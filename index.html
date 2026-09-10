@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.3';
+const VERSION_APP = '1.0.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1507,8 +1507,8 @@ async function abrirVisor(doc) {
       <button class="btn-icono-top" id="visor-descargar" aria-label="Descargar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="btn-icono-top" id="visor-borrar" aria-label="Eliminar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <button class="btn-icono-top" id="visor-ajustes" aria-label="Opciones del documento">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
     </div>
     <div class="visor-cuerpo" id="visor-cuerpo">
@@ -1518,7 +1518,7 @@ async function abrirVisor(doc) {
   pushNavegacion(() => visor.classList.add('hidden'));
 
   $('#visor-cerrar').addEventListener('click', volverAtras);
-  $('#visor-borrar').addEventListener('click', () => confirmarBorrado(doc));
+  $('#visor-ajustes').addEventListener('click', () => abrirMenuDocumento(doc));
 
   try {
     const blob = await obtenerBlobDocumento(doc);
@@ -1545,6 +1545,35 @@ async function abrirVisor(doc) {
   } catch (e) {
     $('#visor-cuerpo').innerHTML = `<div class="estado-vacio"><p>No se pudo cargar el documento. Comprueba tu conexión.</p></div>`;
   }
+}
+
+function abrirMenuDocumento(doc) {
+  abrirModal(`
+    <h3>${escapeHtml(doc.nombre)}</h3>
+    <div class="menu-opciones">
+      <button class="opcion-menu" id="op-renombrar-doc">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Cambiar nombre
+      </button>
+      <button class="opcion-menu peligro" id="op-eliminar-doc">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Eliminar documento
+      </button>
+    </div>
+  `);
+  $('#op-renombrar-doc').addEventListener('click', () => {
+    const nuevo = prompt('Nuevo nombre:', doc.nombre);
+    if (!nuevo || !nuevo.trim()) return;
+    doc.nombre = nuevo.trim();
+    guardarMetadatos().then(() => {
+      volverAtras();
+      renderizarDocumentos();
+      const titulo = $('.visor-topbar .titulo');
+      if (titulo) titulo.textContent = doc.nombre;
+      mostrarToast('Nombre actualizado');
+    });
+  });
+  $('#op-eliminar-doc').addEventListener('click', () => confirmarBorrado(doc));
 }
 
 function confirmarBorrado(doc) {
@@ -1591,7 +1620,7 @@ function confirmarBorrado(doc) {
     }
 
     clearTimeout(temporizadorAviso);
-    cerrarCapas(2); // cierra este modal y el visor a la vez
+    cerrarCapas(3); // cierra este modal, el menú de opciones y el visor a la vez
     mostrarToast('Eliminando…');
     try {
       await borrarArchivoDeDrive(doc.driveFileId);
