@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.1';
+const VERSION_APP = '1.0.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -987,7 +987,7 @@ function renderizarPersonas() {
     btn.className = 'persona-tile';
     btn.dataset.personaId = persona.id;
     btn.innerHTML = `
-      <div class="avatar-persona" style="${estiloAvatar(persona)}">${persona.foto ? '' : iniciales(persona.nombre)}</div>
+      <div class="avatar-persona" style="${estiloAvatar(persona)}"></div>
       <span class="nombre-persona">${escapeHtml(persona.nombre)}</span>`;
     btn.addEventListener('click', () => {
       if (Date.now() - momentoUltimoArrastrePersona < 300) return;
@@ -1094,6 +1094,10 @@ function habilitarArrastrePersonas() {
         if (iOrigen !== -1 && iDestino !== -1) {
           if (iOrigen < iDestino) tileDebajo.after(tile);
           else tileDebajo.before(tile);
+          // El tile cambia de celda en la rejilla al reordenar, así que su
+          // posición "natural" cambia: hay que recalcular ya el transform o
+          // se ve un salto/parpadeo hasta el siguiente movimiento del dedo.
+          actualizarTransform(clientX, clientY);
         }
       }
     }
@@ -1103,10 +1107,11 @@ function habilitarArrastrePersonas() {
     // inferior de la zona con scroll, esta desplaza la pantalla sola para
     // poder llevar la persona más allá de lo que cabe en la pantalla.
     const MARGEN_AUTOSCROLL = 70;
-    const VELOCIDAD_MAX_AUTOSCROLL = 14;
+    const VELOCIDAD_MAX_AUTOSCROLL = 10;
     let rafAutoscroll = null;
     function bucleAutoscroll() {
       const rect = zonaScroll.getBoundingClientRect();
+      const maximo = zonaScroll.scrollHeight - zonaScroll.clientHeight;
       let velocidad = 0;
       if (punteroY < rect.top + MARGEN_AUTOSCROLL) {
         velocidad = -VELOCIDAD_MAX_AUTOSCROLL * Math.min((rect.top + MARGEN_AUTOSCROLL - punteroY) / MARGEN_AUTOSCROLL, 1);
@@ -1115,8 +1120,9 @@ function habilitarArrastrePersonas() {
       }
       if (velocidad !== 0) {
         const antes = zonaScroll.scrollTop;
-        zonaScroll.scrollTop = antes + velocidad;
-        if (zonaScroll.scrollTop !== antes) {
+        const nuevo = Math.max(0, Math.min(antes + velocidad, maximo));
+        if (nuevo !== antes) {
+          zonaScroll.scrollTop = nuevo;
           actualizarTransform(punteroX, punteroY);
           comprobarIntercambio(punteroX, punteroY);
         }
