@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.2';
+const VERSION_APP = '1.0.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1111,16 +1111,34 @@ function habilitarArrastrePersonas() {
     let rafAutoscroll = null;
     function bucleAutoscroll() {
       const rect = zonaScroll.getBoundingClientRect();
-      const maximo = zonaScroll.scrollHeight - zonaScroll.clientHeight;
       let velocidad = 0;
       if (punteroY < rect.top + MARGEN_AUTOSCROLL) {
         velocidad = -VELOCIDAD_MAX_AUTOSCROLL * Math.min((rect.top + MARGEN_AUTOSCROLL - punteroY) / MARGEN_AUTOSCROLL, 1);
       } else if (punteroY > rect.bottom - MARGEN_AUTOSCROLL) {
         velocidad = VELOCIDAD_MAX_AUTOSCROLL * Math.min((punteroY - (rect.bottom - MARGEN_AUTOSCROLL)) / MARGEN_AUTOSCROLL, 1);
       }
+      // No dejar que el scroll avance más de lo necesario para que el
+      // último (o primero) botón de persona quede a la vista: en vez de
+      // fiarse del alto total del contenedor (que incluye relleno extra
+      // al final), se mide dónde está de verdad el primer/último tile.
+      if (velocidad > 0) {
+        const ultimo = contenedor.lastElementChild;
+        if (ultimo) {
+          const rcContenedor = contenedor.getBoundingClientRect();
+          const margenHastaElBorde = (rcContenedor.top + ultimo.offsetTop + ultimo.offsetHeight) - rect.bottom;
+          velocidad = Math.min(velocidad, Math.max(margenHastaElBorde, 0));
+        }
+      } else if (velocidad < 0) {
+        const primero = contenedor.firstElementChild;
+        if (primero) {
+          const rcContenedor = contenedor.getBoundingClientRect();
+          const margenHastaElBorde = rect.top - (rcContenedor.top + primero.offsetTop);
+          velocidad = -Math.min(-velocidad, Math.max(margenHastaElBorde, 0));
+        }
+      }
       if (velocidad !== 0) {
         const antes = zonaScroll.scrollTop;
-        const nuevo = Math.max(0, Math.min(antes + velocidad, maximo));
+        const nuevo = antes + velocidad;
         if (nuevo !== antes) {
           zonaScroll.scrollTop = nuevo;
           actualizarTransform(punteroX, punteroY);
