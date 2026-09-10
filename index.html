@@ -438,6 +438,8 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
+const VERSION_APP = '1.0.0';
+
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
 const NOMBRE_METADATOS = 'documentacion-datos.json';
@@ -1020,7 +1022,14 @@ function habilitarArrastrePersonas() {
       let convertidoEnScroll = false;
 
       const timer = setTimeout(() => {
-        if (!cancelado) iniciarArrastre(tile, ultimoEvento);
+        if (cancelado) return;
+        // Importante: hay que desactivar YA los listeners de esta fase de
+        // espera antes de arrancar el arrastre real. Si no, seguían vivos
+        // de fondo y, al alejarse el dedo del punto de pulsación inicial,
+        // disparaban un scroll manual que competía con el propio arrastre.
+        cancelado = true;
+        limpiar();
+        iniciarArrastre(tile, ultimoEvento);
       }, DURACION_PULSACION);
 
       const cancelarSiSeMueve = (ev) => {
@@ -1696,6 +1705,7 @@ $('#btn-ajustes').addEventListener('click', () => {
       </button>
     </div>
     <p style="color:var(--text-dim);font-size:.76rem;margin:14px 2px 0;">${escapeHtml(usuarioEmail)}</p>
+    <p style="color:var(--text-dim);font-size:.72rem;margin:2px 2px 0;">Versión ${VERSION_APP}</p>
   `);
   $('#op-categorias').addEventListener('click', abrirModalCategorias);
   $$('#selector-tema .segmento').forEach((btn) => {
