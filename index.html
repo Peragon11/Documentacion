@@ -156,7 +156,7 @@
 
   .persona-tile{
     background:none; border:none; color:var(--text-light); cursor:pointer;
-    touch-action:none;
+    touch-action:pan-y;
     display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px; width:100%;
   }
   .avatar-persona{
@@ -1002,7 +1002,6 @@ function renderizarPersonas() {
 // nuevo orden.
 function habilitarArrastrePersonas() {
   const contenedor = $('#grid-personas');
-  const zonaScroll = $('main');
   const DURACION_PULSACION = 380;
   const UMBRAL_MOVIMIENTO = 8;
 
@@ -1011,37 +1010,34 @@ function habilitarArrastrePersonas() {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
       const inicioY = eventoInicial.clientY;
-      const scrollInicial = zonaScroll.scrollTop;
       let cancelado = false;
-      let convertidoEnScroll = false;
 
       const timer = setTimeout(() => {
         if (!cancelado) iniciarArrastre(tile, eventoInicial);
       }, DURACION_PULSACION);
 
+      // Antes de que se cumpla la pulsación larga, el tile deja el scroll
+      // vertical en manos del navegador (touch-action: pan-y en CSS); si el
+      // dedo se mueve, solo cancelamos el arrastre pendiente y dejamos que
+      // el navegador siga scrolleando con normalidad.
       const cancelarSiSeMueve = (ev) => {
         const dx = ev.clientX - inicioX;
         const dy = ev.clientY - inicioY;
         if (!cancelado && (Math.abs(dx) > UMBRAL_MOVIMIENTO || Math.abs(dy) > UMBRAL_MOVIMIENTO)) {
           cancelado = true;
           clearTimeout(timer);
-          // El movimiento antes de que se active el arrastre se trata como
-          // un intento de hacer scroll (el navegador no lo hace solo,
-          // porque el tile bloquea el touch nativo para poder detectar
-          // bien la pulsación larga).
-          if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
-        }
-        if (convertidoEnScroll) {
-          zonaScroll.scrollTop = scrollInicial - dy;
+          limpiar();
         }
       };
       const cancelarPorSoltar = () => { cancelado = true; clearTimeout(timer); limpiar(); };
       function limpiar() {
         window.removeEventListener('pointermove', cancelarSiSeMueve);
         window.removeEventListener('pointerup', cancelarPorSoltar);
+        window.removeEventListener('pointercancel', cancelarPorSoltar);
       }
       window.addEventListener('pointermove', cancelarSiSeMueve);
       window.addEventListener('pointerup', cancelarPorSoltar, { once: true });
+      window.addEventListener('pointercancel', cancelarPorSoltar, { once: true });
     });
   });
 
