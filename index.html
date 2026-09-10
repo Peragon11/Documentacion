@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Documentación — tus documentos, en tu Drive</title>
+<meta name="description" content="Gestiona el DNI, carnet de conducir, tarjeta de discapacidad y otros documentos de tu familia. Todo se guarda en tu propio Google Drive, y también en el móvil para verlo sin conexión.">
+<meta name="theme-color" content="#14202E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Documentación">
+<script>
+(function(){
+  try {
+    var t = localStorage.getItem('documentacion_tema') || 'oscuro';
+    var modo = t === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro') : t;
+    if (modo === 'claro') document.documentElement.setAttribute('data-tema', 'claro');
+  } catch (e) {}
+})();
+</script>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icono.png">
+<link rel="apple-touch-icon" href="icono.png">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --ink:#14202E;
+    --ink-2:#1E2F42;
+    --ink-3:#28405A;
+    --paper:#F2EEE3;
+    --paper-2:#E8E1CF;
+    --stamp:#C1502E;
+    --stamp-dark:#9C3D24;
+    --seal:#5C8374;
+    --amber:#C48A2E;
+    --azul:#4A7BA6;
+    --morado:#8A6FB0;
+    --text-light:#EDE9DE;
+    --text-dim:#9FB0C3;
+    --text-ink:#1E2A38;
+    --borde-sutil:rgba(255,255,255,.06);
+    --borde:rgba(255,255,255,.14);
+    --borde-fuerte:rgba(255,255,255,.22);
+    --topbar-fondo:rgba(20,32,46,.88);
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --serif: 'Source Serif 4', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  html[data-tema="claro"]{
+    --ink:#FBF9F4;
+    --ink-2:#F1ECE0;
+    --ink-3:#E6DFCC;
+    --text-light:#1E2A38;
+    --text-dim:#6B6558;
+    --borde-sutil:rgba(20,32,46,.07);
+    --borde:rgba(20,32,46,.15);
+    --borde-fuerte:rgba(20,32,46,.24);
+    --topbar-fondo:rgba(251,249,244,.88);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; overscroll-behavior-y:none; }
+  body{
+    margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
+    -webkit-font-smoothing:antialiased; transition:background-color .2s ease, color .2s ease;
+  }
+  h1,h2,h3,.serif{ font-family:var(--serif); }
+  button{ font-family:inherit; }
+  img{ max-width:100%; display:block; }
+  .hidden{ display:none !important; }
+  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible{ outline:2px solid var(--seal); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  /* ---------- Login ---------- */
+  #vista-login{
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px 24px; text-align:center;
+    background:
+      radial-gradient(700px 500px at 15% -10%, rgba(92,131,116,.16), transparent 60%),
+      radial-gradient(600px 500px at 110% 10%, rgba(193,80,46,.14), transparent 55%),
+      var(--ink);
+  }
+  .login-sello{
+    width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
+    display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
+  }
+  #vista-login h1{ font-size:2.1rem; margin:0 0 10px; letter-spacing:-.01em; font-weight:600; }
+  #vista-login p.lead{ max-width:320px; color:var(--text-dim); line-height:1.55; margin:0 0 30px; font-size:.95rem; }
+  .btn-google{
+    display:flex; align-items:center; gap:12px; background:var(--paper); color:var(--text-ink);
+    border:none; border-radius:999px; padding:14px 26px; font-size:1rem; font-weight:600;
+    cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  .login-nota{ margin-top:20px; max-width:300px; font-size:.78rem; color:var(--text-dim); line-height:1.5; }
+  .login-nota strong{ color:var(--seal); font-weight:600; }
+
+  /* ---------- App shell (mobile-first, columna única) ---------- */
+  #vista-app{ height:100dvh; overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
+  @media (orientation:landscape){
+    #vista-app{ max-width:100%; }
+  }
+
+  .topbar{
+    position:sticky; top:0; z-index:10;
+    display:flex; align-items:center; gap:10px;
+    padding:calc(12px + var(--safe-t)) 16px 12px;
+    background:var(--topbar-fondo); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--borde-sutil);
+  }
+  .topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
+  .topbar .marca span#titulo-topbar{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:12px; flex:none; box-shadow:none; }
+  .icono-marca{ width:29px; height:29px; border-radius:8px; flex:none; display:block; }
+  .btn-icono-top{
+    background:var(--ink-2); border:none; color:var(--text-light); width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none;
+  }
+  .btn-volver{
+    background:none; border:none; color:var(--text-light); width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none; margin-left:-6px;
+  }
+  .btn-volver:active{ background:var(--ink-2); }
+
+  .banner-instalar{
+    display:flex; align-items:center; gap:10px;
+    background:var(--ink-2); border-bottom:1px solid var(--borde-sutil);
+    padding:10px 16px; font-size:.8rem; color:var(--text-dim);
+  }
+  .banner-instalar span{ flex:1; line-height:1.35; }
+  .banner-instalar #btn-banner-instalar{
+    flex:none; background:var(--stamp); color:var(--paper); border:none; border-radius:8px;
+    padding:8px 14px; font-size:.8rem; font-weight:600; cursor:pointer;
+  }
+  .btn-banner-cerrar{
+    flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  main{
+    flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:18px 16px calc(24px + var(--safe-b));
+  }
+  @media (orientation:landscape){
+    main{ max-width:960px; margin:0 auto; width:100%; }
+  }
+
+  /* ---------- Pantalla de personas ---------- */
+  .grid-personas{
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:26px 18px; position:relative;
+  }
+  @media (orientation:landscape){
+    .grid-personas{ grid-template-columns:repeat(4, 1fr); }
+  }
+
+  .persona-tile{
+    background:none; border:none; color:var(--text-light); cursor:pointer;
+    touch-action:none;
+    display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px; width:100%;
+  }
+  .avatar-persona{
+    width:100%; aspect-ratio:1/1; max-width:210px; border-radius:32px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:600; font-size:clamp(1.8rem, 9vw, 2.6rem); color:var(--ink);
+    background-size:cover; background-position:center;
+    box-shadow:0 10px 24px rgba(0,0,0,.32);
+    position:relative;
+  }
+  .persona-tile .nombre-persona{
+    font-size:.95rem; font-weight:600; text-align:center; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .persona-tile .cuenta-docs{ font-size:.75rem; color:var(--text-dim); margin-top:-6px; }
+  .persona-tile.arrastrando-tile{
+    z-index:30; cursor:grabbing; transition:none; pointer-events:none;
+  }
+  .persona-tile.arrastrando-tile .avatar-persona{
+    box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
+  }
+
+  .estado-vacio{ text-align:center; padding:60px 20px; color:var(--text-dim); }
+  .estado-vacio svg{ opacity:.4; margin-bottom:14px; }
+  .estado-vacio p{ margin:0 0 18px; font-size:.9rem; line-height:1.5; }
+  .estado-vacio .btn-primario{ display:inline-block; width:auto; padding:11px 22px; }
+
+  .estado-carga{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:80px 20px; color:var(--text-dim); gap:14px; text-align:center;
+  }
+  .spinner{ width:24px; height:24px; border-radius:50%; border:2.5px solid var(--borde); border-top-color:var(--seal); animation:girar .8s linear infinite; }
+  @keyframes girar{ to{ transform:rotate(360deg); } }
+
+  /* ---------- Pantalla de persona (documentos) ---------- */
+
+  .chips-categorias{
+    display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
+    -ms-overflow-style:none; scrollbar-width:none;
+  }
+  .chips-categorias::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:none; display:flex; align-items:center; gap:6px;
+    background:var(--ink-2); border:1px solid transparent; color:var(--text-dim);
+    padding:7px 13px; border-radius:999px; font-size:.8rem; cursor:pointer; white-space:nowrap;
+  }
+  .chip .punto-chip{ width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.6; }
+  .chip.activo{ background:var(--ink-3); color:var(--text-light); border-color:var(--borde); }
+  .chip.activo .punto-chip{ opacity:1; }
+  .chip-nueva{ border:1px dashed var(--borde-fuerte); background:transparent; }
+
+  .grupo-documentos{ margin-bottom:26px; }
+  .grupo-documentos:last-child{ margin-bottom:0; }
+  .titulo-grupo{
+    font-size:.88rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--text-dim); margin:0 0 10px; padding-left:2px;
+    display:flex; align-items:center; gap:7px;
+  }
+  .titulo-grupo .punto-grupo{ width:8px; height:8px; border-radius:50%; background:currentColor; flex:none; }
+
+  .lista-docs{ display:flex; flex-direction:column; gap:10px; }
+  @media (orientation:landscape){
+    .lista-docs{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+  }
+
+  .doc-fila{
+    display:flex; flex-direction:column; width:100%;
+    background:var(--ink-2); border:none; border-radius:16px; overflow:hidden;
+    cursor:pointer; text-align:left;
+  }
+  .doc-fila .miniatura{
+    width:100%; aspect-ratio:16/10; position:relative;
+    background:var(--ink-3); overflow:hidden; display:flex; align-items:center; justify-content:center;
+  }
+  .doc-fila .miniatura img{
+    width:100%; height:100%; object-fit:cover; pointer-events:none;
+    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
+  }
+  .doc-fila .miniatura .icono-pdf{ color:var(--text-dim); }
+  .doc-fila .miniatura .skeleton{
+    position:absolute; inset:0; background:linear-gradient(90deg, var(--ink-3) 25%, var(--ink-2) 37%, var(--ink-3) 63%);
+    background-size:400% 100%; animation:brillo 1.4s ease infinite;
+  }
+  @keyframes brillo{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+
+  .doc-fila .info{
+    padding:12px 14px 14px; min-width:0;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .doc-fila .doc-nombre{ font-size:.95rem; font-weight:600; color:var(--text-light); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; }
+  .doc-fila .badge-mini{
+    display:inline-block; flex:none; font-size:.68rem; font-weight:700; padding:3px 8px; border-radius:999px;
+    background:var(--ink-3); color:var(--text-dim);
+  }
+  .doc-fila .badge-mini.alerta{ background:var(--stamp); color:var(--paper); }
+
+  /* ---------- Visor a pantalla completa ---------- */
+  #visor-completo{
+    position:fixed; inset:0; background:#0A0F14; z-index:60;
+    display:flex; flex-direction:column;
+  }
+  .visor-topbar{
+    display:flex; align-items:center; gap:10px;
+    padding:calc(12px + var(--safe-t)) 12px 12px;
+  }
+  .visor-topbar .espaciador{ flex:1; }
+  .visor-topbar .titulo{ font-size:.85rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:45vw; }
+  .visor-cuerpo{
+    flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 12px;
+  }
+  .visor-cuerpo img{
+    max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; pointer-events:none;
+    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
+  }
+  .visor-pdf{ display:flex; flex-direction:column; align-items:center; gap:16px; color:var(--text-dim); text-align:center; padding:20px; }
+  @media (orientation:landscape) and (max-height:520px){
+    .visor-topbar{ padding-top:8px; padding-bottom:8px; }
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-fondo{
+    position:fixed; inset:0; background:rgba(10,15,20,.62); display:flex; align-items:flex-end; justify-content:center;
+    z-index:65; backdrop-filter:blur(2px);
+  }
+  @media (min-width:600px){ .modal-fondo{ align-items:center; } }
+  .modal{
+    background:var(--ink-2); color:var(--text-light); width:100%; max-width:440px;
+    border-radius:18px 18px 0 0; padding:22px 22px calc(22px + var(--safe-b)); max-height:88dvh; overflow-y:auto;
+  }
+  @media (min-width:600px){ .modal{ border-radius:16px; } }
+  .modal h3{ margin:0 0 18px; font-size:1.1rem; font-weight:600; }
+  .campo{ margin-bottom:16px; }
+  .campo label{ display:block; font-size:.8rem; color:var(--text-dim); margin-bottom:6px; }
+  .segmentado{ display:flex; gap:3px; background:var(--ink-3); border-radius:11px; padding:3px; }
+  .segmento{
+    flex:1; background:none; border:none; color:var(--text-dim); cursor:pointer;
+    padding:9px 6px; border-radius:8px; font-size:.82rem; font-weight:600;
+  }
+  .segmento.activo{ background:var(--ink-2); color:var(--text-light); box-shadow:0 1px 4px rgba(0,0,0,.18); }
+  .campo input[type=text], .campo input[type=date], .campo select{
+    width:100%; background:var(--ink-3); border:1px solid var(--borde);
+    color:var(--text-light); border-radius:9px; padding:11px 12px; font-size:.92rem;
+  }
+  .check-aviso{
+    display:flex; align-items:center; gap:10px; margin:2px 0 16px;
+    font-size:.86rem; color:var(--text-light); cursor:pointer;
+  }
+  .check-aviso input{ width:19px; height:19px; flex:none; accent-color:var(--stamp); }
+
+  .zona-archivo{
+    border:1.5px dashed var(--borde-fuerte); border-radius:12px; padding:20px 14px; text-align:center;
+    cursor:pointer; margin-bottom:16px;
+  }
+  .zona-archivo.activa{ border-color:var(--seal); }
+  .zona-archivo p{ margin:8px 0 0; font-size:.85rem; color:var(--text-dim); }
+  .zona-archivo .nombre-archivo{ color:var(--text-light); font-weight:600; margin-top:6px; }
+  .zona-archivo .previsualizacion{
+    max-height:120px; border-radius:8px; margin:0 auto; pointer-events:none;
+    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
+  }
+
+  .selector-foto{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; cursor:pointer; }
+  .selector-foto .btn-secundario{ flex:none; width:auto; padding:9px 16px; font-size:.82rem; }
+
+  .modal-acciones{ display:flex; gap:10px; margin-top:20px; }
+  .btn-primario, .btn-secundario{ border:none; border-radius:10px; padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
+  .modal-acciones .btn-primario, .modal-acciones .btn-secundario{ flex:1; width:auto; }
+  .btn-primario{ background:var(--stamp); color:var(--paper); }
+  .btn-primario:disabled{ opacity:.5; cursor:default; }
+  .btn-secundario{ background:transparent; color:var(--text-dim); border:1px solid var(--borde); }
+  .btn-peligro{ background:var(--stamp); color:var(--paper); }
+
+  .menu-opciones{ display:flex; flex-direction:column; gap:2px; }
+  .opcion-menu{
+    display:flex; align-items:center; gap:12px; background:none; border:none; color:var(--text-light);
+    text-align:left; padding:13px 6px; font-size:.92rem; cursor:pointer; border-radius:8px;
+  }
+  .opcion-menu:active{ background:var(--ink-3); }
+  .opcion-menu.peligro{ color:#E0897A; }
+
+  .lista-categorias-admin{ display:flex; flex-direction:column; gap:2px; margin-bottom:14px; }
+  .fila-categoria{ display:flex; align-items:center; gap:10px; padding:9px 4px; }
+  .fila-categoria .punto-cat{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .fila-categoria .nombre-cat{ flex:1; font-size:.88rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fila-categoria .cuenta-cat{ font-size:.76rem; color:var(--text-dim); flex:none; }
+  .icon-btn-cat{
+    background:none; border:none; color:var(--text-dim); cursor:pointer; flex:none;
+    width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn-cat:active{ background:var(--ink-3); color:var(--text-light); }
+
+  .toast{
+    position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%);
+    background:var(--paper); color:var(--text-ink); padding:11px 20px; border-radius:999px;
+    font-size:.85rem; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.3); z-index:80;
+    opacity:0; transition:opacity .25s ease, transform .25s ease; pointer-events:none; max-width:88vw; text-align:center;
+  }
+  .toast.visible{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+  .toast.error{ background:var(--stamp); color:var(--paper); }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="vista-login">
+  <div class="login-sello" aria-hidden="true">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <h1 style="color: red;">Documentación</h1>
+  <p class="lead">El DNI, carnet de conducir, tarjeta de discapacidad y demás papeles de tu gente, siempre a mano. Se guardan en tu Google Drive: si cambias de móvil, no pierdes nada.</p>
+  <button class="btn-google" id="btn-conectar">
+    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+    Conectar con Google Drive
+  </button>
+  <p class="login-nota"><strong>Nada se guarda fuera de tu cuenta.</strong> Esta app no tiene servidor ni base de datos propia: solo lee y escribe lo que tú subas desde aquí, dentro de una carpeta de tu Drive.</p>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="vista-app" class="hidden">
+  <div class="topbar" id="topbar">
+    <button class="btn-volver hidden" id="btn-volver" aria-label="Volver">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="marca">
+      <img class="icono-marca" src="icono.png" id="topbar-punto" alt="">
+      <div class="avatar-persona hidden" id="avatar-topbar"></div>
+      <span id="titulo-topbar">DOCUMENTACIÓN</span>
+    </div>
+    <button class="btn-icono-top" id="btn-anadir-persona-top" aria-label="Añadir persona">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button class="btn-icono-top" id="btn-ajustes" aria-label="Ajustes">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+    <button class="btn-icono-top hidden" id="btn-subir" aria-label="Subir documento">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0-12l-4 4m4-4l4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="btn-icono-top hidden" id="btn-menu-persona" aria-label="Opciones de esta persona">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg>
+    </button>
+  </div>
+
+  <div class="banner-instalar hidden" id="banner-instalar">
+    <span>Instala la app en tu móvil para abrirla más rápido</span>
+    <button id="btn-banner-instalar">Instalar</button>
+    <button class="btn-banner-cerrar" id="btn-banner-cerrar" aria-label="Cerrar aviso">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <main>
+    <!-- Pantalla 1: personas -->
+    <section id="pantalla-personas">
+      <div class="grid-personas" id="grid-personas"></div>
+    </section>
+
+    <!-- Pantalla 2: documentos de una persona -->
+    <section id="pantalla-persona" class="hidden">
+      <div class="chips-categorias" id="chips-categorias"></div>
+
+      <div id="contenido-documentos"></div>
+    </section>
+  </main>
+</div>
+
+<div id="visor-completo" class="hidden"></div>
+<div id="raiz-modal"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   DOCUMENTACIÓN — configuración
+   ========================================================================= */
+// 1) Ve a https://console.cloud.google.com/ , crea un proyecto.
+// 2) Habilita "Google Drive API".
+// 3) Configura la pantalla de consentimiento OAuth (tipo Externo).
+// 4) Crea credenciales > ID de cliente de OAuth > Aplicación web.
+//    Añade como "Orígenes de JavaScript autorizados" el dominio donde
+//    despliegues esta app. Instrucciones completas en README.md.
+const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
+
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const NOMBRE_CARPETA = 'Documentación (documentos personales)';
+const NOMBRE_METADATOS = 'documentacion-datos.json';
+
+const CATEGORIAS_INICIALES = [
+  { id: 'dni', nombre: 'DNI / NIE', color: '#5C8374' },
+  { id: 'conducir', nombre: 'Carnet de conducir', color: '#4A7BA6' },
+  { id: 'discapacidad', nombre: 'Tarjeta de discapacidad', color: '#C1502E' },
+  { id: 'sanidad', nombre: 'Tarjeta sanitaria', color: '#8A6FB0' },
+  { id: 'otros', nombre: 'Otros', color: '#9FB0C3' },
+];
+
+const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
+
+/* =========================================================================
+   Estado
+   ========================================================================= */
+let tokenClient = null;
+let accessToken = null;
+let tokenExpiry = 0;
+let carpetaId = null;
+let archivoMetadatosId = null;
+let datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
+let personaActivaId = null;
+let momentoUltimoArrastrePersona = 0;
+let categoriaActiva = 'todos';
+let usuarioEmail = '';
+let archivoPendiente = null;
+let fotoPendienteDataUrl = null;
+let promptInstalacionDiferido = null;
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function appYaInstalada() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  promptInstalacionDiferido = e;
+  if (!appYaInstalada()) $('#banner-instalar').classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  promptInstalacionDiferido = null;
+  $('#banner-instalar').classList.add('hidden');
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  $('#btn-banner-instalar')?.addEventListener('click', async () => {
+    if (!promptInstalacionDiferido) return;
+    promptInstalacionDiferido.prompt();
+    await promptInstalacionDiferido.userChoice;
+    promptInstalacionDiferido = null;
+    $('#banner-instalar').classList.add('hidden');
+  });
+  $('#btn-banner-cerrar')?.addEventListener('click', () => $('#banner-instalar').classList.add('hidden'));
+});
+
+/* =========================================================================
+   Arranque — local primero, Drive como copia de seguridad
+   ========================================================================= */
+let mostrandoDatosLocales = false;
+
+window.addEventListener('load', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+
+    // Si la app lleva un rato abierta y entretanto se publicó una versión
+    // nueva, en cuanto el service worker nuevo tome el control recargamos
+    // solos para no quedarnos con el JS antiguo en memoria.
+    let recargandoPorActualizacion = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (recargandoPorActualizacion) return;
+      recargandoPorActualizacion = true;
+      window.location.reload();
+    });
+  }
+  initGIS();
+  arrancarApp();
+});
+
+// 1) Si ya hay una copia guardada en este móvil, se muestra al instante,
+//    sin esperar a Google ni a Drive.
+// 2) En paralelo (o si no había nada guardado, en primer plano) se intenta
+//    sincronizar con Drive: por si hay cambios hechos desde otro móvil, o
+//    porque es la primera vez que se entra en este dispositivo.
+function arrancarApp() {
+  const huboCacheLocal = cargarDatosDesdeCacheLocal();
+  if (huboCacheLocal) {
+    mostrandoDatosLocales = true;
+    carpetaId = localStorage.getItem('documentacion_carpeta_id') || null;
+    usuarioEmail = localStorage.getItem('documentacion_email') || '';
+    mostrarApp();
+    mostrarPantallaPersonas();
+  }
+  intentarSesionGuardada();
+}
+
+function mostrarApp() {
+  $('#vista-login').classList.add('hidden');
+  $('#vista-app').classList.remove('hidden');
+}
+
+/* =========================================================================
+   Tema (claro / oscuro / automático)
+   ========================================================================= */
+const TEMA_STORAGE_KEY = 'documentacion_tema';
+const mediaOscuro = window.matchMedia('(prefers-color-scheme: dark)');
+
+function obtenerTemaGuardado() {
+  return localStorage.getItem(TEMA_STORAGE_KEY) || 'oscuro'; // por defecto, el oscuro de siempre
+}
+
+function aplicarTema(tema) {
+  const modoReal = tema === 'auto' ? (mediaOscuro.matches ? 'oscuro' : 'claro') : tema;
+  if (modoReal === 'claro') {
+    document.documentElement.setAttribute('data-tema', 'claro');
+  } else {
+    document.documentElement.removeAttribute('data-tema');
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', modoReal === 'claro' ? '#FBF9F4' : '#14202E');
+}
+
+function guardarTema(tema) {
+  localStorage.setItem(TEMA_STORAGE_KEY, tema);
+  aplicarTema(tema);
+}
+
+aplicarTema(obtenerTemaGuardado());
+mediaOscuro.addEventListener('change', () => {
+  if (obtenerTemaGuardado() === 'auto') aplicarTema('auto');
+});
+
+/* =========================================================================
+   Navegación con el botón/gesto "atrás" del móvil
+   ========================================================================= */
+// Cada vez que se abre una pantalla, modal o el visor, se añade una
+// "capa" con su función de cierre y se registra en el historial del
+// navegador. Al pulsar atrás, en vez de salir de la app, se deshace la
+// última capa; solo se sale de verdad cuando no queda ninguna.
+let pilaNavegacion = [];
+let ignorarProximoPopstate = false;
+
+function pushNavegacion(cerrarFn) {
+  pilaNavegacion.push(cerrarFn);
+  history.pushState({ documentacionNav: true }, '');
+}
+
+// Usar esto en cualquier botón de "cerrar/cancelar/volver" de la UI, en
+// vez de llamar directamente a la función que cierra: así el botón atrás
+// físico y los botones en pantalla se comportan igual y no se desincroniza
+// el historial.
+function volverAtras() {
+  if (pilaNavegacion.length > 0) history.back();
+}
+
+window.addEventListener('popstate', () => {
+  if (ignorarProximoPopstate) { ignorarProximoPopstate = false; return; }
+  const cerrar = pilaNavegacion.pop();
+  if (cerrar) cerrar();
+});
+
+function initGIS() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: onTokenRecibido,
+    error_callback: () => {
+      // Si ya había datos locales visibles, fallamos en silencio: el
+      // usuario ya está viendo su copia y no hace falta interrumpirle.
+      if (!mostrandoDatosLocales) mostrarToast('No se pudo conectar con Google.', true);
+    },
+  });
+}
+
+$('#btn-conectar').addEventListener('click', () => {
+  if (CLIENT_ID.includes('TU_CLIENT_ID')) {
+    alert('Falta configurar el Client ID de Google. Revisa el README.md.');
+    return;
+  }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+});
+
+function intentarSesionGuardada() {
+  const guardado = localStorage.getItem('documentacion_sesion');
+  if (guardado) {
+    try {
+      const s = JSON.parse(guardado);
+      if (s.expiry > Date.now() + 60000) {
+        accessToken = s.token; tokenExpiry = s.expiry;
+        sincronizarConDrive();
+        return;
+      }
+    } catch (e) { /* ignorar */ }
+  }
+  // Sin token válido: si no hay datos locales que mostrar, no tiene
+  // sentido esperar a Google sin conexión.
+  if (!navigator.onLine && mostrandoDatosLocales) return;
+  if (CLIENT_ID.includes('TU_CLIENT_ID')) return;
+  setTimeout(() => tokenClient && tokenClient.requestAccessToken({ prompt: '' }), 300);
+}
+
+function onTokenRecibido(resp) {
+  if (resp.error) {
+    if (!mostrandoDatosLocales) mostrarToast('No se pudo completar la conexión.', true);
+    return;
+  }
+  accessToken = resp.access_token;
+  tokenExpiry = Date.now() + (resp.expires_in * 1000);
+  localStorage.setItem('documentacion_sesion', JSON.stringify({ token: accessToken, expiry: tokenExpiry }));
+  sincronizarConDrive();
+}
+
+// Sincroniza con Drive. Si ya había datos locales en pantalla, esto ocurre
+// en segundo plano y sin spinner; si no había nada, es la carga principal.
+async function sincronizarConDrive() {
+  programarRenovacionSilenciosa();
+  if (!mostrandoDatosLocales) {
+    mostrarApp();
+    mostrarPantallaCarga();
+  }
+  try {
+    await cargarPerfil();
+    await asegurarCarpeta();
+    await cargarMetadatos();
+    guardarDatosEnCacheLocal();
+    mostrandoDatosLocales = true;
+    refrescarPantallaActual();
+  } catch (err) {
+    console.error(err);
+    if (!mostrandoDatosLocales) {
+      mostrarToast('Hubo un problema al conectar con Drive.', true);
+    }
+    // Si ya había datos locales visibles, no interrumpimos: el usuario
+    // sigue viendo su copia y se reintentará la próxima vez.
+  }
+}
+
+function refrescarPantallaActual() {
+  if (personaActivaId) {
+    renderizarCabeceraPersona();
+    renderizarChipsCategorias();
+    renderizarDocumentos();
+  } else {
+    renderizarPersonas();
+  }
+}
+
+function programarRenovacionSilenciosa() {
+  const margen = 5 * 60 * 1000;
+  const espera = Math.max(tokenExpiry - Date.now() - margen, 30000);
+  setTimeout(() => tokenClient.requestAccessToken({ prompt: '' }), espera);
+}
+
+function mostrarPantallaCarga() {
+  $('#pantalla-personas').classList.remove('hidden');
+  $('#pantalla-persona').classList.add('hidden');
+  $('#grid-personas').innerHTML = `<div class="estado-carga" style="grid-column:1/-1"><div class="spinner"></div><span>Preparando tu carpeta en Drive…</span></div>`;
+}
+
+/* =========================================================================
+   Llamadas a Google
+   ========================================================================= */
+async function llamarGoogle(url, opciones = {}, timeoutMs = 8000) {
+  const cabeceras = Object.assign({ Authorization: `Bearer ${accessToken}` }, opciones.headers || {});
+  const controlador = new AbortController();
+  const limite = setTimeout(() => controlador.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, Object.assign({}, opciones, { headers: cabeceras, signal: controlador.signal }));
+    if (res.status === 401) throw new Error('token-caducado');
+    return res;
+  } finally {
+    clearTimeout(limite);
+  }
+}
+
+async function cargarPerfil() {
+  const res = await llamarGoogle('https://www.googleapis.com/drive/v3/about?fields=user');
+  const info = await res.json();
+  usuarioEmail = info.user.emailAddress;
+}
+
+function escaparComillas(str) {
+  return str.replace(/'/g, "\\'");
+}
+
+// Busca una subcarpeta por nombre dentro de un padre; si no existe, la crea.
+// Se usa para anidar: Documentación / <Persona> / <Categoría> / archivo
+async function buscarOCrearCarpeta(nombre, padreId) {
+  const q = encodeURIComponent(`name='${escaparComillas(nombre)}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${padreId}' in parents`);
+  const busq = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
+  const resultado = await busq.json();
+  if (resultado.files && resultado.files.length > 0) return resultado.files[0].id;
+  const crear = await llamarGoogle('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: nombre, mimeType: 'application/vnd.google-apps.folder', parents: [padreId] }),
+  });
+  const nueva = await crear.json();
+  return nueva.id;
+}
+
+// Caché en memoria de esta sesión, para no repetir búsquedas al subir varios
+// documentos seguidos de la misma persona/categoría.
+const cacheCarpetas = {};
+async function carpetaDestinoDocumento(persona, categoria) {
+  const clave = `${persona.id}:${categoria.id}`;
+  if (cacheCarpetas[clave]) return cacheCarpetas[clave];
+  const carpetaPersonaId = await buscarOCrearCarpeta(persona.nombre, carpetaId);
+  const carpetaCategoriaId = await buscarOCrearCarpeta(categoria.nombre, carpetaPersonaId);
+  cacheCarpetas[clave] = carpetaCategoriaId;
+  return carpetaCategoriaId;
+}
+
+async function asegurarCarpeta() {
+  const guardadoId = localStorage.getItem('documentacion_carpeta_id');
+  if (guardadoId) {
+    const check = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${guardadoId}?fields=id,trashed`);
+    if (check.ok) {
+      const info = await check.json();
+      if (!info.trashed) { carpetaId = guardadoId; return; }
+    }
+  }
+  carpetaId = await buscarOCrearCarpeta(NOMBRE_CARPETA, 'root');
+  localStorage.setItem('documentacion_carpeta_id', carpetaId);
+}
+
+async function cargarMetadatos() {
+  const q = encodeURIComponent(`name='${NOMBRE_METADATOS}' and '${carpetaId}' in parents and trashed=false`);
+  const busq = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
+  const resultado = await busq.json();
+
+  if (resultado.files && resultado.files.length > 0) {
+    archivoMetadatosId = resultado.files[0].id;
+    const contenido = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${archivoMetadatosId}?alt=media`);
+    const texto = await contenido.text();
+    try {
+      const parsed = JSON.parse(texto);
+      datos.personas = parsed.personas || [];
+      datos.categorias = (parsed.categorias && parsed.categorias.length) ? parsed.categorias : CATEGORIAS_INICIALES;
+      datos.documentos = parsed.documentos || [];
+    } catch (e) {
+      datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
+    }
+  } else {
+    datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
+    await guardarMetadatos(true);
+  }
+}
+
+// Guarda una copia de personas/categorías/documentos en este móvil
+// (localStorage), para poder abrir la app y verla sin conexión.
+function guardarDatosEnCacheLocal() {
+  try {
+    localStorage.setItem('documentacion_datos_cache', JSON.stringify(datos));
+    if (usuarioEmail) localStorage.setItem('documentacion_email', usuarioEmail);
+  } catch (e) { /* si no cabe (muy improbable), simplemente no cacheamos */ }
+}
+function cargarDatosDesdeCacheLocal() {
+  const guardado = localStorage.getItem('documentacion_datos_cache');
+  if (!guardado) return false;
+  try {
+    datos = JSON.parse(guardado);
+    return true;
+  } catch (e) { return false; }
+}
+
+async function guardarMetadatos(esNuevo = false) {
+  const contenido = JSON.stringify(datos, null, 2);
+  const blob = new Blob([contenido], { type: 'application/json' });
+  try {
+    if (esNuevo || !archivoMetadatosId) {
+      const metadata = { name: NOMBRE_METADATOS, parents: [carpetaId], mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', blob);
+      const res = await llamarGoogle('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', body: form });
+      const info = await res.json();
+      archivoMetadatosId = info.id;
+    } else {
+      await llamarGoogle(`https://www.googleapis.com/upload/drive/v3/files/${archivoMetadatosId}?uploadType=media`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: blob,
+      });
+    }
+  } catch (e) {
+    mostrarToast('Sin conexión: el cambio se guardó solo en este móvil', true);
+  } finally {
+    guardarDatosEnCacheLocal();
+  }
+}
+
+function obtenerExtension(file) {
+  const partes = file.name.split('.');
+  if (partes.length > 1) return '.' + partes.pop().toLowerCase();
+  const mapa = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
+  return mapa[file.type] || '';
+}
+function construirNombreArchivo(nombreElegido, file) {
+  const ext = obtenerExtension(file);
+  const yaLoTiene = ext && nombreElegido.toLowerCase().endsWith(ext);
+  return yaLoTiene ? nombreElegido : nombreElegido + ext;
+}
+
+async function subirArchivoADrive(file, nombreArchivo, carpetaDestinoId) {
+  const metadata = { name: nombreArchivo, parents: [carpetaDestinoId] };
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', file);
+  const res = await llamarGoogle('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', body: form });
+  const info = await res.json();
+  return info.id;
+}
+
+async function borrarArchivoDeDrive(fileId) {
+  await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE' });
+}
+
+/* =========================================================================
+   Caché local (IndexedDB) — para ver documentos sin conexión
+   ========================================================================= */
+const DB_NOMBRE = 'documentacion_cache';
+const DB_TIENDA = 'archivos';
+let _dbPromesa = null;
+
+function abrirCache() {
+  if (_dbPromesa) return _dbPromesa;
+  _dbPromesa = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NOMBRE, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(DB_TIENDA);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return _dbPromesa;
+}
+async function cacheObtener(id) {
+  try {
+    const db = await abrirCache();
+    return await new Promise((res) => {
+      const tx = db.transaction(DB_TIENDA, 'readonly');
+      const r = tx.objectStore(DB_TIENDA).get(id);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => res(null);
+    });
+  } catch (e) { return null; }
+}
+async function cacheGuardar(id, blob) {
+  try {
+    const db = await abrirCache();
+    await new Promise((res) => {
+      const tx = db.transaction(DB_TIENDA, 'readwrite');
+      tx.objectStore(DB_TIENDA).put(blob, id);
+      tx.oncomplete = () => res();
+      tx.onerror = () => res();
+    });
+  } catch (e) { /* silencioso: la app sigue funcionando sin caché */ }
+}
+async function cacheBorrar(id) {
+  try {
+    const db = await abrirCache();
+    await new Promise((res) => {
+      const tx = db.transaction(DB_TIENDA, 'readwrite');
+      tx.objectStore(DB_TIENDA).delete(id);
+      tx.oncomplete = () => res();
+      tx.onerror = () => res();
+    });
+  } catch (e) { /* ignorar */ }
+}
+
+// Devuelve el blob del documento: primero de la caché local (rápido, sin
+// conexión) y si no está, lo trae de Drive y lo guarda en caché para la
+// próxima vez.
+async function obtenerBlobDocumento(doc) {
+  const enCache = await cacheObtener(doc.driveFileId);
+  if (enCache) return enCache;
+  const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${doc.driveFileId}?alt=media`);
+  const blob = await res.blob();
+  cacheGuardar(doc.driveFileId, blob);
+  return blob;
+}
+
+/* =========================================================================
+   Navegación entre pantallas
+   ========================================================================= */
+function mostrarPantallaPersonas() {
+  personaActivaId = null;
+  $('#pantalla-personas').classList.remove('hidden');
+  $('#pantalla-persona').classList.add('hidden');
+  $('#btn-volver').classList.add('hidden');
+  $('#btn-subir').classList.add('hidden');
+  $('#btn-menu-persona').classList.add('hidden');
+  $('#btn-anadir-persona-top').classList.remove('hidden');
+  $('#btn-ajustes').classList.remove('hidden');
+  $('#topbar-punto').classList.remove('hidden');
+  $('#avatar-topbar').classList.add('hidden');
+  $('#titulo-topbar').textContent = 'DOCUMENTACIÓN';
+  renderizarPersonas();
+}
+
+function abrirPersona(personaId) {
+  personaActivaId = personaId;
+  categoriaActiva = 'todos';
+  $('#pantalla-personas').classList.add('hidden');
+  $('#pantalla-persona').classList.remove('hidden');
+  $('#btn-volver').classList.remove('hidden');
+  $('#btn-subir').classList.remove('hidden');
+  $('#btn-menu-persona').classList.remove('hidden');
+  $('#btn-anadir-persona-top').classList.add('hidden');
+  $('#btn-ajustes').classList.add('hidden');
+  renderizarCabeceraPersona();
+  renderizarChipsCategorias();
+  renderizarDocumentos();
+  pushNavegacion(mostrarPantallaPersonas);
+}
+
+$('#btn-volver').addEventListener('click', volverAtras);
+$('#btn-anadir-persona-top').addEventListener('click', abrirModalNuevaPersona);
+
+/* =========================================================================
+   Render: personas
+   ========================================================================= */
+function iniciales(nombre) {
+  return nombre.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+}
+function colorParaPersona(persona) {
+  const idx = datos.personas.findIndex((p) => p.id === persona.id);
+  return COLORES_AVATAR[Math.max(idx, 0) % COLORES_AVATAR.length];
+}
+function estiloAvatar(persona) {
+  if (persona.foto) return `background-image:url('${persona.foto}')`;
+  return `background:${colorParaPersona(persona)}`;
+}
+
+function renderizarPersonas() {
+  const cont = $('#grid-personas');
+  cont.innerHTML = '';
+
+  datos.personas.forEach((persona) => {
+    const btn = document.createElement('button');
+    btn.className = 'persona-tile';
+    btn.dataset.personaId = persona.id;
+    btn.innerHTML = `
+      <div class="avatar-persona" style="${estiloAvatar(persona)}">${persona.foto ? '' : iniciales(persona.nombre)}</div>
+      <span class="nombre-persona">${escapeHtml(persona.nombre)}</span>`;
+    btn.addEventListener('click', () => {
+      if (Date.now() - momentoUltimoArrastrePersona < 300) return;
+      abrirPersona(persona.id);
+    });
+    cont.appendChild(btn);
+  });
+
+  habilitarArrastrePersonas();
+}
+
+// Permite reordenar las personas de la pantalla principal: mantener
+// pulsado un momento activa el arrastre, y al soltar se guarda el
+// nuevo orden.
+function habilitarArrastrePersonas() {
+  const contenedor = $('#grid-personas');
+  const zonaScroll = $('main');
+  const DURACION_PULSACION = 380;
+  const UMBRAL_MOVIMIENTO = 8;
+
+  contenedor.querySelectorAll('.persona-tile').forEach((tile) => {
+    tile.addEventListener('pointerdown', (eventoInicial) => {
+      if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
+      const inicioX = eventoInicial.clientX;
+      const inicioY = eventoInicial.clientY;
+      const scrollInicial = zonaScroll.scrollTop;
+      let cancelado = false;
+      let convertidoEnScroll = false;
+
+      const timer = setTimeout(() => {
+        if (!cancelado) iniciarArrastre(tile, eventoInicial);
+      }, DURACION_PULSACION);
+
+      const cancelarSiSeMueve = (ev) => {
+        const dx = ev.clientX - inicioX;
+        const dy = ev.clientY - inicioY;
+        if (!cancelado && (Math.abs(dx) > UMBRAL_MOVIMIENTO || Math.abs(dy) > UMBRAL_MOVIMIENTO)) {
+          cancelado = true;
+          clearTimeout(timer);
+          // El movimiento antes de que se active el arrastre se trata como
+          // un intento de hacer scroll (el navegador no lo hace solo,
+          // porque el tile bloquea el touch nativo para poder detectar
+          // bien la pulsación larga).
+          if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
+        }
+        if (convertidoEnScroll) {
+          zonaScroll.scrollTop = scrollInicial - dy;
+        }
+      };
+      const cancelarPorSoltar = () => { cancelado = true; clearTimeout(timer); limpiar(); };
+      function limpiar() {
+        window.removeEventListener('pointermove', cancelarSiSeMueve);
+        window.removeEventListener('pointerup', cancelarPorSoltar);
+      }
+      window.addEventListener('pointermove', cancelarSiSeMueve);
+      window.addEventListener('pointerup', cancelarPorSoltar, { once: true });
+    });
+  });
+
+  function iniciarArrastre(tile, eventoInicial) {
+    if (navigator.vibrate) navigator.vibrate(12);
+    tile.classList.add('arrastrando-tile');
+    tile.style.touchAction = 'none';
+    try { tile.setPointerCapture(eventoInicial.pointerId); } catch (e) { /* ignorar */ }
+
+    const rectInicial = tile.getBoundingClientRect();
+    const offsetX = eventoInicial.clientX - rectInicial.left;
+    const offsetY = eventoInicial.clientY - rectInicial.top;
+
+    function posicionNatural() {
+      const rc = contenedor.getBoundingClientRect();
+      return { left: rc.left + tile.offsetLeft, top: rc.top + tile.offsetTop };
+    }
+    function actualizarTransform(clientX, clientY) {
+      const base = posicionNatural();
+      const x = clientX - offsetX - base.left;
+      const y = clientY - offsetY - base.top;
+      tile.style.transform = `translate(${x}px, ${y}px) scale(1.06)`;
+    }
+    actualizarTransform(eventoInicial.clientX, eventoInicial.clientY);
+
+    function onMove(ev) {
+      actualizarTransform(ev.clientX, ev.clientY);
+      const debajo = document.elementFromPoint(ev.clientX, ev.clientY);
+      const tileDebajo = debajo && debajo.closest('.persona-tile');
+      if (tileDebajo && tileDebajo !== tile && contenedor.contains(tileDebajo)) {
+        const tiles = Array.from(contenedor.children);
+        const iOrigen = tiles.indexOf(tile);
+        const iDestino = tiles.indexOf(tileDebajo);
+        if (iOrigen !== -1 && iDestino !== -1) {
+          if (iOrigen < iDestino) tileDebajo.after(tile);
+          else tileDebajo.before(tile);
+          actualizarTransform(ev.clientX, ev.clientY);
+        }
+      }
+    }
+
+    function onUp() {
+      try { tile.releasePointerCapture(eventoInicial.pointerId); } catch (e) { /* ignorar */ }
+      tile.classList.remove('arrastrando-tile');
+      tile.style.transform = '';
+      tile.style.touchAction = '';
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      // Evita que el "click" que sigue a soltar abra la persona por error.
+      momentoUltimoArrastrePersona = Date.now();
+      guardarOrdenPersonasDesdeDOM();
+    }
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+  }
+
+  function guardarOrdenPersonasDesdeDOM() {
+    const idsEnOrden = Array.from(contenedor.querySelectorAll('.persona-tile')).map((el) => el.dataset.personaId);
+    datos.personas.sort((a, b) => idsEnOrden.indexOf(a.id) - idsEnOrden.indexOf(b.id));
+    guardarMetadatos();
+  }
+}
+
+function renderizarCabeceraPersona() {
+  const persona = datos.personas.find((p) => p.id === personaActivaId);
+  if (!persona) return;
+  $('#topbar-punto').classList.add('hidden');
+  const avatarTop = $('#avatar-topbar');
+  avatarTop.classList.remove('hidden');
+  avatarTop.setAttribute('style', estiloAvatar(persona));
+  avatarTop.textContent = persona.foto ? '' : iniciales(persona.nombre);
+  $('#titulo-topbar').textContent = persona.nombre;
+}
+
+/* =========================================================================
+   Modal: nueva / editar persona
+   ========================================================================= */
+function abrirModalNuevaPersona() {
+  fotoPendienteDataUrl = null;
+  abrirModal(`
+    <h3>Nueva persona</h3>
+    <div class="selector-foto">
+      <div class="avatar-persona" id="preview-avatar-nuevo" style="background:var(--ink-3);cursor:pointer;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 7h3l2-2h6l2 2h3v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+      </div>
+      <button class="btn-secundario" id="btn-elegir-foto" type="button">Añadir foto</button>
+      <input type="file" id="input-foto-persona" accept="image/*" class="visually-hidden">
+    </div>
+    <div class="campo">
+      <label for="input-nombre-persona">Nombre</label>
+      <input type="text" id="input-nombre-persona" placeholder="Ej: Mamá, Nico…">
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="modal-guardar-persona" disabled>Añadir</button>
+    </div>
+  `);
+
+  const inputFoto = $('#input-foto-persona');
+  $('#btn-elegir-foto').addEventListener('click', () => inputFoto.click());
+  $('#preview-avatar-nuevo').addEventListener('click', () => inputFoto.click());
+  inputFoto.addEventListener('change', async () => {
+    const f = inputFoto.files[0];
+    if (!f) return;
+    fotoPendienteDataUrl = await redimensionarImagen(f, 200, .82);
+    $('#preview-avatar-nuevo').setAttribute('style', `background-image:url('${fotoPendienteDataUrl}');background-size:cover;background-position:center;`);
+    $('#preview-avatar-nuevo').innerHTML = '';
+  });
+
+  const revisar = () => { $('#modal-guardar-persona').disabled = !$('#input-nombre-persona').value.trim(); };
+  $('#input-nombre-persona').addEventListener('input', revisar);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#modal-guardar-persona').addEventListener('click', async () => {
+    const nombre = $('#input-nombre-persona').value.trim();
+    if (!nombre) return;
+    const btn = $('#modal-guardar-persona');
+    if (btn.disabled) return; // evita doble toque -> doble persona
+    btn.disabled = true;
+    datos.personas.push({ id: 'p-' + Date.now(), nombre, foto: fotoPendienteDataUrl });
+    await guardarMetadatos();
+    volverAtras();
+    renderizarPersonas();
+    mostrarToast('Persona añadida');
+  });
+}
+
+function redimensionarImagen(file, maxLado, calidad) {
+  return new Promise((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * escala);
+        canvas.height = Math.round(img.height * escala);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', calidad));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    lector.onerror = reject;
+    lector.readAsDataURL(file);
+  });
+}
+
+/* =========================================================================
+   Menú de opciones de la persona (editar / eliminar)
+   ========================================================================= */
+$('#btn-menu-persona').addEventListener('click', () => {
+  const persona = datos.personas.find((p) => p.id === personaActivaId);
+  if (!persona) return;
+  abrirModal(`
+    <h3>${escapeHtml(persona.nombre)}</h3>
+    <div class="menu-opciones">
+      <button class="opcion-menu" id="op-cambiar-foto">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h3l2-2h6l2 2h3v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+        Cambiar foto
+      </button>
+      <button class="opcion-menu" id="op-renombrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Cambiar nombre
+      </button>
+      <button class="opcion-menu peligro" id="op-eliminar-persona">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Eliminar persona
+      </button>
+    </div>
+  `);
+  const inputOculto = document.createElement('input');
+  inputOculto.type = 'file'; inputOculto.accept = 'image/*'; inputOculto.className = 'visually-hidden';
+  $('#raiz-modal').appendChild(inputOculto);
+
+  $('#op-cambiar-foto').addEventListener('click', () => inputOculto.click());
+  inputOculto.addEventListener('change', async () => {
+    const f = inputOculto.files[0];
+    if (!f) return;
+    persona.foto = await redimensionarImagen(f, 200, .82);
+    await guardarMetadatos();
+    volverAtras();
+    renderizarCabeceraPersona();
+    mostrarToast('Foto actualizada');
+  });
+
+  $('#op-renombrar').addEventListener('click', () => {
+    const nuevo = prompt('Nuevo nombre:', persona.nombre);
+    if (!nuevo || !nuevo.trim()) return;
+    persona.nombre = nuevo.trim();
+    guardarMetadatos().then(() => {
+      volverAtras();
+      renderizarCabeceraPersona();
+      mostrarToast('Nombre actualizado');
+    });
+  });
+
+  $('#op-eliminar-persona').addEventListener('click', () => {
+    const docs = datos.documentos.filter((d) => d.personaId === persona.id);
+    abrirModal(`
+      <h3>¿Eliminar a ${escapeHtml(persona.nombre)}?</h3>
+      <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;">
+        Se eliminarán también sus ${docs.length} documento${docs.length === 1 ? '' : 's'} de Drive. Esta acción no se puede deshacer.
+      </p>
+      <div class="campo">
+        <label for="input-confirmar-nombre">Escribe <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> para confirmar</label>
+        <input type="text" id="input-confirmar-nombre" autocomplete="off" autocapitalize="off">
+      </div>
+      <div class="modal-acciones">
+        <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+        <button class="btn-primario btn-peligro" id="modal-confirmar-borrar-persona" disabled>Eliminar</button>
+      </div>
+    `);
+    $('#modal-cancelar').addEventListener('click', volverAtras);
+    const inputConfirmar = $('#input-confirmar-nombre');
+    const btnConfirmar = $('#modal-confirmar-borrar-persona');
+    inputConfirmar.addEventListener('input', () => {
+      btnConfirmar.disabled = inputConfirmar.value.trim().toLowerCase() !== persona.nombre.trim().toLowerCase();
+    });
+    btnConfirmar.addEventListener('click', async () => {
+      if (inputConfirmar.value.trim().toLowerCase() !== persona.nombre.trim().toLowerCase()) return;
+      cerrarTodasLasCapas();
+      mostrarToast('Eliminando…');
+      for (const doc of docs) {
+        try { await borrarArchivoDeDrive(doc.driveFileId); cacheBorrar(doc.driveFileId); } catch (e) { /* seguir */ }
+      }
+      datos.documentos = datos.documentos.filter((d) => d.personaId !== persona.id);
+      datos.personas = datos.personas.filter((p) => p.id !== persona.id);
+      await guardarMetadatos();
+      mostrarPantallaPersonas();
+      mostrarToast('Persona eliminada');
+    });
+  });
+});
+
+/* =========================================================================
+   Render: categorías (chips)
+   ========================================================================= */
+function renderizarChipsCategorias() {
+  const cont = $('#chips-categorias');
+  cont.innerHTML = '';
+  const docsPersona = datos.documentos.filter((d) => d.personaId === personaActivaId);
+
+  const chipTodos = crearChip({ id: 'todos', nombre: 'Todos', color: '#EDE9DE' }, docsPersona.length);
+  cont.appendChild(chipTodos);
+
+  datos.categorias.forEach((cat) => {
+    const n = docsPersona.filter((d) => d.categoria === cat.id).length;
+    cont.appendChild(crearChip(cat, n));
+  });
+
+  const chipNueva = document.createElement('button');
+  chipNueva.className = 'chip chip-nueva';
+  chipNueva.textContent = '+ Categoría';
+  chipNueva.addEventListener('click', async () => {
+    const nombre = prompt('Nombre de la nueva categoría (ej: Seguro del coche):');
+    if (!nombre || !nombre.trim()) return;
+    const id = 'cat-' + Date.now();
+    const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
+    datos.categorias.push({ id, nombre: nombre.trim(), color });
+    await guardarMetadatos();
+    renderizarChipsCategorias();
+    mostrarToast('Categoría creada');
+  });
+  cont.appendChild(chipNueva);
+}
+
+function crearChip(cat, num) {
+  const btn = document.createElement('button');
+  btn.className = 'chip' + (cat.id === categoriaActiva ? ' activo' : '');
+  btn.style.color = cat.id === categoriaActiva ? '' : '';
+  btn.innerHTML = `<span class="punto-chip" style="color:${cat.color}"></span>${escapeHtml(cat.nombre)}${num ? ` (${num})` : ''}`;
+  btn.addEventListener('click', () => {
+    categoriaActiva = cat.id;
+    renderizarChipsCategorias();
+    renderizarDocumentos();
+  });
+  return btn;
+}
+
+/* =========================================================================
+   Render: documentos (lista agrupada por categoría)
+   ========================================================================= */
+function renderizarDocumentos() {
+  const lista = datos.documentos.filter((d) => {
+    if (d.personaId !== personaActivaId) return false;
+    if (categoriaActiva !== 'todos' && d.categoria !== categoriaActiva) return false;
+    return true;
+  });
+
+  const cont = $('#contenido-documentos');
+  if (lista.length === 0) {
+    cont.innerHTML = `
+      <div class="estado-vacio">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4"/><path d="M14 4v5h5" stroke="currentColor" stroke-width="1.4"/></svg>
+        <p>Todavía no hay documentos aquí.<br>Usa el botón + para subir el primero.</p>
+      </div>`;
+    return;
+  }
+
+  // Agrupar por categoría, manteniendo el orden en que aparecen las
+  // categorías en datos.categorias; los más recientes primero dentro
+  // de cada grupo.
+  const porCategoria = new Map();
+  lista.forEach((doc) => {
+    if (!porCategoria.has(doc.categoria)) porCategoria.set(doc.categoria, []);
+    porCategoria.get(doc.categoria).push(doc);
+  });
+
+  const ordenCategorias = datos.categorias
+    .map((c) => c.id)
+    .filter((id) => porCategoria.has(id));
+  // por si algún documento tiene una categoría que ya no existe en la lista
+  porCategoria.forEach((_, id) => { if (!ordenCategorias.includes(id)) ordenCategorias.push(id); });
+
+  cont.innerHTML = '';
+  ordenCategorias.forEach((catId) => {
+    const cat = datos.categorias.find((c) => c.id === catId) || { nombre: 'Otros', color: '#9FB0C3' };
+    const docs = porCategoria.get(catId).slice().sort((a, b) => (b.fechaSubida || '').localeCompare(a.fechaSubida || ''));
+
+    const grupo = document.createElement('div');
+    grupo.className = 'grupo-documentos';
+    grupo.innerHTML = `<h3 class="titulo-grupo"><span class="punto-grupo" style="color:${cat.color}"></span>${escapeHtml(cat.nombre)}</h3><div class="lista-docs"></div>`;
+    const listaEl = grupo.querySelector('.lista-docs');
+    docs.forEach((doc) => listaEl.appendChild(crearTarjetaDoc(doc)));
+    cont.appendChild(grupo);
+  });
+}
+
+function crearTarjetaDoc(doc) {
+  const badge = calcularBadgeCaducidad(doc.fechaCaducidad);
+  const esImagen = (doc.mimeType || '').startsWith('image/');
+
+  const fila = document.createElement('button');
+  fila.className = 'doc-fila';
+  fila.innerHTML = `
+    <div class="miniatura">
+      ${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}
+    </div>
+    <div class="info">
+      <p class="doc-nombre">${escapeHtml(doc.nombre)}</p>
+      ${badge ? `<span class="badge-mini ${badge.alerta ? 'alerta' : ''}">${badge.texto}</span>` : ''}
+    </div>`;
+  fila.addEventListener('click', () => abrirVisor(doc));
+
+  if (esImagen) {
+    obtenerBlobDocumento(doc).then((blob) => {
+      const url = URL.createObjectURL(blob);
+      const cont = fila.querySelector('.miniatura');
+      const img = document.createElement('img');
+      img.src = url; img.alt = doc.nombre; img.loading = 'lazy';
+      img.onload = () => { cont.querySelector('.skeleton')?.remove(); };
+      cont.appendChild(img);
+    }).catch(() => { fila.querySelector('.skeleton')?.remove(); });
+  }
+
+  return fila;
+}
+
+function calcularBadgeCaducidad(fecha) {
+  if (!fecha) return null;
+  const hoy = new Date();
+  const cad = new Date(fecha + 'T00:00:00');
+  const dias = Math.round((cad - hoy) / 86400000);
+  if (dias < 0) return { alerta: true, texto: 'Caducado' };
+  if (dias <= 60) return { alerta: true, texto: `${dias} d.` };
+  return null;
+}
+function formatearFecha(iso) {
+  const [a, m, d] = iso.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+/* =========================================================================
+   Visor a pantalla completa
+   ========================================================================= */
+async function abrirVisor(doc) {
+  const esImagen = (doc.mimeType || '').startsWith('image/');
+  const visor = $('#visor-completo');
+  visor.innerHTML = `
+    <div class="visor-topbar">
+      <button class="btn-icono-top" id="visor-cerrar" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <span class="titulo">${escapeHtml(doc.nombre)}</span>
+      <div class="espaciador"></div>
+      <button class="btn-icono-top" id="visor-descargar" aria-label="Descargar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="btn-icono-top" id="visor-borrar" aria-label="Eliminar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="visor-cuerpo" id="visor-cuerpo">
+      <div class="estado-carga"><div class="spinner"></div><span>Abriendo…</span></div>
+    </div>`;
+  visor.classList.remove('hidden');
+  pushNavegacion(() => visor.classList.add('hidden'));
+
+  $('#visor-cerrar').addEventListener('click', volverAtras);
+  $('#visor-borrar').addEventListener('click', () => confirmarBorrado(doc));
+
+  try {
+    const blob = await obtenerBlobDocumento(doc);
+    const url = URL.createObjectURL(blob);
+    const cuerpo = $('#visor-cuerpo');
+    if (esImagen) {
+      cuerpo.innerHTML = `<img src="${url}" alt="${escapeHtml(doc.nombre)}">`;
+    } else {
+      cuerpo.innerHTML = `
+        <div class="visor-pdf">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>
+          <p>Documento PDF — ábrelo con el visor de tu móvil.</p>
+        </div>`;
+    }
+    $('#visor-descargar').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = url; a.download = doc.nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+    if (!esImagen) {
+      // Para PDFs, un toque en el cuerpo también abre/descarga.
+      $('#visor-cuerpo').addEventListener('click', () => window.open(url, '_blank'));
+    }
+  } catch (e) {
+    $('#visor-cuerpo').innerHTML = `<div class="estado-vacio"><p>No se pudo cargar el documento. Comprueba tu conexión.</p></div>`;
+  }
+}
+
+function confirmarBorrado(doc) {
+  abrirModal(`
+    <h3>¿Eliminar «${escapeHtml(doc.nombre)}»?</h3>
+    <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 6px;">Se borrará también de tu Google Drive. Esta acción no se puede deshacer.</p>
+    <label class="check-aviso">
+      <input type="checkbox" id="check-borrado-permanente">
+      <span>Entiendo que se borrará para siempre</span>
+    </label>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario btn-peligro" id="modal-confirmar" disabled>Eliminar</button>
+    </div>
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+
+  const btnConfirmar = $('#modal-confirmar');
+  const checkAviso = $('#check-borrado-permanente');
+  let confirmando = false;
+  let temporizadorAviso = null;
+
+  checkAviso.addEventListener('change', () => {
+    btnConfirmar.disabled = !checkAviso.checked;
+    if (!checkAviso.checked) {
+      // Si desmarca la casilla, se reinicia también el doble toque.
+      confirmando = false;
+      clearTimeout(temporizadorAviso);
+      btnConfirmar.textContent = 'Eliminar';
+    }
+  });
+
+  btnConfirmar.addEventListener('click', async () => {
+    if (!checkAviso.checked) return;
+    if (!confirmando) {
+      // Primer toque: solo arma la confirmación, todavía no borra nada.
+      confirmando = true;
+      btnConfirmar.textContent = '¿Seguro? Toca otra vez';
+      temporizadorAviso = setTimeout(() => {
+        confirmando = false;
+        btnConfirmar.textContent = 'Eliminar';
+      }, 3000);
+      return;
+    }
+
+    clearTimeout(temporizadorAviso);
+    cerrarCapas(2); // cierra este modal y el visor a la vez
+    mostrarToast('Eliminando…');
+    try {
+      await borrarArchivoDeDrive(doc.driveFileId);
+      cacheBorrar(doc.driveFileId);
+      datos.documentos = datos.documentos.filter((d) => d.id !== doc.id);
+      await guardarMetadatos();
+      renderizarCabeceraPersona();
+      renderizarChipsCategorias();
+      renderizarDocumentos();
+      mostrarToast('Documento eliminado');
+    } catch (e) {
+      mostrarToast('No se pudo eliminar.', true);
+    }
+  });
+}
+
+/* =========================================================================
+   Modal: subir documento
+   ========================================================================= */
+$('#btn-subir').addEventListener('click', abrirModalSubida);
+
+function abrirModalSubida() {
+  archivoPendiente = null;
+  const opcionesCat = datos.categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
+  const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : datos.categorias[0].id;
+
+  abrirModal(`
+    <h3>Subir documento</h3>
+    <div class="zona-archivo" id="zona-archivo">
+      <div id="contenido-zona">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim);margin:0 auto;"><path d="M12 4v12m0-12l-4 4m4-4l4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <p>Toca para elegir una foto o PDF</p>
+      </div>
+      <input type="file" id="input-archivo" accept="image/*,application/pdf" capture="environment" class="visually-hidden">
+    </div>
+    <div class="campo">
+      <label for="input-nombre">Nombre del documento (así se guardará en Drive)</label>
+      <input type="text" id="input-nombre" placeholder="Ej: DNI frontal">
+    </div>
+    <div class="campo">
+      <label for="input-categoria">Categoría</label>
+      <select id="input-categoria">${opcionesCat}</select>
+    </div>
+    <div class="campo">
+      <label for="input-caducidad">Fecha de caducidad (opcional)</label>
+      <input type="date" id="input-caducidad">
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="modal-guardar" disabled>Guardar en Drive</button>
+    </div>
+  `);
+
+  $('#input-categoria').value = catPreseleccionada;
+  const zona = $('#zona-archivo');
+  const inputArchivo = $('#input-archivo');
+  zona.addEventListener('click', () => inputArchivo.click());
+  inputArchivo.addEventListener('change', () => {
+    const f = inputArchivo.files[0];
+    if (!f) return;
+    archivoPendiente = f;
+    zona.classList.add('activa');
+    if (f.type.startsWith('image/')) {
+      const url = URL.createObjectURL(f);
+      $('#contenido-zona').innerHTML = `<img class="previsualizacion" src="${url}"><p class="nombre-archivo">${escapeHtml(f.name)}</p>`;
+    } else {
+      $('#contenido-zona').innerHTML = `<p class="nombre-archivo">${escapeHtml(f.name)}</p>`;
+    }
+    if (!$('#input-nombre').value) $('#input-nombre').value = f.name.replace(/\.[^.]+$/, '');
+    actualizarBotonGuardar();
+  });
+
+  $('#input-nombre').addEventListener('input', actualizarBotonGuardar);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#modal-guardar').addEventListener('click', guardarDocumentoNuevo);
+}
+
+function actualizarBotonGuardar() {
+  const btn = $('#modal-guardar');
+  if (!btn) return;
+  btn.disabled = !(archivoPendiente && $('#input-nombre').value.trim());
+}
+
+async function guardarDocumentoNuevo() {
+  const btn = $('#modal-guardar');
+  btn.disabled = true; btn.textContent = 'Subiendo…';
+
+  const nombre = $('#input-nombre').value.trim();
+  const categoriaId = $('#input-categoria').value;
+  const caducidad = $('#input-caducidad').value || null;
+  const archivo = archivoPendiente;
+  const persona = datos.personas.find((p) => p.id === personaActivaId);
+  const categoriaObj = datos.categorias.find((c) => c.id === categoriaId);
+
+  try {
+    const carpetaDestinoId = await carpetaDestinoDocumento(persona, categoriaObj);
+    const nombreArchivo = construirNombreArchivo(nombre, archivo);
+    const driveFileId = await subirArchivoADrive(archivo, nombreArchivo, carpetaDestinoId);
+    cacheGuardar(driveFileId, archivo); // ya la tenemos en local, no hace falta re-descargarla
+    datos.documentos.push({
+      id: 'doc-' + Date.now(),
+      driveFileId, personaId: personaActivaId,
+      nombre, categoria: categoriaId, mimeType: archivo.type,
+      fechaCaducidad: caducidad, fechaSubida: new Date().toISOString().slice(0, 10),
+    });
+    await guardarMetadatos();
+    volverAtras();
+    renderizarCabeceraPersona();
+    renderizarChipsCategorias();
+    renderizarDocumentos();
+    mostrarToast('Documento guardado en tu Drive');
+  } catch (e) {
+    console.error(e);
+    btn.disabled = false; btn.textContent = 'Guardar en Drive';
+    mostrarToast('No se pudo subir el documento.', true);
+  }
+}
+
+/* =========================================================================
+   Modal genérico
+   ========================================================================= */
+function abrirModal(htmlInterior) {
+  const raiz = $('#raiz-modal');
+  raiz.innerHTML = `<div class="modal-fondo" id="modal-fondo"><div class="modal">${htmlInterior}</div></div>`;
+  $('#modal-fondo').addEventListener('click', (e) => { if (e.target.id === 'modal-fondo') volverAtras(); });
+  pushNavegacion(cerrarModal);
+}
+function cerrarModal() { $('#raiz-modal').innerHTML = ''; }
+function cerrarCapas(n) {
+  const total = Math.min(n, pilaNavegacion.length);
+  for (let i = 0; i < total; i++) {
+    const cerrar = pilaNavegacion.pop();
+    try { cerrar(); } catch (e) { /* ignorar */ }
+  }
+  if (total > 0) {
+    ignorarProximoPopstate = true;
+    history.go(-total);
+  }
+}
+function cerrarTodasLasCapas() { cerrarCapas(pilaNavegacion.length); }
+
+/* =========================================================================
+   Menú de cuenta
+   ========================================================================= */
+$('#btn-ajustes').addEventListener('click', () => {
+  const temaActual = obtenerTemaGuardado();
+  abrirModal(`
+    <h3>Ajustes</h3>
+    <div class="campo">
+      <label>Apariencia</label>
+      <div class="segmentado" id="selector-tema">
+        <button type="button" class="segmento ${temaActual === 'auto' ? 'activo' : ''}" data-valor="auto">Automático</button>
+        <button type="button" class="segmento ${temaActual === 'claro' ? 'activo' : ''}" data-valor="claro">Claro</button>
+        <button type="button" class="segmento ${temaActual === 'oscuro' ? 'activo' : ''}" data-valor="oscuro">Oscuro</button>
+      </div>
+    </div>
+    <div class="menu-opciones">
+      <button class="opcion-menu" id="op-categorias">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Administrar categorías
+      </button>
+      <button class="opcion-menu" id="op-ver-drive">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 3h7v7M21 3l-9 9M5 5h6v2H7v10h10v-4h2v6H5V5z" stroke="currentColor" stroke-width="1.6"/></svg>
+        Ver carpeta en Drive
+      </button>
+      <button class="opcion-menu peligro" id="op-cerrar-sesion">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+    <p style="color:var(--text-dim);font-size:.76rem;margin:14px 2px 0;">${escapeHtml(usuarioEmail)}</p>
+  `);
+  $('#op-categorias').addEventListener('click', abrirModalCategorias);
+  $$('#selector-tema .segmento').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('#selector-tema .segmento').forEach((b) => b.classList.remove('activo'));
+      btn.classList.add('activo');
+      guardarTema(btn.dataset.valor);
+    });
+  });
+  $('#op-ver-drive').addEventListener('click', () => {
+    if (carpetaId) window.open(`https://drive.google.com/drive/folders/${carpetaId}`, '_blank');
+  });
+  $('#op-cerrar-sesion').addEventListener('click', () => {
+    if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+    localStorage.removeItem('documentacion_sesion');
+    localStorage.removeItem('documentacion_carpeta_id');
+    accessToken = null;
+    location.reload();
+  });
+});
+
+/* =========================================================================
+   Administrar categorías (crear / renombrar / eliminar)
+   ========================================================================= */
+function abrirModalCategorias() {
+  abrirModal(htmlModalCategorias());
+  cablearModalCategorias();
+}
+
+function htmlModalCategorias() {
+  const filas = datos.categorias.map((cat) => {
+    const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
+    return `
+      <div class="fila-categoria">
+        <span class="punto-cat" style="background:${cat.color}"></span>
+        <span class="nombre-cat">${escapeHtml(cat.nombre)}</span>
+        <span class="cuenta-cat">${num}</span>
+        <button class="icon-btn-cat" data-accion="renombrar" data-id="${cat.id}" aria-label="Renombrar categoría">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn-cat" data-accion="eliminar" data-id="${cat.id}" aria-label="Eliminar categoría">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>`;
+  }).join('');
+
+  return `
+    <h3>Categorías</h3>
+    <div class="lista-categorias-admin">${filas || '<p style="color:var(--text-dim);font-size:.85rem;">No hay categorías todavía.</p>'}</div>
+    <button class="opcion-menu" id="btn-nueva-categoria-admin" type="button">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Nueva categoría
+    </button>`;
+}
+
+function cablearModalCategorias() {
+  const refrescar = () => { $('.modal').innerHTML = htmlModalCategorias(); cablearModalCategorias(); };
+
+  $$('.icon-btn-cat[data-accion="renombrar"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
+      if (!cat) return;
+      const nuevo = prompt('Nuevo nombre de la categoría:', cat.nombre);
+      if (!nuevo || !nuevo.trim() || nuevo.trim() === cat.nombre) return;
+      cat.nombre = nuevo.trim();
+      await guardarMetadatos();
+      refrescar();
+      if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+      mostrarToast('Categoría renombrada');
+    });
+  });
+
+  $$('.icon-btn-cat[data-accion="eliminar"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
+      if (!cat) return;
+      const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
+      const aviso = num > 0
+        ? `¿Eliminar «${cat.nombre}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «Otros».`
+        : `¿Eliminar la categoría «${cat.nombre}»?`;
+      if (!confirm(aviso)) return;
+      datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
+      await guardarMetadatos();
+      refrescar();
+      if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+      mostrarToast('Categoría eliminada');
+    });
+  });
+
+  $('#btn-nueva-categoria-admin').addEventListener('click', async () => {
+    const nombre = prompt('Nombre de la nueva categoría (ej: Seguro del coche):');
+    if (!nombre || !nombre.trim()) return;
+    const id = 'cat-' + Date.now();
+    const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
+    datos.categorias.push({ id, nombre: nombre.trim(), color });
+    await guardarMetadatos();
+    refrescar();
+    if (personaActivaId) renderizarChipsCategorias();
+    mostrarToast('Categoría creada');
+  });
+}
+
+/* =========================================================================
+   Utilidades
+   ========================================================================= */
+function mostrarToast(msg, esError = false) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast visible' + (esError ? ' error' : '');
+  clearTimeout(mostrarToast._t);
+  mostrarToast._t = setTimeout(() => t.classList.remove('visible'), 2600);
+}
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

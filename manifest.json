@@ -1,0 +1,16 @@
+{
+  "name": "Documentación — tus documentos, en tu Drive",
+  "short_name": "Documentación",
+  "description": "Gestiona el DNI, carnet de conducir, tarjeta de discapacidad y otros documentos de tu familia. Todo se guarda en tu propio Google Drive.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14202E",
+  "theme_color": "#14202E",
+  "lang": "es",
+  "icons": [
+    { "src": "icono.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
