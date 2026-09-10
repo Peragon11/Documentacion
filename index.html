@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.0';
+const VERSION_APP = '1.0.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1071,6 +1071,9 @@ function habilitarArrastrePersonas() {
     const offsetX = eventoInicial.clientX - rectInicial.left;
     const offsetY = eventoInicial.clientY - rectInicial.top;
 
+    let punteroX = eventoInicial.clientX;
+    let punteroY = eventoInicial.clientY;
+
     function posicionNatural() {
       const rc = contenedor.getBoundingClientRect();
       return { left: rc.left + tile.offsetLeft, top: rc.top + tile.offsetTop };
@@ -1081,11 +1084,8 @@ function habilitarArrastrePersonas() {
       const y = clientY - offsetY - base.top;
       tile.style.transform = `translate(${x}px, ${y}px) scale(1.06)`;
     }
-    actualizarTransform(eventoInicial.clientX, eventoInicial.clientY);
-
-    function onMove(ev) {
-      actualizarTransform(ev.clientX, ev.clientY);
-      const debajo = document.elementFromPoint(ev.clientX, ev.clientY);
+    function comprobarIntercambio(clientX, clientY) {
+      const debajo = document.elementFromPoint(clientX, clientY);
       const tileDebajo = debajo && debajo.closest('.persona-tile');
       if (tileDebajo && tileDebajo !== tile && contenedor.contains(tileDebajo)) {
         const tiles = Array.from(contenedor.children);
@@ -1094,12 +1094,46 @@ function habilitarArrastrePersonas() {
         if (iOrigen !== -1 && iDestino !== -1) {
           if (iOrigen < iDestino) tileDebajo.after(tile);
           else tileDebajo.before(tile);
-          actualizarTransform(ev.clientX, ev.clientY);
         }
       }
     }
+    actualizarTransform(punteroX, punteroY);
+
+    // Autoscroll: si mientras arrastras te acercas al borde superior o
+    // inferior de la zona con scroll, esta desplaza la pantalla sola para
+    // poder llevar la persona más allá de lo que cabe en la pantalla.
+    const MARGEN_AUTOSCROLL = 70;
+    const VELOCIDAD_MAX_AUTOSCROLL = 14;
+    let rafAutoscroll = null;
+    function bucleAutoscroll() {
+      const rect = zonaScroll.getBoundingClientRect();
+      let velocidad = 0;
+      if (punteroY < rect.top + MARGEN_AUTOSCROLL) {
+        velocidad = -VELOCIDAD_MAX_AUTOSCROLL * Math.min((rect.top + MARGEN_AUTOSCROLL - punteroY) / MARGEN_AUTOSCROLL, 1);
+      } else if (punteroY > rect.bottom - MARGEN_AUTOSCROLL) {
+        velocidad = VELOCIDAD_MAX_AUTOSCROLL * Math.min((punteroY - (rect.bottom - MARGEN_AUTOSCROLL)) / MARGEN_AUTOSCROLL, 1);
+      }
+      if (velocidad !== 0) {
+        const antes = zonaScroll.scrollTop;
+        zonaScroll.scrollTop = antes + velocidad;
+        if (zonaScroll.scrollTop !== antes) {
+          actualizarTransform(punteroX, punteroY);
+          comprobarIntercambio(punteroX, punteroY);
+        }
+      }
+      rafAutoscroll = requestAnimationFrame(bucleAutoscroll);
+    }
+    rafAutoscroll = requestAnimationFrame(bucleAutoscroll);
+
+    function onMove(ev) {
+      punteroX = ev.clientX;
+      punteroY = ev.clientY;
+      actualizarTransform(punteroX, punteroY);
+      comprobarIntercambio(punteroX, punteroY);
+    }
 
     function onUp() {
+      if (rafAutoscroll) cancelAnimationFrame(rafAutoscroll);
       try { tile.releasePointerCapture(eventoInicial.pointerId); } catch (e) { /* ignorar */ }
       tile.classList.remove('arrastrando-tile');
       tile.style.transform = '';
