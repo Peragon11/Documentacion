@@ -156,7 +156,7 @@
 
   .persona-tile{
     background:none; border:none; color:var(--text-light); cursor:pointer;
-    touch-action:pan-y;
+    touch-action:none;
     display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px; width:100%;
   }
   .avatar-persona{
@@ -1002,31 +1002,42 @@ function renderizarPersonas() {
 // nuevo orden.
 function habilitarArrastrePersonas() {
   const contenedor = $('#grid-personas');
-  const DURACION_PULSACION = 380;
-  const UMBRAL_MOVIMIENTO = 8;
+  const zonaScroll = $('main');
+  const DURACION_PULSACION = 320;
+  // Margen amplio a propósito: al mantener pulsado, el dedo nunca queda
+  // perfectamente quieto, y con un margen pequeño el arrastre se cancelaba
+  // (y se convertía en scroll) casi siempre que de verdad se quería arrastrar.
+  const UMBRAL_MOVIMIENTO = 20;
 
   contenedor.querySelectorAll('.persona-tile').forEach((tile) => {
     tile.addEventListener('pointerdown', (eventoInicial) => {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
       const inicioY = eventoInicial.clientY;
+      const scrollInicial = zonaScroll.scrollTop;
+      let ultimoEvento = eventoInicial;
       let cancelado = false;
+      let convertidoEnScroll = false;
 
       const timer = setTimeout(() => {
-        if (!cancelado) iniciarArrastre(tile, eventoInicial);
+        if (!cancelado) iniciarArrastre(tile, ultimoEvento);
       }, DURACION_PULSACION);
 
-      // Antes de que se cumpla la pulsación larga, el tile deja el scroll
-      // vertical en manos del navegador (touch-action: pan-y en CSS); si el
-      // dedo se mueve, solo cancelamos el arrastre pendiente y dejamos que
-      // el navegador siga scrolleando con normalidad.
       const cancelarSiSeMueve = (ev) => {
+        ultimoEvento = ev;
         const dx = ev.clientX - inicioX;
         const dy = ev.clientY - inicioY;
         if (!cancelado && (Math.abs(dx) > UMBRAL_MOVIMIENTO || Math.abs(dy) > UMBRAL_MOVIMIENTO)) {
           cancelado = true;
           clearTimeout(timer);
-          limpiar();
+          // El movimiento antes de que se active el arrastre se trata como
+          // un intento de hacer scroll (el navegador no lo hace solo,
+          // porque el tile bloquea el touch nativo para poder detectar
+          // bien la pulsación larga).
+          if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
+        }
+        if (convertidoEnScroll) {
+          zonaScroll.scrollTop = scrollInicial - dy;
         }
       };
       const cancelarPorSoltar = () => { cancelado = true; clearTimeout(timer); limpiar(); };
