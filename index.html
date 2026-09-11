@@ -227,8 +227,9 @@
     cursor:pointer; text-align:left;
   }
   .doc-fila .miniatura{
-    width:100%; aspect-ratio:16/10; position:relative;
+    width:auto; margin:8px 8px 0; aspect-ratio:16/10; position:relative;
     background:var(--ink-3); overflow:hidden; display:flex; align-items:center; justify-content:center;
+    border-radius:11px;
   }
   .doc-fila .miniatura img{
     width:100%; height:100%; object-fit:cover; pointer-events:none;
@@ -452,7 +453,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.1.9';
+const VERSION_APP = '1.2.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1682,6 +1683,10 @@ function abrirMenuDocumento(doc) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Cambiar nombre
       </button>
+      <button class="opcion-menu" id="op-caducidad-doc">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        ${doc.fechaCaducidad ? 'Cambiar fecha de caducidad' : 'Añadir fecha de caducidad'}
+      </button>
       <button class="opcion-menu peligro" id="op-eliminar-doc">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         Eliminar documento
@@ -1700,7 +1705,40 @@ function abrirMenuDocumento(doc) {
       });
     });
   });
+  $('#op-caducidad-doc').addEventListener('click', () => abrirModalCaducidad(doc));
   $('#op-eliminar-doc').addEventListener('click', () => confirmarBorrado(doc));
+}
+
+function abrirModalCaducidad(doc) {
+  abrirModal(`
+    <h3>Fecha de caducidad</h3>
+    <div class="campo">
+      <label for="input-caducidad-doc">${escapeHtml(doc.nombre)}</label>
+      <input type="date" id="input-caducidad-doc" autocomplete="off" value="${doc.fechaCaducidad || ''}">
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="modal-guardar-caducidad">Guardar</button>
+    </div>
+    ${doc.fechaCaducidad ? '<button class="opcion-menu peligro" id="op-quitar-caducidad" style="justify-content:center;margin-top:14px;">Quitar fecha de caducidad</button>' : ''}
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#modal-guardar-caducidad').addEventListener('click', () => {
+    doc.fechaCaducidad = $('#input-caducidad-doc').value || null;
+    guardarMetadatos().then(() => {
+      volverAtras();
+      renderizarDocumentos();
+      mostrarToast('Caducidad actualizada');
+    });
+  });
+  $('#op-quitar-caducidad')?.addEventListener('click', () => {
+    doc.fechaCaducidad = null;
+    guardarMetadatos().then(() => {
+      volverAtras();
+      renderizarDocumentos();
+      mostrarToast('Fecha de caducidad eliminada');
+    });
+  });
 }
 
 function confirmarBorrado(doc) {
