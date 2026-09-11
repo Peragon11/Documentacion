@@ -465,7 +465,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.2.8';
+const VERSION_APP = '1.2.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1429,7 +1429,15 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
       pinchRef = null;
     } else if (punteros.size === 2) {
       const [a, b] = [...punteros.values()];
-      pinchRef = { dist: distancia(a, b), zoom: zoomMult, offsetX, offsetY, centro: puntoMedio(a, b) };
+      const centro = puntoMedio(a, b);
+      // Punto de la imagen (en píxeles "naturales") que hay justo debajo
+      // del punto medio de los dos dedos al empezar el pellizco.
+      pinchRef = {
+        dist: distancia(a, b),
+        zoomInicio: zoomMult,
+        relX: (centro.x - offsetX) / escalaEfectiva(),
+        relY: (centro.y - offsetY) / escalaEfectiva(),
+      };
       panRef = null;
     }
   });
@@ -1444,12 +1452,13 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
     } else if (punteros.size === 2 && pinchRef) {
       const [a, b] = [...punteros.values()];
       const factor = distancia(a, b) / pinchRef.dist;
-      const escalaBase = baseScale * pinchRef.zoom;
-      const relX = (pinchRef.centro.x - pinchRef.offsetX) / escalaBase;
-      const relY = (pinchRef.centro.y - pinchRef.offsetY) / escalaBase;
-      zoomMult = clamp(pinchRef.zoom * factor, 1, 4);
-      offsetX = pinchRef.centro.x - relX * escalaEfectiva();
-      offsetY = pinchRef.centro.y - relY * escalaEfectiva();
+      zoomMult = clamp(pinchRef.zoomInicio * factor, 1, 4);
+      // Se ancla al punto medio ACTUAL de los dedos (no al de cuando
+      // empezó el gesto), para que el punto de la foto que pellizcaste
+      // se quede siempre debajo de los dedos aunque estos se desplacen.
+      const centroActual = puntoMedio(a, b);
+      offsetX = centroActual.x - pinchRef.relX * escalaEfectiva();
+      offsetY = centroActual.y - pinchRef.relY * escalaEfectiva();
       aplicarTransform();
     }
   });
