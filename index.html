@@ -157,7 +157,7 @@
   .persona-tile{
     background:none; border:none; color:var(--text-light); cursor:pointer;
     touch-action:none;
-    display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px; width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:10px; padding:4px; width:100%; min-width:0;
   }
   .avatar-persona{
     width:100%; aspect-ratio:1/1; max-width:210px; border-radius:32px; flex:none;
@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.5';
+const VERSION_APP = '1.0.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1209,7 +1209,7 @@ function abrirModalNuevaPersona() {
     </div>
     <div class="campo">
       <label for="input-nombre-persona">Nombre</label>
-      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre">
+      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="20">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1307,7 +1307,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
   $('#op-renombrar').addEventListener('click', () => {
     const nuevo = prompt('Nuevo nombre:', persona.nombre);
     if (!nuevo || !nuevo.trim()) return;
-    persona.nombre = nuevo.trim();
+    persona.nombre = nuevo.trim().slice(0, 20);
     guardarMetadatos().then(() => {
       volverAtras();
       renderizarCabeceraPersona();
