@@ -205,7 +205,6 @@
   .chip .punto-chip{ width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.6; }
   .chip.activo{ background:var(--ink-3); color:var(--text-light); border-color:var(--borde); }
   .chip.activo .punto-chip{ opacity:1; }
-  .chip-nueva{ border:1px dashed var(--borde-fuerte); background:transparent; }
 
   .grupo-documentos{ margin-bottom:26px; }
   .grupo-documentos:last-child{ margin-bottom:0; }
@@ -459,7 +458,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.2.3';
+const VERSION_APP = '1.2.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1483,35 +1482,24 @@ function renderizarChipsCategorias() {
   cont.innerHTML = '';
   const docsPersona = datos.documentos.filter((d) => d.personaId === personaActivaId);
 
-  const chipTodos = crearChip({ id: 'todos', nombre: 'Todos', color: '#EDE9DE' }, docsPersona.length);
+  const chipTodos = crearChip({ id: 'todos', nombre: 'Todos', color: '#EDE9DE' });
   cont.appendChild(chipTodos);
 
-  datos.categorias.forEach((cat) => {
-    const n = docsPersona.filter((d) => d.categoria === cat.id).length;
-    cont.appendChild(crearChip(cat, n));
-  });
+  const categoriasConDocs = datos.categorias.filter((cat) => docsPersona.some((d) => d.categoria === cat.id));
+  categoriasConDocs.forEach((cat) => cont.appendChild(crearChip(cat)));
 
-  const chipNueva = document.createElement('button');
-  chipNueva.className = 'chip chip-nueva';
-  chipNueva.textContent = '+ Categoría';
-  chipNueva.addEventListener('click', async () => {
-    const nombre = prompt('Nombre de la nueva categoría (ej: Seguro del coche):');
-    if (!nombre || !nombre.trim()) return;
-    const id = 'cat-' + Date.now();
-    const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
-    datos.categorias.push({ id, nombre: nombre.trim(), color });
-    await guardarMetadatos();
-    renderizarChipsCategorias();
-    mostrarToast('Categoría creada');
-  });
-  cont.appendChild(chipNueva);
+  // Si la categoría activa se queda sin documentos (se borró/movió el
+  // último), su chip deja de aparecer: volvemos a "Todos" para no dejar
+  // el filtro apuntando a algo que ya no se puede seleccionar.
+  if (categoriaActiva !== 'todos' && !categoriasConDocs.some((c) => c.id === categoriaActiva)) {
+    categoriaActiva = 'todos';
+  }
 }
 
-function crearChip(cat, num) {
+function crearChip(cat) {
   const btn = document.createElement('button');
   btn.className = 'chip' + (cat.id === categoriaActiva ? ' activo' : '');
-  btn.style.color = cat.id === categoriaActiva ? '' : '';
-  btn.innerHTML = `<span class="punto-chip" style="color:${cat.color}"></span>${escapeHtml(cat.nombre)}${num ? ` (${num})` : ''}`;
+  btn.innerHTML = `<span class="punto-chip" style="color:${cat.color}"></span>${escapeHtml(cat.nombre)}`;
   btn.addEventListener('click', () => {
     categoriaActiva = cat.id;
     renderizarChipsCategorias();
