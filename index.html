@@ -341,6 +341,15 @@
   }
   .opcion-icono.activo{ border-color:var(--stamp); }
 
+  .recorte-marco{
+    width:220px; height:220px; margin:0 auto 18px; border-radius:32px; overflow:hidden;
+    position:relative; background:var(--ink-3); touch-action:none; cursor:grab;
+  }
+  .recorte-marco img{ position:absolute; top:0; left:0; transform-origin:0 0; pointer-events:none; -webkit-user-drag:none; }
+  .recorte-zoom{ display:flex; align-items:center; gap:10px; margin:0 0 20px; color:var(--text-dim); }
+  .recorte-zoom input[type=range]{ flex:1; accent-color:var(--stamp); }
+  .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:-10px 0 18px; }
+
   .modal-acciones{ display:flex; gap:10px; margin-top:20px; }
   .btn-primario, .btn-secundario{ border:none; border-radius:10px; padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
   .modal-acciones .btn-primario, .modal-acciones .btn-secundario{ flex:1; width:auto; }
@@ -458,7 +467,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.2.5';
+const VERSION_APP = '1.2.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1263,29 +1272,34 @@ function abrirModalNuevaPersona() {
   iconoPendienteId = null;
   abrirModal(`
     <h3>Nueva persona</h3>
-    <div class="selector-foto">
-      <div class="avatar-persona" id="preview-avatar-nuevo" style="background:var(--ink-3);cursor:pointer;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 7h3l2-2h6l2 2h3v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+    <div id="seccion-normal-nuevo">
+      <div class="selector-foto">
+        <div class="avatar-persona" id="preview-avatar-nuevo" style="background:var(--ink-3);cursor:pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 7h3l2-2h6l2 2h3v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <div class="acciones-foto">
+          <button class="btn-secundario" id="btn-foto-camara" type="button">Hacer foto</button>
+          <button class="btn-secundario" id="btn-foto-galeria" type="button">Galería</button>
+          <button class="btn-secundario" id="btn-foto-icono" type="button">Icono</button>
+        </div>
+        <input type="file" id="input-foto-camara" accept="image/*" capture="user" class="visually-hidden">
+        <input type="file" id="input-foto-galeria" accept="image/*" class="visually-hidden">
       </div>
-      <div class="acciones-foto">
-        <button class="btn-secundario" id="btn-foto-camara" type="button">Hacer foto</button>
-        <button class="btn-secundario" id="btn-foto-galeria" type="button">Galería</button>
-        <button class="btn-secundario" id="btn-foto-icono" type="button">Icono</button>
+      <div id="zona-iconos-nuevo" class="hidden">${htmlGridIconosAvatar(null)}</div>
+      <div class="campo">
+        <label for="input-nombre-persona">Nombre</label>
+        <input type="search" id="input-nombre-persona" name="q" placeholder="Añadir nombre" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
-      <input type="file" id="input-foto-camara" accept="image/*" capture="user" class="visually-hidden">
-      <input type="file" id="input-foto-galeria" accept="image/*" class="visually-hidden">
+      <div class="modal-acciones">
+        <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+        <button class="btn-primario" id="modal-guardar-persona" disabled>Añadir</button>
+      </div>
     </div>
-    <div id="zona-iconos-nuevo" class="hidden">${htmlGridIconosAvatar(null)}</div>
-    <div class="campo">
-      <label for="input-nombre-persona">Nombre</label>
-      <input type="search" id="input-nombre-persona" name="q" placeholder="Añadir nombre" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
-    </div>
-    <div class="modal-acciones">
-      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
-      <button class="btn-primario" id="modal-guardar-persona" disabled>Añadir</button>
-    </div>
+    <div id="zona-recorte-nuevo" class="hidden"></div>
   `);
 
+  const seccionNormal = $('#seccion-normal-nuevo');
+  const zonaRecorte = $('#zona-recorte-nuevo');
   const preview = $('#preview-avatar-nuevo');
   const zonaIconos = $('#zona-iconos-nuevo');
   const inputCamara = $('#input-foto-camara');
@@ -1304,13 +1318,28 @@ function abrirModalNuevaPersona() {
     zonaIconos.querySelectorAll('.opcion-icono').forEach((b) => b.classList.toggle('activo', b === btn));
     zonaIconos.classList.add('hidden');
   });
-  const alElegirFoto = async (input) => {
+  const alElegirFoto = (input) => {
     const f = input.files[0];
+    input.value = '';
     if (!f) return;
-    iconoPendienteId = null;
-    fotoPendienteDataUrl = await redimensionarImagen(f, 200, .82);
-    preview.setAttribute('style', `background-image:url('${fotoPendienteDataUrl}');background-size:cover;background-position:center;`);
-    preview.innerHTML = '';
+    seccionNormal.classList.add('hidden');
+    zonaRecorte.classList.remove('hidden');
+    montarAjustePosicionFoto(zonaRecorte, f, {
+      onConfirmar: (dataUrl) => {
+        iconoPendienteId = null;
+        fotoPendienteDataUrl = dataUrl;
+        preview.setAttribute('style', `background-image:url('${dataUrl}');background-size:cover;background-position:center;`);
+        preview.innerHTML = '';
+        zonaRecorte.classList.add('hidden');
+        zonaRecorte.innerHTML = '';
+        seccionNormal.classList.remove('hidden');
+      },
+      onCancelar: () => {
+        zonaRecorte.classList.add('hidden');
+        zonaRecorte.innerHTML = '';
+        seccionNormal.classList.remove('hidden');
+      },
+    });
   };
   inputCamara.addEventListener('change', () => alElegirFoto(inputCamara));
   inputGaleria.addEventListener('change', () => alElegirFoto(inputGaleria));
@@ -1333,24 +1362,102 @@ function abrirModalNuevaPersona() {
   });
 }
 
-function redimensionarImagen(file, maxLado, calidad) {
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * escala);
-        canvas.height = Math.round(img.height * escala);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', calidad));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    lector.onerror = reject;
-    lector.readAsDataURL(file);
+/* =========================================================================
+   Ajustar posición de la foto de avatar (con la misma forma redondeada de
+   los botones de persona, arrastre y zoom), para poder centrar bien la
+   cara antes de guardarla.
+   ========================================================================= */
+function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar }) {
+  const TAMANO_MARCO = 220;
+  const TAMANO_SALIDA = 240;
+
+  contenedor.innerHTML = `
+    <div class="recorte-marco" id="recorte-marco"></div>
+    <div class="recorte-zoom">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex:none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="range" id="recorte-zoom" min="100" max="300" value="100">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex:none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <p class="recorte-ayuda">Arrastra la foto para colocarla</p>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="recorte-cancelar" type="button">Cancelar</button>
+      <button class="btn-primario" id="recorte-guardar" type="button">Usar esta foto</button>
+    </div>
+  `;
+
+  const marco = contenedor.querySelector('#recorte-marco');
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  let baseScale = 1, zoomMult = 1, offsetX = 0, offsetY = 0;
+
+  const escalaEfectiva = () => baseScale * zoomMult;
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+  function limitarOffset() {
+    const anchoImg = img.naturalWidth * escalaEfectiva();
+    const altoImg = img.naturalHeight * escalaEfectiva();
+    offsetX = clamp(offsetX, TAMANO_MARCO - anchoImg, 0);
+    offsetY = clamp(offsetY, TAMANO_MARCO - altoImg, 0);
+  }
+  function aplicarTransform() {
+    limitarOffset();
+    img.style.width = (img.naturalWidth * escalaEfectiva()) + 'px';
+    img.style.height = (img.naturalHeight * escalaEfectiva()) + 'px';
+    img.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+  }
+
+  img.onload = () => {
+    baseScale = TAMANO_MARCO / Math.min(img.naturalWidth, img.naturalHeight);
+    offsetX = (TAMANO_MARCO - img.naturalWidth * escalaEfectiva()) / 2;
+    offsetY = (TAMANO_MARCO - img.naturalHeight * escalaEfectiva()) / 2;
+    aplicarTransform();
+  };
+  img.src = url;
+  marco.appendChild(img);
+
+  let arrastrando = false, inicioX = 0, inicioY = 0, offInicioX = 0, offInicioY = 0;
+  marco.addEventListener('pointerdown', (e) => {
+    arrastrando = true;
+    inicioX = e.clientX; inicioY = e.clientY;
+    offInicioX = offsetX; offInicioY = offsetY;
+    marco.setPointerCapture(e.pointerId);
+  });
+  marco.addEventListener('pointermove', (e) => {
+    if (!arrastrando) return;
+    offsetX = offInicioX + (e.clientX - inicioX);
+    offsetY = offInicioY + (e.clientY - inicioY);
+    aplicarTransform();
+  });
+  marco.addEventListener('pointerup', () => { arrastrando = false; });
+  marco.addEventListener('pointercancel', () => { arrastrando = false; });
+
+  contenedor.querySelector('#recorte-zoom').addEventListener('input', (e) => {
+    // Al hacer zoom, se mantiene fijo el centro del marco en el mismo
+    // punto de la foto, en vez de desplazarse hacia una esquina.
+    const centro = TAMANO_MARCO / 2;
+    const relX = (centro - offsetX) / escalaEfectiva();
+    const relY = (centro - offsetY) / escalaEfectiva();
+    zoomMult = e.target.value / 100;
+    offsetX = centro - relX * escalaEfectiva();
+    offsetY = centro - relY * escalaEfectiva();
+    aplicarTransform();
+  });
+
+  contenedor.querySelector('#recorte-cancelar').addEventListener('click', () => {
+    URL.revokeObjectURL(url);
+    onCancelar();
+  });
+  contenedor.querySelector('#recorte-guardar').addEventListener('click', () => {
+    const factor = TAMANO_SALIDA / TAMANO_MARCO;
+    const canvas = document.createElement('canvas');
+    canvas.width = TAMANO_SALIDA; canvas.height = TAMANO_SALIDA;
+    canvas.getContext('2d').drawImage(
+      img, 0, 0, img.naturalWidth, img.naturalHeight,
+      offsetX * factor, offsetY * factor,
+      img.naturalWidth * escalaEfectiva() * factor, img.naturalHeight * escalaEfectiva() * factor
+    );
+    const dataUrl = canvas.toDataURL('image/jpeg', .85);
+    URL.revokeObjectURL(url);
+    onConfirmar(dataUrl);
   });
 }
 
@@ -1392,15 +1499,22 @@ $('#btn-menu-persona').addEventListener('click', () => {
   $('#raiz-modal').appendChild(inputCamara);
   $('#raiz-modal').appendChild(inputGaleria);
 
-  const alElegirFotoPersona = async (input) => {
+  const alElegirFotoPersona = (input) => {
     const f = input.files[0];
+    input.value = '';
     if (!f) return;
-    persona.icono = null;
-    persona.foto = await redimensionarImagen(f, 200, .82);
-    await guardarMetadatos();
-    volverAtras();
-    renderizarCabeceraPersona();
-    mostrarToast('Foto actualizada');
+    abrirModal('<h3>Ajustar foto</h3><div id="zona-recorte-persona"></div>');
+    montarAjustePosicionFoto($('#zona-recorte-persona'), f, {
+      onConfirmar: async (dataUrl) => {
+        persona.icono = null;
+        persona.foto = dataUrl;
+        await guardarMetadatos();
+        cerrarCapas(2); // cierra el recorte y el menú de opciones
+        renderizarCabeceraPersona();
+        mostrarToast('Foto actualizada');
+      },
+      onCancelar: () => volverAtras(),
+    });
   };
   $('#op-foto-camara').addEventListener('click', () => inputCamara.click());
   $('#op-foto-galeria').addEventListener('click', () => inputGaleria.click());
