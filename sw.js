@@ -44,3 +44,14 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request))
   );
 });
+
+// Al tocar un aviso de caducidad, enfoca la app si ya está abierta o la abre.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
+      for (const c of lista) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow('./index.html');
+    })
+  );
+});

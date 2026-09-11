@@ -451,7 +451,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.1.2';
+const VERSION_APP = '1.1.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -500,7 +500,16 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.addEventListener('appinstalled', () => {
   promptInstalacionDiferido = null;
   $('#banner-instalar').classList.add('hidden');
+  pedirPermisoNotificaciones();
 });
+
+// Aviso de caducidad de documentos: pide permiso de notificaciones al
+// instalar la app (arriba) y también, por si ya estaba instalada de antes
+// de añadir esta función, la primera vez que se abre ya instalada.
+function pedirPermisoNotificaciones() {
+  if (!('Notification' in window) || Notification.permission !== 'default') return;
+  Notification.requestPermission();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   $('#btn-banner-instalar')?.addEventListener('click', async () => {
@@ -542,6 +551,7 @@ window.addEventListener('load', () => {
 //    sincronizar con Drive: por si hay cambios hechos desde otro móvil, o
 //    porque es la primera vez que se entra en este dispositivo.
 function arrancarApp() {
+  if (appYaInstalada()) pedirPermisoNotificaciones();
   const huboCacheLocal = cargarDatosDesdeCacheLocal();
   if (huboCacheLocal) {
     mostrandoDatosLocales = true;
@@ -549,6 +559,10 @@ function arrancarApp() {
     usuarioEmail = localStorage.getItem('documentacion_email') || '';
     mostrarApp();
     mostrarPantallaPersonas();
+    // Las caducidades ya están en la copia local (se guardan ahí en cuanto
+    // se crean o se editan), así que no hace falta esperar a Drive para
+    // comprobarlas: funciona igual con o sin conexión.
+    comprobarCaducidadesYNotificar();
   }
   intentarSesionGuardada();
 }
@@ -688,6 +702,7 @@ async function sincronizarConDrive() {
     guardarDatosEnCacheLocal();
     mostrandoDatosLocales = true;
     refrescarPantallaActual();
+    comprobarCaducidadesYNotificar();
   } catch (err) {
     console.error(err);
     if (!mostrandoDatosLocales) {
@@ -1504,6 +1519,83 @@ function calcularBadgeCaducidad(fecha) {
 function formatearFecha(iso) {
   const [a, m, d] = iso.split('-');
   return `${d}/${m}/${a}`;
+}
+
+/* =========================================================================
+   Avisos de caducidad (notificaciones)
+   Se comprueba cada vez que se sincroniza con Drive (es decir, cada vez que
+   se abre la app con conexión). No hay servidor detrás, así que no puede
+   avisar si la app lleva semanas sin abrirse: en cuanto se abre, revisa
+   todos los documentos y lanza los avisos pendientes.
+   Cada documento avisa como máximo una vez a 60 días y una vez a 30 días
+   mientras no cambie su fecha de caducidad (si se renueva con una fecha
+   nueva, los avisos se reinician).
+   ========================================================================= */
+function obtenerAvisosCaducidad() {
+  try { return JSON.parse(localStorage.getItem('documentacion_avisos_caducidad') || '{}'); }
+  catch (e) { return {}; }
+}
+function guardarAvisosCaducidad(avisos) {
+  try { localStorage.setItem('documentacion_avisos_caducidad', JSON.stringify(avisos)); }
+  catch (e) { /* ignorar */ }
+}
+
+function comprobarCaducidadesYNotificar() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const avisos = obtenerAvisosCaducidad();
+  const idsVivos = new Set();
+  let cambiado = false;
+
+  datos.documentos.forEach((doc) => {
+    if (!doc.fechaCaducidad) return;
+    idsVivos.add(doc.id);
+
+    let estado = avisos[doc.id];
+    if (!estado || estado.fecha !== doc.fechaCaducidad) {
+      // Documento nuevo con caducidad, o fecha renovada: avisos a cero.
+      estado = { fecha: doc.fechaCaducidad, aviso60: false, aviso30: false };
+    }
+
+    const hoy = new Date();
+    const cad = new Date(doc.fechaCaducidad + 'T00:00:00');
+    const dias = Math.round((cad - hoy) / 86400000);
+
+    if (dias <= 30 && !estado.aviso30) {
+      notificarCaducidad(doc, dias);
+      estado.aviso30 = true;
+      estado.aviso60 = true; // si se salta directo a <30 días, no repetir el de 60
+      cambiado = true;
+    } else if (dias <= 60 && !estado.aviso60) {
+      notificarCaducidad(doc, dias);
+      estado.aviso60 = true;
+      cambiado = true;
+    }
+    avisos[doc.id] = estado;
+  });
+
+  // Limpia avisos de documentos que ya no existen (borrados o sin caducidad).
+  Object.keys(avisos).forEach((id) => {
+    if (!idsVivos.has(id)) { delete avisos[id]; cambiado = true; }
+  });
+
+  if (cambiado) guardarAvisosCaducidad(avisos);
+}
+
+function notificarCaducidad(doc, dias) {
+  const persona = datos.personas.find((p) => p.id === doc.personaId);
+  const quien = persona ? ` de ${persona.nombre}` : '';
+  const texto = dias < 0 ? 'ha caducado' : dias === 0 ? 'caduca hoy' : `caduca en ${dias} días`;
+  const titulo = 'Documento a punto de caducar';
+  const cuerpo = `${doc.nombre}${quien} ${texto}.`;
+  const opciones = {
+    body: cuerpo, icon: 'icono.png', badge: 'icono.png',
+    tag: 'caducidad-' + doc.id, data: { personaId: doc.personaId },
+  };
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.ready.then((reg) => reg.showNotification(titulo, opciones)).catch(() => {});
+  } else {
+    try { new Notification(titulo, opciones); } catch (e) { /* ignorar */ }
+  }
 }
 
 /* =========================================================================
