@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.6';
+const VERSION_APP = '1.0.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1209,7 +1209,7 @@ function abrirModalNuevaPersona() {
     </div>
     <div class="campo">
       <label for="input-nombre-persona">Nombre</label>
-      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="20">
+      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1305,14 +1305,14 @@ $('#btn-menu-persona').addEventListener('click', () => {
   });
 
   $('#op-renombrar').addEventListener('click', () => {
-    const nuevo = prompt('Nuevo nombre:', persona.nombre);
-    if (!nuevo || !nuevo.trim()) return;
-    persona.nombre = nuevo.trim().slice(0, 20);
-    guardarMetadatos().then(() => {
-      volverAtras();
-      renderizarCabeceraPersona();
-      mostrarToast('Nombre actualizado');
-    });
+    abrirModalRenombrar('Cambiar nombre', persona.nombre, (nuevo) => {
+      persona.nombre = nuevo;
+      guardarMetadatos().then(() => {
+        volverAtras();
+        renderizarCabeceraPersona();
+        mostrarToast('Nombre actualizado');
+      });
+    }, 30);
   });
 
   $('#op-eliminar-persona').addEventListener('click', () => {
@@ -1562,15 +1562,15 @@ function abrirMenuDocumento(doc) {
     </div>
   `);
   $('#op-renombrar-doc').addEventListener('click', () => {
-    const nuevo = prompt('Nuevo nombre:', doc.nombre);
-    if (!nuevo || !nuevo.trim()) return;
-    doc.nombre = nuevo.trim();
-    guardarMetadatos().then(() => {
-      volverAtras();
-      renderizarDocumentos();
-      const titulo = $('.visor-topbar .titulo');
-      if (titulo) titulo.textContent = doc.nombre;
-      mostrarToast('Nombre actualizado');
+    abrirModalRenombrar('Cambiar nombre', doc.nombre, (nuevo) => {
+      doc.nombre = nuevo;
+      guardarMetadatos().then(() => {
+        volverAtras();
+        renderizarDocumentos();
+        const titulo = $('.visor-topbar .titulo');
+        if (titulo) titulo.textContent = doc.nombre;
+        mostrarToast('Nombre actualizado');
+      });
     });
   });
   $('#op-eliminar-doc').addEventListener('click', () => confirmarBorrado(doc));
@@ -1761,6 +1761,35 @@ function cerrarCapas(n) {
   }
 }
 function cerrarTodasLasCapas() { cerrarCapas(pilaNavegacion.length); }
+
+// Modal de "cambiar nombre" con el mismo estilo del resto de la app (en vez
+// del prompt() nativo del navegador, que aparece como una ventana ajena a
+// la interfaz, arriba de la web).
+function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
+  abrirModal(`
+    <h3>${escapeHtml(titulo)}</h3>
+    <div class="campo">
+      <label for="input-renombrar">Nombre</label>
+      <input type="text" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}">
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="modal-guardar-renombrar">Guardar</button>
+    </div>
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  const input = $('#input-renombrar');
+  input.focus();
+  input.select();
+  const btnGuardar = $('#modal-guardar-renombrar');
+  const intentarGuardar = () => {
+    const nuevo = input.value.trim();
+    if (!nuevo) return;
+    alGuardar(nuevo);
+  };
+  btnGuardar.addEventListener('click', intentarGuardar);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarGuardar(); });
+}
 
 /* =========================================================================
    Menú de cuenta
