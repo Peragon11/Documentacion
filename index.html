@@ -438,7 +438,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.7';
+const VERSION_APP = '1.0.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1209,7 +1209,7 @@ function abrirModalNuevaPersona() {
     </div>
     <div class="campo">
       <label for="input-nombre-persona">Nombre</label>
-      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30">
+      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1324,7 +1324,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
       </p>
       <div class="campo">
         <label for="input-confirmar-nombre">Escribe <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> para confirmar</label>
-        <input type="text" id="input-confirmar-nombre" autocomplete="off" autocapitalize="off">
+        <input type="text" id="input-confirmar-nombre" autocomplete="off" autocapitalize="off" spellcheck="false">
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1658,7 +1658,7 @@ function abrirModalSubida() {
     </div>
     <div class="campo">
       <label for="input-nombre">Nombre del documento (así se guardará en Drive)</label>
-      <input type="text" id="input-nombre" placeholder="Ej: DNI frontal">
+      <input type="text" id="input-nombre" placeholder="Ej: DNI frontal" autocomplete="off" autocapitalize="sentences" spellcheck="false">
     </div>
     <div class="campo">
       <label for="input-categoria">Categoría</label>
@@ -1666,7 +1666,7 @@ function abrirModalSubida() {
     </div>
     <div class="campo">
       <label for="input-caducidad">Fecha de caducidad (opcional)</label>
-      <input type="date" id="input-caducidad">
+      <input type="date" id="input-caducidad" autocomplete="off">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1770,7 +1770,7 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
     <h3>${escapeHtml(titulo)}</h3>
     <div class="campo">
       <label for="input-renombrar">Nombre</label>
-      <input type="text" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}">
+      <input type="text" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="off" autocapitalize="sentences" spellcheck="false">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
