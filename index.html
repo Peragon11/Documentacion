@@ -335,6 +335,12 @@
   .selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; cursor:pointer; }
   .selector-foto .btn-secundario{ flex:none; width:auto; padding:9px 16px; font-size:.82rem; }
   .acciones-foto{ display:flex; gap:8px; flex-wrap:wrap; }
+  .grid-iconos-avatar{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:0 0 18px; }
+  .opcion-icono{
+    aspect-ratio:1/1; border-radius:50%; border:2px solid transparent; background:var(--ink-3);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  }
+  .opcion-icono.activo{ border-color:var(--stamp); }
 
   .modal-acciones{ display:flex; gap:10px; margin-top:20px; }
   .btn-primario, .btn-secundario{ border:none; border-radius:10px; padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
@@ -453,7 +459,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.2.1';
+const VERSION_APP = '1.2.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -468,6 +474,31 @@ const CATEGORIAS_INICIALES = [
 ];
 
 const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
+
+// Iconos de avatar para quien prefiera no usar una foto propia. Dibujados
+// como SVG dentro del propio código: no hace falta subir ni cargar ningún
+// archivo de imagen aparte.
+const ICONOS_AVATAR = [
+  { id: 'persona', nombre: 'Persona', svg: '<circle cx="12" cy="8" r="4.2"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3"/>' },
+  { id: 'gato', nombre: 'Gato', svg: '<polygon points="5,11 3,3.5 9.5,8.5"/><polygon points="19,11 21,3.5 14.5,8.5"/><circle cx="12" cy="14.5" r="7"/>' },
+  { id: 'perro', nombre: 'Perro', svg: '<ellipse cx="4.8" cy="11" rx="3.4" ry="5.2" transform="rotate(-18 4.8 11)"/><ellipse cx="19.2" cy="11" rx="3.4" ry="5.2" transform="rotate(18 19.2 11)"/><circle cx="12" cy="14" r="7"/>' },
+  { id: 'zorro', nombre: 'Zorro', svg: '<polygon points="5,10 3,2.5 10,8"/><polygon points="19,10 21,2.5 14,8"/><path d="M12 8c4.5 0 7.5 3.2 7.5 7.3 0 4-3.3 6.7-7.5 6.7s-7.5-2.7-7.5-6.7C4.5 11.2 7.5 8 12 8z"/>' },
+  { id: 'oso', nombre: 'Oso', svg: '<circle cx="5.5" cy="6.5" r="2.8"/><circle cx="18.5" cy="6.5" r="2.8"/><circle cx="12" cy="14" r="7.5"/>' },
+  { id: 'conejo', nombre: 'Conejo', svg: '<ellipse cx="7" cy="5" rx="2.3" ry="6" transform="rotate(-12 7 5)"/><ellipse cx="17" cy="5" rx="2.3" ry="6" transform="rotate(12 17 5)"/><circle cx="12" cy="15" r="6.5"/>' },
+  { id: 'estrella', nombre: 'Estrella', svg: '<path d="M12 2.5l2.6 6.2 6.7.6-5.1 4.4 1.6 6.6L12 16.9 6.2 20.3l1.6-6.6-5.1-4.4 6.7-.6z"/>' },
+  { id: 'corazon', nombre: 'Corazón', svg: '<path d="M12 20.5S3 14.8 3 8.9C3 5.9 5.3 3.8 8 3.8c1.7 0 3.2.9 4 2.3.8-1.4 2.3-2.3 4-2.3 2.7 0 5 2.1 5 5.1 0 5.9-9 11.6-9 11.6z"/>' },
+];
+function htmlIconoAvatar(id) {
+  const ic = ICONOS_AVATAR.find((i) => i.id === id);
+  if (!ic) return '';
+  return `<svg width="62%" height="62%" viewBox="0 0 24 24" fill="var(--paper)">${ic.svg}</svg>`;
+}
+function htmlGridIconosAvatar(seleccionadoId) {
+  return `<div class="grid-iconos-avatar">${ICONOS_AVATAR.map((ic) => `
+    <button type="button" class="opcion-icono${ic.id === seleccionadoId ? ' activo' : ''}" data-icono="${ic.id}" aria-label="${ic.nombre}">
+      ${htmlIconoAvatar(ic.id)}
+    </button>`).join('')}</div>`;
+}
 
 /* =========================================================================
    Estado
@@ -484,6 +515,7 @@ let categoriaActiva = 'todos';
 let usuarioEmail = '';
 let archivoPendiente = null;
 let fotoPendienteDataUrl = null;
+let iconoPendienteId = null;
 let promptInstalacionDiferido = null;
 
 const $ = (sel) => document.querySelector(sel);
@@ -996,9 +1028,6 @@ $('#btn-anadir-persona-top').addEventListener('click', abrirModalNuevaPersona);
 /* =========================================================================
    Render: personas
    ========================================================================= */
-function iniciales(nombre) {
-  return nombre.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
-}
 function colorParaPersona(persona) {
   const idx = datos.personas.findIndex((p) => p.id === persona.id);
   return COLORES_AVATAR[Math.max(idx, 0) % COLORES_AVATAR.length];
@@ -1006,6 +1035,10 @@ function colorParaPersona(persona) {
 function estiloAvatar(persona) {
   if (persona.foto) return `background-image:url('${persona.foto}')`;
   return `background:${colorParaPersona(persona)}`;
+}
+function contenidoAvatar(persona) {
+  if (persona.foto || !persona.icono) return '';
+  return htmlIconoAvatar(persona.icono);
 }
 
 function renderizarPersonas() {
@@ -1017,7 +1050,7 @@ function renderizarPersonas() {
     btn.className = 'persona-tile';
     btn.dataset.personaId = persona.id;
     btn.innerHTML = `
-      <div class="avatar-persona" style="${estiloAvatar(persona)}"></div>
+      <div class="avatar-persona" style="${estiloAvatar(persona)}">${contenidoAvatar(persona)}</div>
       <span class="nombre-persona">${escapeHtml(persona.nombre)}</span>`;
     btn.addEventListener('click', () => {
       if (Date.now() - momentoUltimoArrastrePersona < 300) return;
@@ -1219,7 +1252,7 @@ function renderizarCabeceraPersona() {
   const avatarTop = $('#avatar-topbar');
   avatarTop.classList.remove('hidden');
   avatarTop.setAttribute('style', estiloAvatar(persona));
-  avatarTop.textContent = persona.foto ? '' : iniciales(persona.nombre);
+  avatarTop.innerHTML = contenidoAvatar(persona);
   $('#titulo-topbar').textContent = persona.nombre;
 }
 
@@ -1228,6 +1261,7 @@ function renderizarCabeceraPersona() {
    ========================================================================= */
 function abrirModalNuevaPersona() {
   fotoPendienteDataUrl = null;
+  iconoPendienteId = null;
   abrirModal(`
     <h3>Nueva persona</h3>
     <div class="selector-foto">
@@ -1237,10 +1271,12 @@ function abrirModalNuevaPersona() {
       <div class="acciones-foto">
         <button class="btn-secundario" id="btn-foto-camara" type="button">Hacer foto</button>
         <button class="btn-secundario" id="btn-foto-galeria" type="button">Galería</button>
+        <button class="btn-secundario" id="btn-foto-icono" type="button">Icono</button>
       </div>
       <input type="file" id="input-foto-camara" accept="image/*" capture="user" class="visually-hidden">
       <input type="file" id="input-foto-galeria" accept="image/*" class="visually-hidden">
     </div>
+    <div id="zona-iconos-nuevo" class="hidden">${htmlGridIconosAvatar(null)}</div>
     <div class="campo">
       <label for="input-nombre-persona">Nombre</label>
       <input type="search" id="input-nombre-persona" name="q" placeholder="Añadir nombre" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
@@ -1251,17 +1287,31 @@ function abrirModalNuevaPersona() {
     </div>
   `);
 
+  const preview = $('#preview-avatar-nuevo');
+  const zonaIconos = $('#zona-iconos-nuevo');
   const inputCamara = $('#input-foto-camara');
   const inputGaleria = $('#input-foto-galeria');
   $('#btn-foto-camara').addEventListener('click', () => inputCamara.click());
   $('#btn-foto-galeria').addEventListener('click', () => inputGaleria.click());
   $('#preview-avatar-nuevo').addEventListener('click', () => inputGaleria.click());
+  $('#btn-foto-icono').addEventListener('click', () => zonaIconos.classList.toggle('hidden'));
+  zonaIconos.addEventListener('click', (e) => {
+    const btn = e.target.closest('.opcion-icono');
+    if (!btn) return;
+    fotoPendienteDataUrl = null;
+    iconoPendienteId = btn.dataset.icono;
+    preview.setAttribute('style', `background:var(--ink-3);`);
+    preview.innerHTML = htmlIconoAvatar(iconoPendienteId);
+    zonaIconos.querySelectorAll('.opcion-icono').forEach((b) => b.classList.toggle('activo', b === btn));
+    zonaIconos.classList.add('hidden');
+  });
   const alElegirFoto = async (input) => {
     const f = input.files[0];
     if (!f) return;
+    iconoPendienteId = null;
     fotoPendienteDataUrl = await redimensionarImagen(f, 200, .82);
-    $('#preview-avatar-nuevo').setAttribute('style', `background-image:url('${fotoPendienteDataUrl}');background-size:cover;background-position:center;`);
-    $('#preview-avatar-nuevo').innerHTML = '';
+    preview.setAttribute('style', `background-image:url('${fotoPendienteDataUrl}');background-size:cover;background-position:center;`);
+    preview.innerHTML = '';
   };
   inputCamara.addEventListener('change', () => alElegirFoto(inputCamara));
   inputGaleria.addEventListener('change', () => alElegirFoto(inputGaleria));
@@ -1276,7 +1326,7 @@ function abrirModalNuevaPersona() {
     const btn = $('#modal-guardar-persona');
     if (btn.disabled) return; // evita doble toque -> doble persona
     btn.disabled = true;
-    datos.personas.push({ id: 'p-' + Date.now(), nombre, foto: fotoPendienteDataUrl });
+    datos.personas.push({ id: 'p-' + Date.now(), nombre, foto: fotoPendienteDataUrl, icono: iconoPendienteId });
     await guardarMetadatos();
     volverAtras();
     renderizarPersonas();
@@ -1322,6 +1372,10 @@ $('#btn-menu-persona').addEventListener('click', () => {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M21 16l-5.5-5.5a1.5 1.5 0 0 0-2.1 0L4 19" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Elegir de la galería
       </button>
+      <button class="opcion-menu" id="op-foto-icono">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 10.2h.01M15.5 10.2h.01M8 15c1 .9 2.3 1.4 4 1.4s3-.5 4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Elegir icono
+      </button>
       <button class="opcion-menu" id="op-renombrar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Cambiar nombre
@@ -1342,6 +1396,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
   const alElegirFotoPersona = async (input) => {
     const f = input.files[0];
     if (!f) return;
+    persona.icono = null;
     persona.foto = await redimensionarImagen(f, 200, .82);
     await guardarMetadatos();
     volverAtras();
@@ -1352,6 +1407,23 @@ $('#btn-menu-persona').addEventListener('click', () => {
   $('#op-foto-galeria').addEventListener('click', () => inputGaleria.click());
   inputCamara.addEventListener('change', () => alElegirFotoPersona(inputCamara));
   inputGaleria.addEventListener('change', () => alElegirFotoPersona(inputGaleria));
+
+  $('#op-foto-icono').addEventListener('click', () => {
+    abrirModal(`
+      <h3>Elegir icono</h3>
+      ${htmlGridIconosAvatar(persona.icono)}
+    `);
+    $('.grid-iconos-avatar').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.opcion-icono');
+      if (!btn) return;
+      persona.foto = null;
+      persona.icono = btn.dataset.icono;
+      await guardarMetadatos();
+      cerrarCapas(2); // cierra el selector de icono y el menú de opciones
+      renderizarCabeceraPersona();
+      mostrarToast('Icono actualizado');
+    });
+  });
 
   $('#op-renombrar').addEventListener('click', () => {
     abrirModalRenombrar('Cambiar nombre', persona.nombre, (nuevo) => {
