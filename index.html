@@ -451,7 +451,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.11';
+const VERSION_APP = '1.1.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1222,7 +1222,7 @@ function abrirModalNuevaPersona() {
     </div>
     <div class="campo">
       <label for="input-nombre-persona">Nombre</label>
-      <input type="search" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30" autocomplete="nope" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
+      <input type="search" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30" autocomplete="nope" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1243,6 +1243,7 @@ function abrirModalNuevaPersona() {
 
   const revisar = () => { $('#modal-guardar-persona').disabled = !$('#input-nombre-persona').value.trim(); };
   $('#input-nombre-persona').addEventListener('input', revisar);
+  evitarBarraAutorrelleno($('#input-nombre-persona'));
   $('#modal-cancelar').addEventListener('click', volverAtras);
   $('#modal-guardar-persona').addEventListener('click', async () => {
     const nombre = $('#input-nombre-persona').value.trim();
@@ -1337,7 +1338,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
       </p>
       <div class="campo">
         <label for="input-confirmar-nombre">Escribe <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> para confirmar</label>
-        <input type="search" id="input-confirmar-nombre" autocomplete="nope" autocapitalize="off" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
+        <input type="search" id="input-confirmar-nombre" autocomplete="nope" autocapitalize="off" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1347,6 +1348,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
     $('#modal-cancelar').addEventListener('click', volverAtras);
     const inputConfirmar = $('#input-confirmar-nombre');
     const btnConfirmar = $('#modal-confirmar-borrar-persona');
+    evitarBarraAutorrelleno(inputConfirmar);
     inputConfirmar.addEventListener('input', () => {
       btnConfirmar.disabled = inputConfirmar.value.trim().toLowerCase() !== persona.nombre.trim().toLowerCase();
     });
@@ -1671,7 +1673,7 @@ function abrirModalSubida() {
     </div>
     <div class="campo">
       <label for="input-nombre">Nombre del documento (así se guardará en Drive)</label>
-      <input type="search" id="input-nombre" placeholder="Ej: DNI frontal" autocomplete="nope" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
+      <input type="search" id="input-nombre" placeholder="Ej: DNI frontal" autocomplete="nope" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
     </div>
     <div class="campo">
       <label for="input-categoria">Categoría</label>
@@ -1707,6 +1709,7 @@ function abrirModalSubida() {
   });
 
   $('#input-nombre').addEventListener('input', actualizarBotonGuardar);
+  evitarBarraAutorrelleno($('#input-nombre'));
   $('#modal-cancelar').addEventListener('click', volverAtras);
   $('#modal-guardar').addEventListener('click', guardarDocumentoNuevo);
 }
@@ -1775,6 +1778,17 @@ function cerrarCapas(n) {
 }
 function cerrarTodasLasCapas() { cerrarCapas(pilaNavegacion.length); }
 
+// La barra de autocompletar de Android/Chrome (llave, tarjeta...) solo se
+// ofrece sobre campos VACÍOS al recibir el foco; con texto ya escrito no
+// sale. El truco: el campo empieza en "solo lectura" y se activa justo al
+// tocarlo, así en el instante en que el sistema decide si ofrece la barra,
+// el campo todavía no es editable y no hay nada que ofrecer.
+function evitarBarraAutorrelleno(input) {
+  const activar = () => { input.readOnly = false; };
+  input.addEventListener('focus', activar, { once: true });
+  input.addEventListener('touchstart', activar, { once: true });
+}
+
 // Modal de "cambiar nombre" con el mismo estilo del resto de la app (en vez
 // del prompt() nativo del navegador, que aparece como una ventana ajena a
 // la interfaz, arriba de la web).
@@ -1783,7 +1797,7 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
     <h3>${escapeHtml(titulo)}</h3>
     <div class="campo">
       <label for="input-renombrar">Nombre</label>
-      <input type="search" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="nope" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
+      <input type="search" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="nope" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1792,6 +1806,7 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
   `);
   $('#modal-cancelar').addEventListener('click', volverAtras);
   const input = $('#input-renombrar');
+  evitarBarraAutorrelleno(input);
   input.focus();
   input.select();
   const btnGuardar = $('#modal-guardar-renombrar');
