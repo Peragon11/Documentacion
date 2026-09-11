@@ -295,9 +295,22 @@
     padding:9px 6px; border-radius:8px; font-size:.82rem; font-weight:600;
   }
   .segmento.activo{ background:var(--ink-2); color:var(--text-light); box-shadow:0 1px 4px rgba(0,0,0,.18); }
-  .campo input[type=text], .campo input[type=date], .campo select{
+  .campo input[type=text], .campo input[type=date], .campo input[type=search], .campo select{
     width:100%; background:var(--ink-3); border:1px solid var(--borde);
     color:var(--text-light); border-radius:9px; padding:11px 12px; font-size:.92rem;
+  }
+  /* type="search" evita la barra de contraseñas/tarjetas de Chrome en
+     Android, pero por defecto trae su propio aspecto (lupa, aspa para
+     borrar, bordes redondeados nativos); lo dejamos igual que un input
+     de texto normal. */
+  .campo input[type=search]{
+    -webkit-appearance:none; appearance:none;
+  }
+  .campo input[type=search]::-webkit-search-decoration,
+  .campo input[type=search]::-webkit-search-cancel-button,
+  .campo input[type=search]::-webkit-search-results-button,
+  .campo input[type=search]::-webkit-search-results-decoration{
+    -webkit-appearance:none; appearance:none;
   }
   .check-aviso{
     display:flex; align-items:center; gap:10px; margin:2px 0 16px;
@@ -438,7 +451,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.0.9';
+const VERSION_APP = '1.0.11';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1209,7 +1222,7 @@ function abrirModalNuevaPersona() {
     </div>
     <div class="campo">
       <label for="input-nombre-persona">Nombre</label>
-      <input type="text" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+      <input type="search" id="input-nombre-persona" placeholder="Añadir nombre" maxlength="30" autocomplete="nope" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1324,7 +1337,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
       </p>
       <div class="campo">
         <label for="input-confirmar-nombre">Escribe <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> para confirmar</label>
-        <input type="text" id="input-confirmar-nombre" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+        <input type="search" id="input-confirmar-nombre" autocomplete="nope" autocapitalize="off" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -1658,7 +1671,7 @@ function abrirModalSubida() {
     </div>
     <div class="campo">
       <label for="input-nombre">Nombre del documento (así se guardará en Drive)</label>
-      <input type="text" id="input-nombre" placeholder="Ej: DNI frontal" autocomplete="off" autocapitalize="sentences" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+      <input type="search" id="input-nombre" placeholder="Ej: DNI frontal" autocomplete="nope" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
     </div>
     <div class="campo">
       <label for="input-categoria">Categoría</label>
@@ -1770,7 +1783,7 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
     <h3>${escapeHtml(titulo)}</h3>
     <div class="campo">
       <label for="input-renombrar">Nombre</label>
-      <input type="text" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="off" autocapitalize="sentences" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+      <input type="search" id="input-renombrar" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="nope" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other">
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
