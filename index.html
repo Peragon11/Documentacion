@@ -451,7 +451,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.1.4';
+const VERSION_APP = '1.1.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1509,9 +1509,7 @@ function crearTarjetaDoc(doc) {
 
 function calcularBadgeCaducidad(fecha) {
   if (!fecha) return null;
-  const hoy = new Date();
-  const cad = new Date(fecha + 'T00:00:00');
-  const dias = Math.round((cad - hoy) / 86400000);
+  const dias = diasHastaCaducidad(fecha);
   if (dias < 0) return { alerta: true, texto: 'Caducado' };
   if (dias <= 60) return { alerta: true, texto: `${dias} d.` };
   return null;
@@ -1523,10 +1521,12 @@ function formatearFecha(iso) {
 
 /* =========================================================================
    Avisos de caducidad (notificaciones)
-   Se comprueba cada vez que se sincroniza con Drive (es decir, cada vez que
-   se abre la app con conexión). No hay servidor detrás, así que no puede
-   avisar si la app lleva semanas sin abrirse: en cuanto se abre, revisa
-   todos los documentos y lanza los avisos pendientes.
+   Se comprueba cada vez que se abre la app (con o sin conexión, usando la
+   copia local). No hay servidor detrás, así que no puede avisar si la app
+   lleva semanas sin abrirse: en cuanto se abre, revisa todos los documentos
+   y lanza los avisos pendientes. Si se abre la app es que hay alguien
+   despierto mirándola, así que se avisa en el momento, sin restricción de
+   horario.
    Cada documento avisa como máximo una vez a 60 días y una vez a 30 días
    mientras no cambie su fecha de caducidad (si se renueva con una fecha
    nueva, los avisos se reinician).
@@ -1538,6 +1538,11 @@ function obtenerAvisosCaducidad() {
 function guardarAvisosCaducidad(avisos) {
   try { localStorage.setItem('documentacion_avisos_caducidad', JSON.stringify(avisos)); }
   catch (e) { /* ignorar */ }
+}
+function diasHastaCaducidad(fecha) {
+  const hoy = new Date();
+  const cad = new Date(fecha + 'T00:00:00');
+  return Math.round((cad - hoy) / 86400000);
 }
 
 function comprobarCaducidadesYNotificar() {
@@ -1556,18 +1561,14 @@ function comprobarCaducidadesYNotificar() {
       estado = { fecha: doc.fechaCaducidad, aviso60: false, aviso30: false };
     }
 
-    const hoy = new Date();
-    const cad = new Date(doc.fechaCaducidad + 'T00:00:00');
-    const dias = Math.round((cad - hoy) / 86400000);
+    const dias = diasHastaCaducidad(doc.fechaCaducidad);
+    const necesitaAviso30 = dias <= 30 && !estado.aviso30;
+    const necesitaAviso60 = !necesitaAviso30 && dias <= 60 && !estado.aviso60;
 
-    if (dias <= 30 && !estado.aviso30) {
-      notificarCaducidad(doc, dias);
-      estado.aviso30 = true;
-      estado.aviso60 = true; // si se salta directo a <30 días, no repetir el de 60
-      cambiado = true;
-    } else if (dias <= 60 && !estado.aviso60) {
+    if (necesitaAviso30 || necesitaAviso60) {
       notificarCaducidad(doc, dias);
       estado.aviso60 = true;
+      if (necesitaAviso30) estado.aviso30 = true;
       cambiado = true;
     }
     avisos[doc.id] = estado;
