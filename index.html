@@ -346,9 +346,7 @@
     position:relative; background:var(--ink-3); touch-action:none; cursor:grab;
   }
   .recorte-marco img{ position:absolute; top:0; left:0; transform-origin:0 0; pointer-events:none; -webkit-user-drag:none; }
-  .recorte-zoom{ display:flex; align-items:center; gap:10px; margin:0 0 20px; color:var(--text-dim); }
-  .recorte-zoom input[type=range]{ flex:1; accent-color:var(--stamp); }
-  .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:-10px 0 18px; }
+  .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:0 0 18px; }
 
   .modal-acciones{ display:flex; gap:10px; margin-top:20px; }
   .btn-primario, .btn-secundario{ border:none; border-radius:10px; padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
@@ -467,7 +465,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.2.7';
+const VERSION_APP = '1.2.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1373,12 +1371,7 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
 
   contenedor.innerHTML = `
     <div class="recorte-marco" id="recorte-marco"></div>
-    <div class="recorte-zoom">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex:none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      <input type="range" id="recorte-zoom" min="100" max="300" value="100">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex:none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-    </div>
-    <p class="recorte-ayuda">Arrastra la foto para colocarla</p>
+    <p class="recorte-ayuda">Arrastra con un dedo para moverla, pellizca con dos para hacer zoom</p>
     <div class="modal-acciones">
       <button class="btn-secundario" id="recorte-cancelar" type="button">Cancelar</button>
       <button class="btn-primario" id="recorte-guardar" type="button">Usar esta foto</button>
@@ -1414,33 +1407,65 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   img.src = url;
   marco.appendChild(img);
 
-  let arrastrando = false, inicioX = 0, inicioY = 0, offInicioX = 0, offInicioY = 0;
+  // Gesto tipo Maps: un dedo mueve la foto, dos dedos (pellizco) hacen
+  // zoom manteniendo fijo el punto de la imagen que hay entre ambos dedos.
+  const punteros = new Map();
+  let panRef = null;
+  let pinchRef = null;
+
+  function posRelativa(e) {
+    const r = marco.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function distancia(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+  function puntoMedio(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+
   marco.addEventListener('pointerdown', (e) => {
-    arrastrando = true;
-    inicioX = e.clientX; inicioY = e.clientY;
-    offInicioX = offsetX; offInicioY = offsetY;
     marco.setPointerCapture(e.pointerId);
+    punteros.set(e.pointerId, posRelativa(e));
+    if (punteros.size === 1) {
+      const p = punteros.values().next().value;
+      panRef = { x: p.x, y: p.y, offsetX, offsetY };
+      pinchRef = null;
+    } else if (punteros.size === 2) {
+      const [a, b] = [...punteros.values()];
+      pinchRef = { dist: distancia(a, b), zoom: zoomMult, offsetX, offsetY, centro: puntoMedio(a, b) };
+      panRef = null;
+    }
   });
   marco.addEventListener('pointermove', (e) => {
-    if (!arrastrando) return;
-    offsetX = offInicioX + (e.clientX - inicioX);
-    offsetY = offInicioY + (e.clientY - inicioY);
-    aplicarTransform();
+    if (!punteros.has(e.pointerId)) return;
+    punteros.set(e.pointerId, posRelativa(e));
+    if (punteros.size === 1 && panRef) {
+      const p = punteros.values().next().value;
+      offsetX = panRef.offsetX + (p.x - panRef.x);
+      offsetY = panRef.offsetY + (p.y - panRef.y);
+      aplicarTransform();
+    } else if (punteros.size === 2 && pinchRef) {
+      const [a, b] = [...punteros.values()];
+      const factor = distancia(a, b) / pinchRef.dist;
+      const escalaBase = baseScale * pinchRef.zoom;
+      const relX = (pinchRef.centro.x - pinchRef.offsetX) / escalaBase;
+      const relY = (pinchRef.centro.y - pinchRef.offsetY) / escalaBase;
+      zoomMult = clamp(pinchRef.zoom * factor, 1, 4);
+      offsetX = pinchRef.centro.x - relX * escalaEfectiva();
+      offsetY = pinchRef.centro.y - relY * escalaEfectiva();
+      aplicarTransform();
+    }
   });
-  marco.addEventListener('pointerup', () => { arrastrando = false; });
-  marco.addEventListener('pointercancel', () => { arrastrando = false; });
-
-  contenedor.querySelector('#recorte-zoom').addEventListener('input', (e) => {
-    // Al hacer zoom, se mantiene fijo el centro del marco en el mismo
-    // punto de la foto, en vez de desplazarse hacia una esquina.
-    const centro = TAMANO_MARCO / 2;
-    const relX = (centro - offsetX) / escalaEfectiva();
-    const relY = (centro - offsetY) / escalaEfectiva();
-    zoomMult = e.target.value / 100;
-    offsetX = centro - relX * escalaEfectiva();
-    offsetY = centro - relY * escalaEfectiva();
-    aplicarTransform();
-  });
+  function soltarPuntero(e) {
+    punteros.delete(e.pointerId);
+    if (punteros.size === 1) {
+      const p = punteros.values().next().value;
+      panRef = { x: p.x, y: p.y, offsetX, offsetY };
+      pinchRef = null;
+    } else {
+      panRef = null;
+      pinchRef = null;
+    }
+  }
+  marco.addEventListener('pointerup', soltarPuntero);
+  marco.addEventListener('pointercancel', soltarPuntero);
 
   contenedor.querySelector('#recorte-cancelar').addEventListener('click', () => {
     URL.revokeObjectURL(url);
