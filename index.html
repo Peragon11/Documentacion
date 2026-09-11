@@ -468,7 +468,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.3.1';
+const VERSION_APP = '1.3.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1368,23 +1368,9 @@ function abrirModalNuevaPersona() {
    los botones de persona, arrastre y zoom), para poder centrar bien la
    cara antes de guardarla.
    ========================================================================= */
-function bloquearZoomPagina(bloquear) {
-  const meta = document.querySelector('meta[name="viewport"]');
-  if (!meta) return;
-  meta.setAttribute('content', bloquear
-    ? 'width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no'
-    : 'width=device-width, initial-scale=1, viewport-fit=cover');
-}
-
 function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar }) {
   const TAMANO_MARCO = 220;
   const TAMANO_SALIDA = 240;
-
-  // Mientras se ajusta la foto, se bloquea el zoom de la página entera:
-  // si no, el navegador intenta hacer zoom de la pantalla a la vez que
-  // nuestro propio gesto mueve la imagen, y el resultado se ve como si
-  // la foto se deformara o se fuera hacia un lado.
-  bloquearZoomPagina(true);
 
   contenedor.innerHTML = `
     <div class="recorte-marco" id="recorte-marco"></div>
@@ -1494,7 +1480,6 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   marco.addEventListener('pointercancel', soltarPuntero);
 
   contenedor.querySelector('#recorte-cancelar').addEventListener('click', () => {
-    bloquearZoomPagina(false);
     URL.revokeObjectURL(url);
     onCancelar();
   });
@@ -1508,7 +1493,6 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
       img.naturalWidth * escalaEfectiva() * factor, img.naturalHeight * escalaEfectiva() * factor
     );
     const dataUrl = canvas.toDataURL('image/jpeg', .85);
-    bloquearZoomPagina(false);
     URL.revokeObjectURL(url);
     onConfirmar(dataUrl);
   });
@@ -2141,13 +2125,7 @@ function abrirModal(htmlInterior) {
   $('#modal-fondo').addEventListener('click', (e) => { if (e.target.id === 'modal-fondo') volverAtras(); });
   pushNavegacion(cerrarModal);
 }
-function cerrarModal() {
-  $('#raiz-modal').innerHTML = '';
-  // Por si se cierra el recortador de foto con el botón atrás en vez de
-  // sus propios botones: nos aseguramos de que el zoom de la página
-  // quede repuesto sí o sí (no pasa nada si ya lo estaba).
-  bloquearZoomPagina(false);
-}
+function cerrarModal() { $('#raiz-modal').innerHTML = ''; }
 function cerrarCapas(n) {
   const total = Math.min(n, pilaNavegacion.length);
   for (let i = 0; i < total; i++) {
