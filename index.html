@@ -519,7 +519,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.5.0';
+const VERSION_APP = '1.5.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -607,6 +607,17 @@ function pedirPermisoNotificaciones() {
   Notification.requestPermission();
 }
 
+/* =========================================================================
+   Arranque — local primero, Drive como copia de seguridad
+   ========================================================================= */
+let mostrandoDatosLocales = false;
+
+// Esto se dispara en cuanto el HTML está listo, sin esperar a que
+// terminen de cargar imágenes ni el script externo de Google — así, si ya
+// hay una copia guardada en este móvil, se muestra al instante y no llega
+// a verse ni un instante la pantalla de conectar con Drive. Solo se vería
+// esa pantalla si de verdad no hay ninguna copia local (primera vez en
+// este dispositivo, o tras cerrar sesión).
 document.addEventListener('DOMContentLoaded', () => {
   $('#btn-banner-instalar')?.addEventListener('click', async () => {
     if (!promptInstalacionDiferido) return;
@@ -616,13 +627,25 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#banner-instalar').classList.add('hidden');
   });
   $('#btn-banner-cerrar')?.addEventListener('click', () => $('#banner-instalar').classList.add('hidden'));
+
+  if (appYaInstalada()) pedirPermisoNotificaciones();
+  const huboCacheLocal = cargarDatosDesdeCacheLocal();
+  if (huboCacheLocal) {
+    mostrandoDatosLocales = true;
+    carpetaId = localStorage.getItem('documentacion_carpeta_id') || null;
+    usuarioEmail = localStorage.getItem('documentacion_email') || '';
+    mostrarApp();
+    mostrarPantallaPersonas();
+    // Las caducidades ya están en la copia local (se guardan ahí en cuanto
+    // se crean o se editan), así que no hace falta esperar a Drive para
+    // comprobarlas: funciona igual con o sin conexión.
+    comprobarCaducidadesYNotificar();
+  }
 });
 
-/* =========================================================================
-   Arranque — local primero, Drive como copia de seguridad
-   ========================================================================= */
-let mostrandoDatosLocales = false;
-
+// El resto (registrar el service worker, iniciar el cliente de Google y
+// sincronizar con Drive) no necesita ser instantáneo — es la parte que de
+// verdad puede esperar a que la página termine de cargar del todo.
 window.addEventListener('load', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -638,30 +661,8 @@ window.addEventListener('load', () => {
     });
   }
   initGIS();
-  arrancarApp();
-});
-
-// 1) Si ya hay una copia guardada en este móvil, se muestra al instante,
-//    sin esperar a Google ni a Drive.
-// 2) En paralelo (o si no había nada guardado, en primer plano) se intenta
-//    sincronizar con Drive: por si hay cambios hechos desde otro móvil, o
-//    porque es la primera vez que se entra en este dispositivo.
-function arrancarApp() {
-  if (appYaInstalada()) pedirPermisoNotificaciones();
-  const huboCacheLocal = cargarDatosDesdeCacheLocal();
-  if (huboCacheLocal) {
-    mostrandoDatosLocales = true;
-    carpetaId = localStorage.getItem('documentacion_carpeta_id') || null;
-    usuarioEmail = localStorage.getItem('documentacion_email') || '';
-    mostrarApp();
-    mostrarPantallaPersonas();
-    // Las caducidades ya están en la copia local (se guardan ahí en cuanto
-    // se crean o se editan), así que no hace falta esperar a Drive para
-    // comprobarlas: funciona igual con o sin conexión.
-    comprobarCaducidadesYNotificar();
-  }
   intentarSesionGuardada();
-}
+});
 
 function mostrarApp() {
   $('#vista-login').classList.add('hidden');
@@ -1815,6 +1816,10 @@ function alternarSeleccionDoc(doc, fila, activarModo = false) {
   if (activarModo && !modoSeleccionDocs) {
     modoSeleccionDocs = true;
     document.body.classList.add('modo-seleccion');
+    // Empuja una "capa" de navegación propia: así, el botón atrás del
+    // móvil solo cancela la selección la primera vez, en vez de salir
+    // directamente de la pantalla de la persona.
+    pushNavegacion(limpiarModoSeleccion);
   }
   if (!modoSeleccionDocs) return;
   if (docsSeleccionados.has(doc.id)) {
@@ -1834,19 +1839,27 @@ function actualizarBarraSeleccion() {
   $('#barra-seleccion').classList.toggle('hidden', !modoSeleccionDocs);
 }
 
-function salirModoSeleccion() {
+// Solo limpia el estado (la usa el propio sistema de navegación al
+// deshacer la capa, sea por el botón atrás o por volverAtras()).
+function limpiarModoSeleccion() {
   modoSeleccionDocs = false;
   docsSeleccionados.clear();
   document.body.classList.remove('modo-seleccion');
   $$('.doc-fila.seleccionada').forEach((f) => f.classList.remove('seleccionada'));
   $('#barra-seleccion').classList.add('hidden');
 }
+// Para salir de fuera del propio flujo de selección (cambiar de pantalla,
+// de persona...), sin pasar por el botón atrás.
+function salirModoSeleccion() {
+  if (!modoSeleccionDocs) return;
+  limpiarModoSeleccion();
+}
 
-$('#btn-cancelar-seleccion').addEventListener('click', salirModoSeleccion);
+$('#btn-cancelar-seleccion').addEventListener('click', volverAtras);
 $('#btn-compartir-seleccion').addEventListener('click', async () => {
   const docs = datos.documentos.filter((d) => docsSeleccionados.has(d.id));
   await compartirDocumentos(docs);
-  salirModoSeleccion();
+  volverAtras();
 });
 
 function extensionPorMime(mime) {
