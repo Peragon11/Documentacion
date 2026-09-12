@@ -24,7 +24,7 @@
 <link rel="apple-touch-icon" href="icono.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
@@ -115,7 +115,7 @@
   .topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
   .topbar .marca span#titulo-topbar{
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    letter-spacing:.03em;
+    font-family:'Poppins', var(--sans); letter-spacing:.02em;
   }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:12px; flex:none; box-shadow:none; }
   .icono-marca{ width:29px; height:29px; border-radius:8px; flex:none; display:block; }
@@ -473,7 +473,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.3.7';
+const VERSION_APP = '1.3.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
