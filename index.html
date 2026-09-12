@@ -331,7 +331,7 @@
   }
 
   .selector-foto{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
-  .selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; cursor:pointer; }
+  .selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; border-radius:10px; }
   .selector-foto .btn-secundario{ flex:none; width:auto; padding:9px 16px; font-size:.82rem; }
   .acciones-foto{ display:flex; gap:8px; flex-wrap:wrap; }
   .grid-iconos-avatar{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:0 0 18px; }
@@ -371,7 +371,6 @@
   .fila-categoria{ display:flex; align-items:center; gap:10px; padding:9px 4px; }
   .fila-categoria .punto-cat{ width:10px; height:10px; border-radius:50%; flex:none; }
   .fila-categoria .nombre-cat{ flex:1; font-size:.88rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .fila-categoria .cuenta-cat{ font-size:.76rem; color:var(--text-dim); flex:none; }
   .icon-btn-cat{
     background:none; border:none; color:var(--text-dim); cursor:pointer; flex:none;
     width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
@@ -468,7 +467,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.3.3';
+const VERSION_APP = '1.3.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1275,7 +1274,7 @@ function abrirModalNuevaPersona() {
     <h3>Nueva persona</h3>
     <div id="seccion-normal-nuevo">
       <div class="selector-foto">
-        <div class="avatar-persona" id="preview-avatar-nuevo" style="background:var(--ink-3);cursor:pointer;">
+        <div class="avatar-persona" id="preview-avatar-nuevo" style="background:var(--ink-3);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 7h3l2-2h6l2 2h3v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
         </div>
         <div class="acciones-foto">
@@ -1307,7 +1306,6 @@ function abrirModalNuevaPersona() {
   const inputGaleria = $('#input-foto-galeria');
   $('#btn-foto-camara').addEventListener('click', () => inputCamara.click());
   $('#btn-foto-galeria').addEventListener('click', () => inputGaleria.click());
-  $('#preview-avatar-nuevo').addEventListener('click', () => inputGaleria.click());
   $('#btn-foto-icono').addEventListener('click', () => zonaIconos.classList.toggle('hidden'));
   zonaIconos.addEventListener('click', (e) => {
     const btn = e.target.closest('.opcion-icono');
@@ -2238,25 +2236,31 @@ function abrirModalCategorias() {
 }
 
 function htmlModalCategorias() {
-  const filas = datos.categorias.map((cat) => {
-    const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
-    return `
+  const filas = datos.categorias.map((cat) => `
       <div class="fila-categoria">
         <span class="punto-cat" style="background:${cat.color}"></span>
         <span class="nombre-cat">${escapeHtml(cat.nombre)}</span>
-        <span class="cuenta-cat">${num}</span>
         <button class="icon-btn-cat" data-accion="renombrar" data-id="${cat.id}" aria-label="Renombrar categoría">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         </button>
         <button class="icon-btn-cat" data-accion="eliminar" data-id="${cat.id}" aria-label="Eliminar categoría">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
-      </div>`;
-  }).join('');
+      </div>`).join('');
 
   return `
     <h3>Categorías</h3>
     <div class="lista-categorias-admin">${filas || '<p style="color:var(--text-dim);font-size:.85rem;">No hay categorías todavía.</p>'}</div>
+    <div id="zona-form-categoria" class="hidden">
+      <div class="campo">
+        <label for="input-nombre-categoria" id="label-form-categoria">Nombre de la categoría</label>
+        <input type="search" id="input-nombre-categoria" name="q" maxlength="30" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
+      </div>
+      <div class="modal-acciones">
+        <button class="btn-secundario" id="btn-cancelar-form-categoria" type="button">Cancelar</button>
+        <button class="btn-primario" id="btn-guardar-form-categoria" type="button">Guardar</button>
+      </div>
+    </div>
     <button class="opcion-menu" id="btn-nueva-categoria-admin" type="button">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       Nueva categoría
@@ -2266,17 +2270,51 @@ function htmlModalCategorias() {
 function cablearModalCategorias() {
   const refrescar = () => { $('.modal').innerHTML = htmlModalCategorias(); cablearModalCategorias(); };
 
-  $$('.icon-btn-cat[data-accion="renombrar"]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
-      if (!cat) return;
-      const nuevo = prompt('Nuevo nombre de la categoría:', cat.nombre);
-      if (!nuevo || !nuevo.trim() || nuevo.trim() === cat.nombre) return;
-      cat.nombre = nuevo.trim();
+  const zonaForm = $('#zona-form-categoria');
+  const inputNombre = $('#input-nombre-categoria');
+  const labelForm = $('#label-form-categoria');
+  const btnGuardarForm = $('#btn-guardar-form-categoria');
+  let editandoId = null;
+
+  function abrirForm(cat) {
+    editandoId = cat ? cat.id : null;
+    labelForm.textContent = cat ? 'Nuevo nombre' : 'Nombre de la categoría';
+    btnGuardarForm.textContent = cat ? 'Guardar' : 'Añadir';
+    inputNombre.value = cat ? cat.nombre : '';
+    inputNombre.readOnly = true;
+    zonaForm.classList.remove('hidden');
+    evitarBarraAutorrelleno(inputNombre);
+    inputNombre.focus();
+  }
+  function cerrarForm() {
+    zonaForm.classList.add('hidden');
+    editandoId = null;
+  }
+  async function guardarForm() {
+    const nombre = inputNombre.value.trim();
+    if (!nombre) return;
+    if (editandoId) {
+      const cat = datos.categorias.find((c) => c.id === editandoId);
+      if (cat && nombre !== cat.nombre) {
+        cat.nombre = nombre;
+        await guardarMetadatos();
+        mostrarToast('Categoría renombrada');
+      }
+    } else {
+      const id = 'cat-' + Date.now();
+      const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
+      datos.categorias.push({ id, nombre, color });
       await guardarMetadatos();
-      refrescar();
-      if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
-      mostrarToast('Categoría renombrada');
+      mostrarToast('Categoría creada');
+    }
+    if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+    refrescar();
+  }
+
+  $$('.icon-btn-cat[data-accion="renombrar"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
+      if (cat) abrirForm(cat);
     });
   });
 
@@ -2297,17 +2335,10 @@ function cablearModalCategorias() {
     });
   });
 
-  $('#btn-nueva-categoria-admin').addEventListener('click', async () => {
-    const nombre = prompt('Nombre de la nueva categoría (ej: Seguro del coche):');
-    if (!nombre || !nombre.trim()) return;
-    const id = 'cat-' + Date.now();
-    const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
-    datos.categorias.push({ id, nombre: nombre.trim(), color });
-    await guardarMetadatos();
-    refrescar();
-    if (personaActivaId) renderizarChipsCategorias();
-    mostrarToast('Categoría creada');
-  });
+  $('#btn-nueva-categoria-admin').addEventListener('click', () => abrirForm(null));
+  $('#btn-cancelar-form-categoria').addEventListener('click', cerrarForm);
+  $('#btn-guardar-form-categoria').addEventListener('click', guardarForm);
+  inputNombre.addEventListener('keydown', (e) => { if (e.key === 'Enter') guardarForm(); });
 }
 
 /* =========================================================================
