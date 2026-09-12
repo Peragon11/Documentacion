@@ -468,7 +468,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.3.2';
+const VERSION_APP = '1.3.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1506,19 +1506,18 @@ $('#btn-menu-persona').addEventListener('click', () => {
   if (!persona) return;
   abrirModal(`
     <h3>${escapeHtml(persona.nombre)}</h3>
+    <div class="selector-foto">
+      <div class="avatar-persona" id="preview-avatar-persona" style="${estiloAvatar(persona)}">${contenidoAvatar(persona)}</div>
+      <div class="acciones-foto">
+        <button class="btn-secundario" id="op-foto-camara" type="button">Hacer foto</button>
+        <button class="btn-secundario" id="op-foto-galeria" type="button">Galería</button>
+        <button class="btn-secundario" id="op-foto-icono" type="button">Icono</button>
+      </div>
+      <input type="file" id="input-foto-camara-persona" accept="image/*" capture="user" class="visually-hidden">
+      <input type="file" id="input-foto-galeria-persona" accept="image/*" class="visually-hidden">
+    </div>
+    <div id="zona-iconos-persona" class="hidden">${htmlGridIconosAvatar(persona.icono)}</div>
     <div class="menu-opciones">
-      <button class="opcion-menu" id="op-foto-camara">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h3l2-2h6l2 2h3v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
-        Hacer foto
-      </button>
-      <button class="opcion-menu" id="op-foto-galeria">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M21 16l-5.5-5.5a1.5 1.5 0 0 0-2.1 0L4 19" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        Elegir de la galería
-      </button>
-      <button class="opcion-menu" id="op-foto-icono">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 10.2h.01M15.5 10.2h.01M8 15c1 .9 2.3 1.4 4 1.4s3-.5 4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        Elegir icono
-      </button>
       <button class="opcion-menu" id="op-renombrar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Cambiar nombre
@@ -1529,12 +1528,12 @@ $('#btn-menu-persona').addEventListener('click', () => {
       </button>
     </div>
   `);
-  const inputCamara = document.createElement('input');
-  inputCamara.type = 'file'; inputCamara.accept = 'image/*'; inputCamara.capture = 'user'; inputCamara.className = 'visually-hidden';
-  const inputGaleria = document.createElement('input');
-  inputGaleria.type = 'file'; inputGaleria.accept = 'image/*'; inputGaleria.className = 'visually-hidden';
-  $('#raiz-modal').appendChild(inputCamara);
-  $('#raiz-modal').appendChild(inputGaleria);
+  const previewPersona = $('#preview-avatar-persona');
+  const zonaIconosPersona = $('#zona-iconos-persona');
+  const inputCamara = $('#input-foto-camara-persona');
+  const inputGaleria = $('#input-foto-galeria-persona');
+  previewPersona.addEventListener('click', () => inputGaleria.click());
+  $('#op-foto-icono').addEventListener('click', () => zonaIconosPersona.classList.toggle('hidden'));
 
   const alElegirFotoPersona = (input) => {
     const f = input.files[0];
@@ -1558,21 +1557,15 @@ $('#btn-menu-persona').addEventListener('click', () => {
   inputCamara.addEventListener('change', () => alElegirFotoPersona(inputCamara));
   inputGaleria.addEventListener('change', () => alElegirFotoPersona(inputGaleria));
 
-  $('#op-foto-icono').addEventListener('click', () => {
-    abrirModal(`
-      <h3>Elegir icono</h3>
-      ${htmlGridIconosAvatar(persona.icono)}
-    `);
-    $('.grid-iconos-avatar').addEventListener('click', async (e) => {
-      const btn = e.target.closest('.opcion-icono');
-      if (!btn) return;
-      persona.foto = null;
-      persona.icono = btn.dataset.icono;
-      await guardarMetadatos();
-      cerrarCapas(2); // cierra el selector de icono y el menú de opciones
-      renderizarCabeceraPersona();
-      mostrarToast('Icono actualizado');
-    });
+  zonaIconosPersona.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.opcion-icono');
+    if (!btn) return;
+    persona.foto = null;
+    persona.icono = btn.dataset.icono;
+    await guardarMetadatos();
+    volverAtras(); // cierra el menú de opciones
+    renderizarCabeceraPersona();
+    mostrarToast('Icono actualizado');
   });
 
   $('#op-renombrar').addEventListener('click', () => {
