@@ -176,8 +176,9 @@
      centradas en el ancho de la pantalla. */
   @media (orientation:landscape){
     .grid-personas.pocas{ flex-direction:row; justify-content:center; max-width:none; }
-    .grid-personas.pocas .persona-tile{ width:auto; }
+    .grid-personas.pocas .persona-tile{ width:210px; }
     .grid-personas.pocas.tres{ max-width:none; gap:24px; }
+    .grid-personas.pocas.tres .persona-tile{ width:150px; }
   }
 
   .persona-tile{
@@ -494,7 +495,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.4.4';
+const VERSION_APP = '1.4.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
