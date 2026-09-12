@@ -169,6 +169,9 @@
     width:100%; max-width:260px; margin:auto;
   }
   .grid-personas.centrado{ margin:auto 0; }
+  /* Con 3 personas, un poco más pequeñas para que quepan sin scroll. */
+  .grid-personas.pocas.tres{ gap:14px; max-width:200px; }
+  .grid-personas.pocas.tres .avatar-persona{ max-width:150px; }
 
   .persona-tile{
     background:none; border:none; color:var(--text-light); cursor:pointer;
@@ -483,7 +486,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.4.0';
+const VERSION_APP = '1.4.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1069,6 +1072,7 @@ function renderizarPersonas() {
   const cont = $('#grid-personas');
   cont.innerHTML = '';
   cont.classList.toggle('pocas', datos.personas.length > 0 && datos.personas.length <= 3);
+  cont.classList.toggle('tres', datos.personas.length === 3);
   cont.classList.toggle('centrado', datos.personas.length === 4);
 
   datos.personas.forEach((persona) => {
