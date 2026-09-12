@@ -22,6 +22,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icono.png">
 <link rel="apple-touch-icon" href="icono.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
@@ -110,7 +113,10 @@
     border-bottom:1px solid var(--borde-sutil);
   }
   .topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
-  .topbar .marca span#titulo-topbar{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topbar .marca span#titulo-topbar{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    letter-spacing:.03em;
+  }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:12px; flex:none; box-shadow:none; }
   .icono-marca{ width:29px; height:29px; border-radius:8px; flex:none; display:block; }
   .btn-icono-top{
@@ -467,7 +473,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.3.5';
+const VERSION_APP = '1.3.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -689,7 +695,7 @@ function initGIS() {
 
 $('#btn-conectar').addEventListener('click', () => {
   if (CLIENT_ID.includes('TU_CLIENT_ID')) {
-    alert('Falta configurar el Client ID de Google. Revisa el README.md.');
+    mostrarToast('Falta configurar el Client ID de Google. Revisa el README.md.', true);
     return;
   }
   tokenClient.requestAccessToken({ prompt: 'consent' });
@@ -2261,6 +2267,13 @@ function htmlModalCategorias() {
         <button class="btn-primario" id="btn-guardar-form-categoria" type="button">Guardar</button>
       </div>
     </div>
+    <div id="zona-eliminar-categoria" class="hidden">
+      <p id="texto-eliminar-categoria" style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;"></p>
+      <div class="modal-acciones">
+        <button class="btn-secundario" id="btn-cancelar-eliminar-categoria" type="button">Cancelar</button>
+        <button class="btn-primario btn-peligro" id="btn-confirmar-eliminar-categoria" type="button">Eliminar</button>
+      </div>
+    </div>
     <button class="opcion-menu" id="btn-nueva-categoria-admin" type="button">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       Nueva categoría
@@ -2274,9 +2287,14 @@ function cablearModalCategorias() {
   const inputNombre = $('#input-nombre-categoria');
   const labelForm = $('#label-form-categoria');
   const btnGuardarForm = $('#btn-guardar-form-categoria');
+  const zonaEliminar = $('#zona-eliminar-categoria');
+  const textoEliminar = $('#texto-eliminar-categoria');
   let editandoId = null;
+  let eliminandoId = null;
 
   function abrirForm(cat) {
+    zonaEliminar.classList.add('hidden');
+    eliminandoId = null;
     editandoId = cat ? cat.id : null;
     labelForm.textContent = cat ? 'Nuevo nombre' : 'Nombre de la categoría';
     btnGuardarForm.textContent = cat ? 'Guardar' : 'Añadir';
@@ -2289,6 +2307,20 @@ function cablearModalCategorias() {
   function cerrarForm() {
     zonaForm.classList.add('hidden');
     editandoId = null;
+  }
+  function abrirConfirmEliminar(cat) {
+    zonaForm.classList.add('hidden');
+    editandoId = null;
+    eliminandoId = cat.id;
+    const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
+    textoEliminar.textContent = num > 0
+      ? `¿Eliminar «${cat.nombre}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «Otros».`
+      : `¿Eliminar la categoría «${cat.nombre}»?`;
+    zonaEliminar.classList.remove('hidden');
+  }
+  function cerrarConfirmEliminar() {
+    zonaEliminar.classList.add('hidden');
+    eliminandoId = null;
   }
   async function guardarForm() {
     const nombre = inputNombre.value.trim();
@@ -2319,20 +2351,20 @@ function cablearModalCategorias() {
   });
 
   $$('.icon-btn-cat[data-accion="eliminar"]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
-      if (!cat) return;
-      const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
-      const aviso = num > 0
-        ? `¿Eliminar «${cat.nombre}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «Otros».`
-        : `¿Eliminar la categoría «${cat.nombre}»?`;
-      if (!confirm(aviso)) return;
-      datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
-      await guardarMetadatos();
-      refrescar();
-      if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
-      mostrarToast('Categoría eliminada');
+      if (cat) abrirConfirmEliminar(cat);
     });
+  });
+  $('#btn-cancelar-eliminar-categoria').addEventListener('click', cerrarConfirmEliminar);
+  $('#btn-confirmar-eliminar-categoria').addEventListener('click', async () => {
+    const cat = datos.categorias.find((c) => c.id === eliminandoId);
+    if (!cat) return;
+    datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
+    await guardarMetadatos();
+    if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+    mostrarToast('Categoría eliminada');
+    refrescar();
   });
 
   $('#btn-nueva-categoria-admin').addEventListener('click', () => abrirForm(null));
