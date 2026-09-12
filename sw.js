@@ -8,7 +8,7 @@
 // la app instalada lo recoge en la siguiente vez que se abra con conexión,
 // sin depender de que el propio sw.js haya cambiado de bytes.
 const CACHE = 'documentacion-shell-v2';
-const SHELL = ['./index.html', './manifest.json', './icono.png'];
+const SHELL = ['./index.html', './manifest.json', './icono.png', './icono_notificacion.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

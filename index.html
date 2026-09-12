@@ -63,7 +63,7 @@
     --topbar-fondo:rgba(242,243,245,.88);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ height:100%; overscroll-behavior-y:none; }
+  html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); }
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
     -webkit-font-smoothing:antialiased; transition:background-color .2s ease, color .2s ease;
@@ -495,7 +495,7 @@
 //    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.4.5';
+const VERSION_APP = '1.4.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -660,7 +660,7 @@ function aplicarTema(tema) {
     document.documentElement.removeAttribute('data-tema');
   }
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', modoReal === 'claro' ? '#FBF9F4' : '#14202E');
+  if (meta) meta.setAttribute('content', modoReal === 'claro' ? '#F2F3F5' : '#14202E');
 }
 
 function guardarTema(tema) {
@@ -1842,7 +1842,7 @@ function notificarCaducidad(doc, dias) {
   const titulo = 'Documento a punto de caducar';
   const cuerpo = `${doc.nombre}${quien} ${texto}.`;
   const opciones = {
-    body: cuerpo, icon: 'icono.png', badge: 'icono.png',
+    body: cuerpo, icon: 'icono.png', badge: 'icono_notificacion.png',
     tag: 'caducidad-' + doc.id, data: { personaId: doc.personaId },
   };
   if (navigator.serviceWorker) {
