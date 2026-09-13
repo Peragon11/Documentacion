@@ -491,7 +491,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.3';
+const VERSION_APP = '1.7.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -817,6 +817,17 @@ async function asegurarCarpeta() {
   localStorage.setItem('documentacion_carpeta_id', carpetaId);
 }
 
+// "Otros" es la categoría de reserva a la que caen los documentos
+// huérfanos (categoría borrada, o sin categoría); ya no se puede borrar
+// desde el menú, pero por si alguien la había borrado antes de este
+// arreglo, se recupera sola en cuanto se detecta que falta.
+function asegurarCategoriaOtros() {
+  if (!datos.categorias.some((c) => c.id === 'otros')) {
+    const otros = CATEGORIAS_INICIALES.find((c) => c.id === 'otros');
+    if (otros) datos.categorias.push(Object.assign({}, otros));
+  }
+}
+
 async function cargarMetadatos() {
   const q = encodeURIComponent(`name='${NOMBRE_METADATOS}' and '${carpetaId}' in parents and trashed=false`);
   const busq = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
@@ -831,6 +842,7 @@ async function cargarMetadatos() {
       datos.personas = parsed.personas || [];
       datos.categorias = (parsed.categorias && parsed.categorias.length) ? parsed.categorias : CATEGORIAS_INICIALES;
       datos.documentos = parsed.documentos || [];
+      asegurarCategoriaOtros();
     } catch (e) {
       datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
     }
@@ -1512,6 +1524,10 @@ $('#btn-menu-persona').addEventListener('click', () => {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Cambiar nombre
       </button>
+      <button class="opcion-menu" id="op-exportar-persona">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 12l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Exportar copia
+      </button>
       <button class="opcion-menu peligro" id="op-eliminar-persona">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         Eliminar persona
@@ -1568,6 +1584,8 @@ $('#btn-menu-persona').addEventListener('click', () => {
       });
     }, 30);
   });
+
+  $('#op-exportar-persona').addEventListener('click', () => abrirModalExportar(persona));
 
   $('#op-eliminar-persona').addEventListener('click', () => {
     const docs = datos.documentos.filter((d) => d.personaId === persona.id);
@@ -1717,7 +1735,14 @@ function crearTarjetaDoc(doc) {
       const cont = fila.querySelector('.miniatura');
       const img = document.createElement('img');
       img.src = url; img.alt = doc.nombre; img.loading = 'lazy';
-      img.onload = () => { cont.querySelector('.skeleton')?.remove(); };
+      img.onload = () => {
+        cont.querySelector('.skeleton')?.remove();
+        // Documentos verticales: la ficha crece lo justo para que quepa
+        // entera la foto, en vez de recortarla en un recuadro apaisado.
+        if (img.naturalHeight > img.naturalWidth) {
+          cont.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+        }
+      };
       cont.appendChild(img);
     }).catch(() => { fila.querySelector('.skeleton')?.remove(); });
   }
@@ -2419,21 +2444,27 @@ function nombreArchivoExportacion() {
 // [archivo 1][archivo 2]... — cada documento de la cabecera guarda su
 // tamaño en bytes para poder trocear los archivos al leerlos, en el mismo
 // orden en que aparecen. Es un formato propio, solo esta app lo entiende.
-async function generarArchivoExportacion() {
+async function generarArchivoExportacion(personaId = null) {
+  const documentosAExportar = personaId ? datos.documentos.filter((d) => d.personaId === personaId) : datos.documentos;
+  const personasAExportar = personaId ? datos.personas.filter((p) => p.id === personaId) : datos.personas;
+  const categoriasAExportar = personaId
+    ? datos.categorias.filter((c) => documentosAExportar.some((d) => d.categoria === c.id))
+    : datos.categorias;
+
   // En paralelo: si se piden uno a uno y hay muchos documentos, puede
   // tardar tanto que el navegador ya no deje compartir después (el
   // permiso de compartir caduca a los pocos segundos del toque).
-  const partesArchivos = await Promise.all(datos.documentos.map(async (doc) => {
+  const partesArchivos = await Promise.all(documentosAExportar.map(async (doc) => {
     const blob = await obtenerBlobDocumento(doc);
     return new Uint8Array(await blob.arrayBuffer());
   }));
-  const documentosCabecera = datos.documentos.map((doc, i) => ({
+  const documentosCabecera = documentosAExportar.map((doc, i) => ({
     personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
     mimeType: doc.mimeType, fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida,
     tamano: partesArchivos[i].length,
   }));
 
-  const cabecera = { version: 1, personas: datos.personas, categorias: datos.categorias, documentos: documentosCabecera };
+  const cabecera = { version: 1, personas: personasAExportar, categorias: categoriasAExportar, documentos: documentosCabecera };
   const jsonBytes = new TextEncoder().encode(JSON.stringify(cabecera));
   const totalArchivos = partesArchivos.reduce((s, p) => s + p.length, 0);
 
@@ -2466,10 +2497,15 @@ function leerPaqueteExportacion(buffer) {
   };
 }
 
-function abrirModalExportar() {
+function abrirModalExportar(persona = null) {
+  const titulo = persona ? `Exportar copia de ${escapeHtml(persona.nombre)}` : 'Exportar copia';
+  const introQuien = persona
+    ? `con los documentos de <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> (no con el resto de personas que tengas guardadas)`
+    : 'con todas las personas, categorías y documentos que tienes guardados';
+
   abrirModal(`
-    <h3>Exportar copia</h3>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">copia_hh-mm_día-mes-año.txt</strong>, con todas las personas, categorías y documentos que tienes guardados, listo para pasarlo a otro dispositivo.</p>
+    <h3>${titulo}</h3>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">copia_hh-mm_día-mes-año.txt</strong>, ${introQuien}, listo para pasarlo a otro dispositivo.</p>
     <p style="color:var(--stamp);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong>Importante: esto es una copia puntual, no una sincronización.</strong> Se clona todo tal cual está ahora mismo, pero a partir de ahí cada dispositivo tendrá su propia copia totalmente independiente: lo que se añada, cambie o borre después en uno no afectará para nada al otro.</p>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 4px;">Antes de nada, el otro dispositivo necesita:</p>
     <ol style="color:var(--text-dim);font-size:.85rem;line-height:1.6;margin:0 0 14px;padding-left:20px;">
@@ -2494,16 +2530,22 @@ function abrirModalExportar() {
   // en una pantalla nueva, que dispara el share() con el toque recién
   // hecho, sin esperas de por medio.
   $('#btn-generar-exportacion').addEventListener('click', async () => {
-    if (!datos.personas.length) { mostrarToast('No hay nada que exportar todavía.', true); return; }
+    const hayAlgoQueExportar = persona
+      ? datos.documentos.some((d) => d.personaId === persona.id)
+      : datos.personas.length;
+    if (!hayAlgoQueExportar) {
+      mostrarToast(persona ? `${persona.nombre} todavía no tiene documentos guardados.` : 'No hay nada que exportar todavía.', true);
+      return;
+    }
     if (!navigator.share) { mostrarToast('Este móvil no permite compartir archivos desde el navegador.', true); return; }
 
     $('.modal').innerHTML = `
-      <h3>Exportar copia</h3>
+      <h3>${titulo}</h3>
       <div class="estado-carga"><div class="spinner"></div><span>Generando el archivo, un momento…</span></div>
     `;
 
     try {
-      const bytes = await generarArchivoExportacion();
+      const bytes = await generarArchivoExportacion(persona ? persona.id : null);
       const nombre = nombreArchivoExportacion();
       // Chrome solo permite compartir archivos de ciertos tipos por
       // navigator.share() (imagen, PDF, audio, vídeo, texto...); un tipo
@@ -2657,9 +2699,10 @@ function htmlModalCategorias() {
         <button class="icon-btn-cat" data-accion="renombrar" data-id="${cat.id}" aria-label="Renombrar categoría">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         </button>
+        ${cat.id === 'otros' ? '' : `
         <button class="icon-btn-cat" data-accion="eliminar" data-id="${cat.id}" aria-label="Eliminar categoría">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </button>
+        </button>`}
       </div>`).join('');
 
   return `
