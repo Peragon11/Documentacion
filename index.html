@@ -375,7 +375,7 @@
     position:relative; background:var(--ink-3); touch-action:none; cursor:grab;
   }
   .recorte-marco img{
-    position:absolute; top:0; left:0; transform-origin:0 0; pointer-events:none; -webkit-user-drag:none;
+    position:absolute; top:0; left:0; pointer-events:none; -webkit-user-drag:none;
     max-width:none; max-height:none;
   }
   .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:0 0 18px; }
@@ -492,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.0';
+const VERSION_APP = '1.8.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1320,7 +1320,7 @@ function abrirModalNuevaPersona() {
 function montarRecortador(contenedor, file, opciones) {
   const {
     anchoMarco, altoMarco, radioMarco = 32,
-    textoAyuda = 'Arrastra con un dedo para moverla, pellizca con dos para hacer zoom',
+    textoAyuda = 'Arrastra con un dedo para moverla, pellizca con dos para hacer zoom o girarla',
     textoConfirmar = 'Usar esta foto',
     generarSalida, onConfirmar, onCancelar,
   } = opciones;
@@ -1337,27 +1337,37 @@ function montarRecortador(contenedor, file, opciones) {
   const marco = contenedor.querySelector('#recorte-marco');
   const img = new Image();
   const url = URL.createObjectURL(file);
-  let baseScale = 1, zoomMult = 1, offsetX = 0, offsetY = 0;
+  // cx,cy: dónde cae el centro de la imagen dentro del marco (píxeles del
+  // marco). rot: giro en radianes. escala: cuánto se agranda la imagen
+  // respecto a su tamaño real.
+  let cx = 0, cy = 0, rot = 0, escala = 1;
 
-  const escalaEfectiva = () => baseScale * zoomMult;
   const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-  function limitarOffset() {
-    const anchoImg = img.naturalWidth * escalaEfectiva();
-    const altoImg = img.naturalHeight * escalaEfectiva();
-    offsetX = clamp(offsetX, anchoMarco - anchoImg, 0);
-    offsetY = clamp(offsetY, altoMarco - altoImg, 0);
+
+  // Escala mínima para que, con el giro actual, la imagen siga tapando
+  // el marco entero sin dejar huecos en las esquinas: el rectángulo de
+  // la imagen (sin girar) tiene que cubrir el propio marco girado el
+  // ángulo contrario — es la fórmula exacta, no una aproximación.
+  function escalaMinima(angulo) {
+    const c = Math.abs(Math.cos(angulo)), s = Math.abs(Math.sin(angulo));
+    return Math.max(
+      (anchoMarco * c + altoMarco * s) / img.naturalWidth,
+      (anchoMarco * s + altoMarco * c) / img.naturalHeight
+    );
   }
+
   function aplicarTransform() {
-    limitarOffset();
-    img.style.width = (img.naturalWidth * escalaEfectiva()) + 'px';
-    img.style.height = (img.naturalHeight * escalaEfectiva()) + 'px';
-    img.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+    escala = clamp(escala, escalaMinima(rot), escalaMinima(0) * 4);
+    img.style.transform = `translate(${cx - img.naturalWidth / 2}px, ${cy - img.naturalHeight / 2}px) rotate(${rot}rad) scale(${escala})`;
   }
 
   img.onload = () => {
-    baseScale = Math.max(anchoMarco / img.naturalWidth, altoMarco / img.naturalHeight);
-    offsetX = (anchoMarco - img.naturalWidth * escalaEfectiva()) / 2;
-    offsetY = (altoMarco - img.naturalHeight * escalaEfectiva()) / 2;
+    img.style.width = img.naturalWidth + 'px';
+    img.style.height = img.naturalHeight + 'px';
+    img.style.transformOrigin = '50% 50%';
+    escala = escalaMinima(0);
+    cx = anchoMarco / 2;
+    cy = altoMarco / 2;
     aplicarTransform();
   };
   img.src = url;
@@ -1373,22 +1383,33 @@ function montarRecortador(contenedor, file, opciones) {
   }
   function distancia(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
   function puntoMedio(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+  function angulo(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
+
+  // Punto de la imagen (relativo a su propio centro, tal cual sin girar
+  // ni escalar) que cae bajo un punto de pantalla dado, con la
+  // transformación actual — para mantenerlo fijo bajo los dedos mientras
+  // se hace zoom, se gira y se arrastra a la vez, en el mismo gesto.
+  function puntoImagenBajo(p) {
+    const dx = p.x - cx, dy = p.y - cy;
+    const c = Math.cos(-rot), s = Math.sin(-rot);
+    return { x: (dx * c - dy * s) / escala, y: (dx * s + dy * c) / escala };
+  }
 
   marco.addEventListener('pointerdown', (e) => {
     marco.setPointerCapture(e.pointerId);
     punteros.set(e.pointerId, posRelativa(e));
     if (punteros.size === 1) {
       const p = punteros.values().next().value;
-      panRef = { x: p.x, y: p.y, offsetX, offsetY };
+      panRef = { x: p.x, y: p.y, cx, cy };
       pinchRef = null;
     } else if (punteros.size === 2) {
       const [a, b] = [...punteros.values()];
-      const centro = puntoMedio(a, b);
       pinchRef = {
         dist: distancia(a, b),
-        zoomInicio: zoomMult,
-        relX: (centro.x - offsetX) / escalaEfectiva(),
-        relY: (centro.y - offsetY) / escalaEfectiva(),
+        angulo: angulo(a, b),
+        escalaInicio: escala,
+        rotInicio: rot,
+        ancla: puntoImagenBajo(puntoMedio(a, b)),
       };
       panRef = null;
     }
@@ -1398,16 +1419,18 @@ function montarRecortador(contenedor, file, opciones) {
     punteros.set(e.pointerId, posRelativa(e));
     if (punteros.size === 1 && panRef) {
       const p = punteros.values().next().value;
-      offsetX = panRef.offsetX + (p.x - panRef.x);
-      offsetY = panRef.offsetY + (p.y - panRef.y);
+      cx = panRef.cx + (p.x - panRef.x);
+      cy = panRef.cy + (p.y - panRef.y);
       aplicarTransform();
     } else if (punteros.size === 2 && pinchRef) {
       const [a, b] = [...punteros.values()];
       const factor = distancia(a, b) / pinchRef.dist;
-      zoomMult = clamp(pinchRef.zoomInicio * factor, 1, 4);
-      const centroActual = puntoMedio(a, b);
-      offsetX = centroActual.x - pinchRef.relX * escalaEfectiva();
-      offsetY = centroActual.y - pinchRef.relY * escalaEfectiva();
+      rot = pinchRef.rotInicio + (angulo(a, b) - pinchRef.angulo);
+      escala = clamp(pinchRef.escalaInicio * factor, escalaMinima(rot), escalaMinima(0) * 4);
+      const centro = puntoMedio(a, b);
+      const c = Math.cos(rot), s = Math.sin(rot);
+      cx = centro.x - (pinchRef.ancla.x * c - pinchRef.ancla.y * s) * escala;
+      cy = centro.y - (pinchRef.ancla.x * s + pinchRef.ancla.y * c) * escala;
       aplicarTransform();
     }
   });
@@ -1415,7 +1438,7 @@ function montarRecortador(contenedor, file, opciones) {
     punteros.delete(e.pointerId);
     if (punteros.size === 1) {
       const p = punteros.values().next().value;
-      panRef = { x: p.x, y: p.y, offsetX, offsetY };
+      panRef = { x: p.x, y: p.y, cx, cy };
       pinchRef = null;
     } else {
       panRef = null;
@@ -1430,7 +1453,7 @@ function montarRecortador(contenedor, file, opciones) {
     onCancelar();
   });
   contenedor.querySelector('#recorte-guardar').addEventListener('click', () => {
-    const salida = generarSalida({ img, offsetX, offsetY, escala: escalaEfectiva(), anchoMarco, altoMarco });
+    const salida = generarSalida({ img, cx, cy, escala, rotacion: rot, anchoMarco, altoMarco });
     Promise.resolve(salida).then((resultado) => {
       URL.revokeObjectURL(url);
       onConfirmar(resultado);
@@ -1444,15 +1467,15 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   montarRecortador(contenedor, file, {
     anchoMarco: TAMANO_MARCO, altoMarco: TAMANO_MARCO, radioMarco: 32,
     onCancelar, onConfirmar,
-    generarSalida: ({ img, offsetX, offsetY, escala }) => {
+    generarSalida: ({ img, cx, cy, escala, rotacion }) => {
       const factor = TAMANO_SALIDA / TAMANO_MARCO;
       const canvas = document.createElement('canvas');
       canvas.width = TAMANO_SALIDA; canvas.height = TAMANO_SALIDA;
-      canvas.getContext('2d').drawImage(
-        img, 0, 0, img.naturalWidth, img.naturalHeight,
-        offsetX * factor, offsetY * factor,
-        img.naturalWidth * escala * factor, img.naturalHeight * escala * factor
-      );
+      const ctx = canvas.getContext('2d');
+      ctx.translate(cx * factor, cy * factor);
+      ctx.rotate(rotacion);
+      ctx.scale(escala * factor, escala * factor);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
       return canvas.toDataURL('image/jpeg', .85);
     },
   });
@@ -1474,18 +1497,22 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
 
     montarRecortador(contenedor, file, {
       anchoMarco, altoMarco, radioMarco: 14,
-      textoAyuda: 'Arrastra con un dedo para encajar el documento, pellizca con dos para hacer zoom',
+      textoAyuda: 'Arrastra con un dedo para encajar el documento, pellizca con dos para hacer zoom o girarlo',
       textoConfirmar: 'Usar este recorte',
       onCancelar,
-      generarSalida: ({ img, offsetX, offsetY, escala }) => {
-        const sx = -offsetX / escala;
-        const sy = -offsetY / escala;
-        const sw = anchoMarco / escala;
-        const sh = altoMarco / escala;
+      generarSalida: ({ img, cx, cy, escala, rotacion }) => {
+        // 1 píxel del canvas de salida = 1 píxel real de la foto original,
+        // al nivel de zoom actual, para no perder calidad al recortar.
+        const factor = 1 / escala;
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(sw);
-        canvas.height = Math.round(sh);
-        canvas.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+        canvas.width = Math.round(anchoMarco * factor);
+        canvas.height = Math.round(altoMarco * factor);
+        const ctx = canvas.getContext('2d');
+        ctx.scale(factor, factor);
+        ctx.translate(cx, cy);
+        ctx.rotate(rotacion);
+        ctx.scale(escala, escala);
+        ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
         return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', .95));
       },
       onConfirmar: (blob) => {
