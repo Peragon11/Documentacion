@@ -491,7 +491,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.0';
+const VERSION_APP = '1.7.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2420,18 +2420,18 @@ function nombreArchivoExportacion() {
 // tamaño en bytes para poder trocear los archivos al leerlos, en el mismo
 // orden en que aparecen. Es un formato propio, solo esta app lo entiende.
 async function generarArchivoExportacion() {
-  const partesArchivos = [];
-  const documentosCabecera = [];
-  for (const doc of datos.documentos) {
+  // En paralelo: si se piden uno a uno y hay muchos documentos, puede
+  // tardar tanto que el navegador ya no deje compartir después (el
+  // permiso de compartir caduca a los pocos segundos del toque).
+  const partesArchivos = await Promise.all(datos.documentos.map(async (doc) => {
     const blob = await obtenerBlobDocumento(doc);
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    partesArchivos.push(bytes);
-    documentosCabecera.push({
-      personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
-      mimeType: doc.mimeType, fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida,
-      tamano: bytes.length,
-    });
-  }
+    return new Uint8Array(await blob.arrayBuffer());
+  }));
+  const documentosCabecera = datos.documentos.map((doc, i) => ({
+    personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
+    mimeType: doc.mimeType, fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida,
+    tamano: partesArchivos[i].length,
+  }));
 
   const cabecera = { version: 1, personas: datos.personas, categorias: datos.categorias, documentos: documentosCabecera };
   const jsonBytes = new TextEncoder().encode(JSON.stringify(cabecera));
@@ -2503,7 +2503,8 @@ function abrirModalExportar() {
       await navigator.share({ files: [archivo], title: nombre });
       cerrarCapas(2); // cierra este modal y el de Ajustes
     } catch (e) {
-      if (e.name !== 'AbortError') mostrarToast('No se pudo generar el archivo.', true);
+      console.error(e);
+      if (e.name !== 'AbortError') mostrarToast('No se pudo generar el archivo: ' + (e.message || e.name || e), true);
     } finally {
       if ($('#btn-generar-exportacion')) { btn.disabled = false; btn.textContent = 'Generar archivo'; }
     }
