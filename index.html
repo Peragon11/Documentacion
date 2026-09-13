@@ -492,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.6';
+const VERSION_APP = '1.7.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2439,10 +2439,12 @@ function idUnico(prefijo) {
   return `${prefijo}-${Date.now()}-${contadorIdsImport}`;
 }
 
-function nombreArchivoExportacion() {
+function nombreArchivoExportacion(nombrePersona = null) {
   const ahora = new Date();
   const dos = (n) => String(n).padStart(2, '0');
-  return `copia_${dos(ahora.getHours())}-${dos(ahora.getMinutes())}_${dos(ahora.getDate())}-${dos(ahora.getMonth() + 1)}-${ahora.getFullYear()}.txt`;
+  const fecha = `${dos(ahora.getHours())}h${dos(ahora.getMinutes())}m_${dos(ahora.getDate())}-${dos(ahora.getMonth() + 1)}-${ahora.getFullYear()}`;
+  const prefijo = nombrePersona ? nombrePersona.replace(/[\\/:*?"<>|]/g, ' ').trim().replace(/\s+/g, '_') : 'copia';
+  return `${prefijo}_${fecha}.txt`;
 }
 
 // Formato del paquete: [4 bytes = longitud de la cabecera][cabecera en JSON]
@@ -2507,10 +2509,11 @@ function abrirModalExportar(persona = null) {
   const introQuien = persona
     ? `con los documentos de <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> (no con el resto de personas que tengas guardadas)`
     : 'con todas las personas, categorías y documentos que tienes guardados';
+  const patronNombre = persona ? `${escapeHtml(persona.nombre)}_00h00m_día-mes-año.txt` : 'copia_00h00m_día-mes-año.txt';
 
   abrirModal(`
     <h3>${titulo}</h3>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">copia_hh-mm_día-mes-año.txt</strong>, ${introQuien}, listo para pasarlo a otro dispositivo.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">${patronNombre}</strong>, ${introQuien}, listo para pasarlo a otro dispositivo.</p>
     <p style="color:var(--stamp);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong>Importante: esto es una copia puntual, no una sincronización.</strong> Se clona todo tal cual está ahora mismo, pero a partir de ahí cada dispositivo tendrá su propia copia totalmente independiente: lo que se añada, cambie o borre después en uno no afectará para nada al otro.</p>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 4px;">Antes de nada, el otro dispositivo necesita:</p>
     <ol style="color:var(--text-dim);font-size:.85rem;line-height:1.6;margin:0 0 14px;padding-left:20px;">
@@ -2549,7 +2552,7 @@ function abrirModalExportar(persona = null) {
 
     try {
       const bytes = await generarArchivoExportacion(persona ? persona.id : null);
-      const nombre = nombreArchivoExportacion();
+      const nombre = nombreArchivoExportacion(persona ? persona.nombre : null);
       // Chrome solo permite compartir archivos de ciertos tipos por
       // navigator.share() (imagen, PDF, audio, vídeo, texto...); un tipo
       // inventado se rechaza siempre. Se declara como texto para que
