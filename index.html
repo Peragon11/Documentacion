@@ -162,6 +162,7 @@
     width:100%; max-width:260px; margin:auto;
   }
   .grid-personas.centrado{ margin:auto 0; }
+  .grid-personas.vacio{ display:flex; margin:auto; width:100%; }
   .grid-personas.pocas.tres{ gap:14px; max-width:200px; }
   .grid-personas.pocas.tres .avatar-persona{ max-width:150px; }
   @media (orientation:landscape){
@@ -490,7 +491,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.6.2';
+const VERSION_APP = '1.7.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1013,7 +1014,19 @@ function contenidoAvatar(persona) {
 function renderizarPersonas() {
   const cont = $('#grid-personas');
   cont.innerHTML = '';
-  cont.classList.toggle('pocas', datos.personas.length > 0 && datos.personas.length <= 3);
+  cont.classList.remove('pocas', 'tres', 'centrado', 'vacio');
+
+  if (datos.personas.length === 0) {
+    cont.classList.add('vacio');
+    cont.innerHTML = `
+      <div class="estado-vacio">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.4"/></svg>
+        <p>Todavía no tienes a nadie aquí.<br>Usa el botón + de arriba para añadir la primera persona, o si ya tienes una copia de otro dispositivo, ve a Ajustes → "Importar copia".</p>
+      </div>`;
+    return;
+  }
+
+  cont.classList.toggle('pocas', datos.personas.length <= 3);
   cont.classList.toggle('tres', datos.personas.length === 3);
   cont.classList.toggle('centrado', datos.personas.length === 4);
 
@@ -2348,6 +2361,14 @@ $('#btn-ajustes').addEventListener('click', () => {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 3h7v7M21 3l-9 9M5 5h6v2H7v10h10v-4h2v6H5V5z" stroke="currentColor" stroke-width="1.6"/></svg>
         Ver carpeta en Drive
       </button>
+      <button class="opcion-menu" id="op-exportar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 12l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Exportar copia
+      </button>
+      <button class="opcion-menu" id="op-importar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Importar copia
+      </button>
       <button class="opcion-menu peligro" id="op-cerrar-sesion">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         Cerrar sesión
@@ -2367,6 +2388,8 @@ $('#btn-ajustes').addEventListener('click', () => {
   $('#op-ver-drive').addEventListener('click', () => {
     if (carpetaId) window.open(`https://drive.google.com/drive/folders/${carpetaId}`, '_blank');
   });
+  $('#op-exportar').addEventListener('click', abrirModalExportar);
+  $('#op-importar').addEventListener('click', abrirModalImportar);
   $('#op-cerrar-sesion').addEventListener('click', () => {
     if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
     localStorage.removeItem('documentacion_sesion');
@@ -2379,6 +2402,213 @@ $('#btn-ajustes').addEventListener('click', () => {
     location.reload();
   });
 });
+
+let contadorIdsImport = 0;
+function idUnico(prefijo) {
+  contadorIdsImport++;
+  return `${prefijo}-${Date.now()}-${contadorIdsImport}`;
+}
+
+function nombreArchivoExportacion() {
+  const ahora = new Date();
+  const dos = (n) => String(n).padStart(2, '0');
+  return `copia_${dos(ahora.getHours())}-${dos(ahora.getMinutes())}_${dos(ahora.getDate())}-${dos(ahora.getMonth() + 1)}-${ahora.getFullYear()}.documentacion`;
+}
+
+// Formato del paquete: [4 bytes = longitud de la cabecera][cabecera en JSON]
+// [archivo 1][archivo 2]... — cada documento de la cabecera guarda su
+// tamaño en bytes para poder trocear los archivos al leerlos, en el mismo
+// orden en que aparecen. Es un formato propio, solo esta app lo entiende.
+async function generarArchivoExportacion() {
+  const partesArchivos = [];
+  const documentosCabecera = [];
+  for (const doc of datos.documentos) {
+    const blob = await obtenerBlobDocumento(doc);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    partesArchivos.push(bytes);
+    documentosCabecera.push({
+      personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
+      mimeType: doc.mimeType, fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida,
+      tamano: bytes.length,
+    });
+  }
+
+  const cabecera = { version: 1, personas: datos.personas, categorias: datos.categorias, documentos: documentosCabecera };
+  const jsonBytes = new TextEncoder().encode(JSON.stringify(cabecera));
+  const totalArchivos = partesArchivos.reduce((s, p) => s + p.length, 0);
+
+  const resultado = new Uint8Array(4 + jsonBytes.length + totalArchivos);
+  new DataView(resultado.buffer).setUint32(0, jsonBytes.length, false);
+  resultado.set(jsonBytes, 4);
+  let pos = 4 + jsonBytes.length;
+  for (const bytes of partesArchivos) { resultado.set(bytes, pos); pos += bytes.length; }
+  return resultado;
+}
+
+function leerPaqueteExportacion(buffer) {
+  const vista = new DataView(buffer);
+  const longitudCabecera = vista.getUint32(0, false);
+  const bytesCabecera = new Uint8Array(buffer, 4, longitudCabecera);
+  const cabecera = JSON.parse(new TextDecoder().decode(bytesCabecera));
+
+  let pos = 4 + longitudCabecera;
+  const archivos = (cabecera.documentos || []).map((meta) => {
+    const bytes = new Uint8Array(buffer, pos, meta.tamano);
+    pos += meta.tamano;
+    return bytes;
+  });
+
+  return {
+    personas: cabecera.personas || [],
+    categorias: cabecera.categorias || [],
+    documentos: cabecera.documentos || [],
+    archivos,
+  };
+}
+
+function abrirModalExportar() {
+  abrirModal(`
+    <h3>Exportar copia</h3>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">copia_hh-mm_día-mes-año.documentacion</strong>, con todas las personas, categorías y documentos que tienes guardados, listo para pasarlo a otro dispositivo.</p>
+    <p style="color:var(--stamp);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong>Importante: esto es una copia puntual, no una sincronización.</strong> Se clona todo tal cual está ahora mismo, pero a partir de ahí cada dispositivo tendrá su propia copia totalmente independiente: lo que se añada, cambie o borre después en uno no afectará para nada al otro.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 4px;">Antes de nada, el otro dispositivo necesita:</p>
+    <ol style="color:var(--text-dim);font-size:.85rem;line-height:1.6;margin:0 0 14px;padding-left:20px;">
+      <li>Tener esta misma app instalada.</li>
+      <li>Tener una sesión iniciada con <strong style="color:var(--text-light)">otra</strong> cuenta de Google Drive, distinta de la tuya (los documentos se guardarán ahí; si usara la misma cuenta, no tendría sentido importar nada, ya vería tus documentos con solo iniciar sesión).</li>
+    </ol>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Al abrir el archivo en el otro dispositivo, todo lo que trae se añadirá a lo que ya hubiera guardado, sin tocar ni borrar nada de lo que ya tuviera.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 18px;">Una vez se genere el archivo, lo envías al otro dispositivo por el medio que prefieras. Desde allí, solo hay que ir a Ajustes → <strong style="color:var(--text-light)">"Importar copia"</strong> y seleccionar ese archivo de entre sus documentos del móvil.</p>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="btn-generar-exportacion" type="button">Generar archivo</button>
+    </div>
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#btn-generar-exportacion').addEventListener('click', async () => {
+    if (!datos.personas.length) { mostrarToast('No hay nada que exportar todavía.', true); return; }
+    const btn = $('#btn-generar-exportacion');
+    btn.disabled = true; btn.textContent = 'Generando…';
+    try {
+      const bytes = await generarArchivoExportacion();
+      const nombre = nombreArchivoExportacion();
+      const archivo = new File([bytes], nombre, { type: 'application/octet-stream' });
+      if (!navigator.share) {
+        mostrarToast('Este móvil no permite compartir archivos desde el navegador.', true);
+        return;
+      }
+      if (navigator.canShare && !navigator.canShare({ files: [archivo] })) {
+        mostrarToast('Este archivo no se puede compartir desde aquí.', true);
+        return;
+      }
+      await navigator.share({ files: [archivo], title: nombre });
+      cerrarCapas(2); // cierra este modal y el de Ajustes
+    } catch (e) {
+      if (e.name !== 'AbortError') mostrarToast('No se pudo generar el archivo.', true);
+    } finally {
+      if ($('#btn-generar-exportacion')) { btn.disabled = false; btn.textContent = 'Generar archivo'; }
+    }
+  });
+}
+
+function abrirModalImportar() {
+  abrirModal(`
+    <h3>Importar copia</h3>
+    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Elige el archivo <strong style="color:var(--text-light)">.documentacion</strong> que te hayan pasado. Todo lo que traiga se añadirá a lo que ya tienes guardado, sin tocar ni borrar nada.</p>
+    <input type="file" id="input-importar" accept=".documentacion" class="visually-hidden">
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="btn-elegir-importar" type="button">Elegir archivo</button>
+    </div>
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  const inputImportar = $('#input-importar');
+  $('#btn-elegir-importar').addEventListener('click', () => inputImportar.click());
+  inputImportar.addEventListener('change', () => {
+    const f = inputImportar.files[0];
+    inputImportar.value = '';
+    if (!f) return;
+    procesarImportacion(f);
+  });
+}
+
+async function procesarImportacion(file) {
+  $('.modal').innerHTML = `
+    <h3>Importando…</h3>
+    <div class="estado-carga"><div class="spinner"></div><span id="texto-progreso-importar">Leyendo archivo…</span></div>
+  `;
+  let nuevasPersonas = [];
+  let hechos = 0;
+  try {
+    const buffer = await file.arrayBuffer();
+    const paquete = leerPaqueteExportacion(buffer);
+    if (!paquete.personas.length && !paquete.documentos.length) throw new Error('paquete vacío');
+
+    const mapaPersonas = {};
+    nuevasPersonas = paquete.personas.map((p) => {
+      const nuevoId = idUnico('p');
+      mapaPersonas[p.id] = nuevoId;
+      return Object.assign({}, p, { id: nuevoId });
+    });
+
+    const idsDefecto = new Set(CATEGORIAS_INICIALES.map((c) => c.id));
+    const mapaCategorias = {};
+    const nuevasCategorias = [];
+    paquete.categorias.forEach((c) => {
+      if (idsDefecto.has(c.id)) {
+        mapaCategorias[c.id] = c.id;
+        // Si ya la había borrado antes de importar, se recupera tal cual
+        // venía en la copia, en vez de asumir que sigue existiendo.
+        const yaExiste = datos.categorias.some((existente) => existente.id === c.id);
+        if (!yaExiste) nuevasCategorias.push(Object.assign({}, c));
+      } else {
+        const nuevoId = idUnico('cat');
+        mapaCategorias[c.id] = nuevoId;
+        nuevasCategorias.push(Object.assign({}, c, { id: nuevoId }));
+      }
+    });
+
+    datos.personas.push(...nuevasPersonas);
+    datos.categorias.push(...nuevasCategorias);
+
+    for (let i = 0; i < paquete.documentos.length; i++) {
+      const meta = paquete.documentos[i];
+      const bytes = paquete.archivos[i];
+      const spanProgreso = $('#texto-progreso-importar');
+      if (spanProgreso) spanProgreso.textContent = `Subiendo documento ${i + 1} de ${paquete.documentos.length}…`;
+
+      const personaId = mapaPersonas[meta.personaId];
+      const persona = datos.personas.find((p) => p.id === personaId);
+      if (!persona) continue;
+      const categoriaId = mapaCategorias[meta.categoria] || 'otros';
+      const categoriaObj = datos.categorias.find((c) => c.id === categoriaId) || { id: 'otros', nombre: 'Otros' };
+
+      const blobArchivo = new Blob([bytes], { type: meta.mimeType || 'application/octet-stream' });
+      const archivoFile = new File([blobArchivo], meta.nombre, { type: meta.mimeType || blobArchivo.type });
+      const carpetaDestinoId = await carpetaDestinoDocumento(persona, categoriaObj);
+      const nombreArchivo = construirNombreArchivo(meta.nombre, archivoFile);
+      const driveFileId = await subirArchivoADrive(archivoFile, nombreArchivo, carpetaDestinoId);
+      cacheGuardar(driveFileId, blobArchivo);
+
+      datos.documentos.push({
+        id: idUnico('doc'), driveFileId, personaId,
+        nombre: meta.nombre, categoria: categoriaId, mimeType: meta.mimeType,
+        fechaCaducidad: meta.fechaCaducidad || null, fechaSubida: meta.fechaSubida || new Date().toISOString().slice(0, 10),
+      });
+      hechos++;
+    }
+
+    await guardarMetadatos();
+    cerrarCapas(2); // cierra este modal y el de Ajustes
+    renderizarPersonas();
+    mostrarToast(`Importadas ${nuevasPersonas.length} persona${nuevasPersonas.length === 1 ? '' : 's'} y ${hechos} documento${hechos === 1 ? '' : 's'}`);
+  } catch (e) {
+    console.error(e);
+    try { await guardarMetadatos(); } catch (e2) { /* ignorar */ }
+    cerrarCapas(2);
+    renderizarPersonas();
+    mostrarToast('No se pudo importar el archivo (o se importó solo en parte). ¿Seguro que es una copia válida?', true);
+  }
+}
 
 function abrirModalCategorias() {
   abrirModal(htmlModalCategorias());
