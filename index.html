@@ -491,7 +491,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.2';
+const VERSION_APP = '1.7.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2412,7 +2412,7 @@ function idUnico(prefijo) {
 function nombreArchivoExportacion() {
   const ahora = new Date();
   const dos = (n) => String(n).padStart(2, '0');
-  return `copia_${dos(ahora.getHours())}-${dos(ahora.getMinutes())}_${dos(ahora.getDate())}-${dos(ahora.getMonth() + 1)}-${ahora.getFullYear()}.documentacion`;
+  return `copia_${dos(ahora.getHours())}-${dos(ahora.getMinutes())}_${dos(ahora.getDate())}-${dos(ahora.getMonth() + 1)}-${ahora.getFullYear()}.txt`;
 }
 
 // Formato del paquete: [4 bytes = longitud de la cabecera][cabecera en JSON]
@@ -2469,7 +2469,7 @@ function leerPaqueteExportacion(buffer) {
 function abrirModalExportar() {
   abrirModal(`
     <h3>Exportar copia</h3>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">copia_hh-mm_día-mes-año.documentacion</strong>, con todas las personas, categorías y documentos que tienes guardados, listo para pasarlo a otro dispositivo.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">copia_hh-mm_día-mes-año.txt</strong>, con todas las personas, categorías y documentos que tienes guardados, listo para pasarlo a otro dispositivo.</p>
     <p style="color:var(--stamp);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong>Importante: esto es una copia puntual, no una sincronización.</strong> Se clona todo tal cual está ahora mismo, pero a partir de ahí cada dispositivo tendrá su propia copia totalmente independiente: lo que se añada, cambie o borre después en uno no afectará para nada al otro.</p>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 4px;">Antes de nada, el otro dispositivo necesita:</p>
     <ol style="color:var(--text-dim);font-size:.85rem;line-height:1.6;margin:0 0 14px;padding-left:20px;">
@@ -2505,7 +2505,11 @@ function abrirModalExportar() {
     try {
       const bytes = await generarArchivoExportacion();
       const nombre = nombreArchivoExportacion();
-      const archivo = new File([bytes], nombre, { type: 'application/octet-stream' });
+      // Chrome solo permite compartir archivos de ciertos tipos por
+      // navigator.share() (imagen, PDF, audio, vídeo, texto...); un tipo
+      // inventado se rechaza siempre. Se declara como texto para que
+      // pase ese filtro, aunque por dentro sea nuestro formato propio.
+      const archivo = new File([bytes], nombre, { type: 'text/plain' });
       if (navigator.canShare && !navigator.canShare({ files: [archivo] })) {
         mostrarToast('Este archivo no se puede compartir desde aquí.', true);
         volverAtras();
@@ -2543,8 +2547,8 @@ function mostrarPantallaArchivoListo(archivo) {
 function abrirModalImportar() {
   abrirModal(`
     <h3>Importar copia</h3>
-    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Elige el archivo <strong style="color:var(--text-light)">.documentacion</strong> que te hayan pasado. Todo lo que traiga se añadirá a lo que ya tienes guardado, sin tocar ni borrar nada.</p>
-    <input type="file" id="input-importar" accept=".documentacion" class="visually-hidden">
+    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Elige el archivo <strong style="color:var(--text-light)">copia_...txt</strong> que te hayan pasado. Todo lo que traiga se añadirá a lo que ya tienes guardado, sin tocar ni borrar nada.</p>
+    <input type="file" id="input-importar" accept=".txt" class="visually-hidden">
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
       <button class="btn-primario" id="btn-elegir-importar" type="button">Elegir archivo</button>
