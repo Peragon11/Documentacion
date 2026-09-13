@@ -214,6 +214,7 @@
     position:fixed; inset:0; z-index:80; background:var(--ink);
     display:flex; align-items:center; justify-content:center;
   }
+  .overlay-reconectando img{ width:96px; height:96px; border-radius:22px; }
 
   .chips-categorias{
     display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
@@ -486,7 +487,7 @@
 
 <div id="visor-completo" class="hidden"></div>
 <div id="raiz-modal"></div>
-<div id="overlay-reconectando" class="overlay-reconectando hidden"><div class="spinner"></div></div>
+<div id="overlay-reconectando" class="overlay-reconectando hidden"><img src="icono.png" alt=""></div>
 <div class="toast" id="toast"></div>
 <div class="barra-seleccion hidden" id="barra-seleccion">
   <button class="btn-icono-top" id="btn-cancelar-seleccion" aria-label="Cancelar selección">
@@ -499,7 +500,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.3';
+const VERSION_APP = '1.8.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
