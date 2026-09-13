@@ -491,7 +491,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.1';
+const VERSION_APP = '1.7.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2484,29 +2484,58 @@ function abrirModalExportar() {
     </div>
   `);
   $('#modal-cancelar').addEventListener('click', volverAtras);
+
+  // navigator.share() exige llamarse justo tras un toque, sin esperas de
+  // por medio, o el navegador lo rechaza con "permission denied" — por
+  // eso va en pantallas separadas: primero se prepara el archivo (aquí sí
+  // puede tardar, trayendo los documentos de Drive, con su propio
+  // indicador de carga para que no parezca que la app se ha quedado
+  // colgada) y solo cuando ya está listo se ofrece un botón de compartir
+  // en una pantalla nueva, que dispara el share() con el toque recién
+  // hecho, sin esperas de por medio.
   $('#btn-generar-exportacion').addEventListener('click', async () => {
     if (!datos.personas.length) { mostrarToast('No hay nada que exportar todavía.', true); return; }
-    const btn = $('#btn-generar-exportacion');
-    btn.disabled = true; btn.textContent = 'Generando…';
+    if (!navigator.share) { mostrarToast('Este móvil no permite compartir archivos desde el navegador.', true); return; }
+
+    $('.modal').innerHTML = `
+      <h3>Exportar copia</h3>
+      <div class="estado-carga"><div class="spinner"></div><span>Generando el archivo, un momento…</span></div>
+    `;
+
     try {
       const bytes = await generarArchivoExportacion();
       const nombre = nombreArchivoExportacion();
       const archivo = new File([bytes], nombre, { type: 'application/octet-stream' });
-      if (!navigator.share) {
-        mostrarToast('Este móvil no permite compartir archivos desde el navegador.', true);
-        return;
-      }
       if (navigator.canShare && !navigator.canShare({ files: [archivo] })) {
         mostrarToast('Este archivo no se puede compartir desde aquí.', true);
+        volverAtras();
         return;
       }
-      await navigator.share({ files: [archivo], title: nombre });
-      cerrarCapas(2); // cierra este modal y el de Ajustes
+      mostrarPantallaArchivoListo(archivo);
     } catch (e) {
       console.error(e);
-      if (e.name !== 'AbortError') mostrarToast('No se pudo generar el archivo: ' + (e.message || e.name || e), true);
-    } finally {
-      if ($('#btn-generar-exportacion')) { btn.disabled = false; btn.textContent = 'Generar archivo'; }
+      mostrarToast('No se pudo generar el archivo: ' + (e.message || e.name || e), true);
+      volverAtras();
+    }
+  });
+}
+
+function mostrarPantallaArchivoListo(archivo) {
+  $('.modal').innerHTML = `
+    <h3>Archivo generado</h3>
+    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Ya está listo: <strong style="color:var(--text-light)">${escapeHtml(archivo.name)}</strong>. Toca "Compartir" para enviarlo al otro dispositivo.</p>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="btn-cancelar-archivo-listo" type="button">Cancelar</button>
+      <button class="btn-primario" id="btn-compartir-archivo-listo" type="button">Compartir</button>
+    </div>
+  `;
+  $('#btn-cancelar-archivo-listo').addEventListener('click', volverAtras);
+  $('#btn-compartir-archivo-listo').addEventListener('click', async () => {
+    try {
+      await navigator.share({ files: [archivo], title: archivo.name });
+      cerrarCapas(2); // cierra este modal y el de Ajustes
+    } catch (e) {
+      if (e.name !== 'AbortError') { console.error(e); mostrarToast('No se pudo compartir: ' + (e.message || e.name || e), true); }
     }
   });
 }
