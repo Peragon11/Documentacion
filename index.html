@@ -492,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.9';
+const VERSION_APP = '1.8.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2322,9 +2322,15 @@ async function guardarDocumentoNuevo() {
 
 function abrirModal(htmlInterior) {
   const raiz = $('#raiz-modal');
+  const yaHabiaModalAbierto = !!raiz.querySelector('.modal-fondo');
   raiz.innerHTML = `<div class="modal-fondo" id="modal-fondo"><div class="modal">${htmlInterior}</div></div>`;
   $('#modal-fondo').addEventListener('click', (e) => { if (e.target.id === 'modal-fondo') volverAtras(); });
-  pushNavegacion(cerrarModal);
+  // Si ya había un modal abierto (p.ej. un menú que abre otra pantalla
+  // encima), su contenido ya se ha machacado y no hay nada que restaurar
+  // al volver — así que no se añade otra capa de navegación: con una ya
+  // basta para cerrarlo todo de un toque, en vez de dejar una capa
+  // fantasma que no cierra nada y hace falta un segundo toque atrás.
+  if (!yaHabiaModalAbierto) pushNavegacion(cerrarModal);
 }
 function cerrarModal() { $('#raiz-modal').innerHTML = ''; }
 function cerrarCapas(n) {
