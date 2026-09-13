@@ -214,7 +214,7 @@
     position:fixed; inset:0; z-index:80; background:var(--ink);
     display:flex; align-items:center; justify-content:center;
   }
-  .overlay-reconectando img{ width:96px; height:96px; border-radius:22px; }
+  .overlay-reconectando img{ width:30vw; max-width:132px; min-width:84px; aspect-ratio:1/1; border-radius:22%; }
 
   .chips-categorias{
     display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
@@ -500,7 +500,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.4';
+const VERSION_APP = '1.8.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -600,6 +600,10 @@ document.addEventListener('DOMContentLoaded', () => {
     mostrandoDatosLocales = true;
     carpetaId = localStorage.getItem('documentacion_carpeta_id') || null;
     usuarioEmail = localStorage.getItem('documentacion_email') || '';
+    // Se tapa desde ya, antes incluso de mostrar nada, para que no se
+    // llegue a ver la pantalla de personas ni un instante antes de que
+    // intentarSesionGuardada() decida si hace falta reconectar o no.
+    mostrarOverlayReconectando();
     mostrarApp();
     mostrarPantallaPersonas();
     comprobarCaducidadesYNotificar();
@@ -696,14 +700,12 @@ $('#btn-conectar').addEventListener('click', () => {
 function intentarSesionGuardada() {
   if (localStorage.getItem('documentacion_sesion_cerrada')) {
     localStorage.removeItem('documentacion_sesion_cerrada');
+    ocultarOverlayReconectando();
     return;
   }
-  // Se tapa la app con una pantalla propia (que no es sospechosa, solo
-  // parece que tarda un poco más en abrir) desde el primer momento y
-  // siempre, no solo cuando ya se sabe que hace falta reconectar — así,
-  // si en algún momento Google necesita renovar el token por debajo, su
-  // posible parpadeo queda tapado pase lo que pase.
-  if (mostrandoDatosLocales) mostrarOverlayReconectando();
+  // La pantalla de tapado (mismo icono que el arranque de Android) ya se
+  // puso al cargar los datos en caché, antes de mostrar nada — aquí solo
+  // se retira, una vez se sabe si hacía falta reconectar o no.
   const guardado = localStorage.getItem('documentacion_sesion');
   if (guardado) {
     try {
