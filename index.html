@@ -45,7 +45,7 @@
     --borde-sutil:rgba(255,255,255,.06);
     --borde:rgba(255,255,255,.14);
     --borde-fuerte:rgba(255,255,255,.22);
-    --topbar-fondo:rgba(20,32,46,.88);
+    --topbar-fondo:rgba(30,47,66,.92);
     --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --serif: 'Source Serif 4', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
     --safe-b: env(safe-area-inset-bottom, 0px);
@@ -60,7 +60,7 @@
     --borde-sutil:rgba(20,26,36,.07);
     --borde:rgba(20,26,36,.15);
     --borde-fuerte:rgba(20,26,36,.24);
-    --topbar-fondo:rgba(242,243,245,.88);
+    --topbar-fondo:rgba(230,231,235,.92);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); }
@@ -76,7 +76,6 @@
   button:focus-visible, input:focus-visible, [tabindex]:focus-visible{ outline:2px solid var(--seal); outline-offset:2px; }
   @media (prefers-reduced-motion:reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
-  /* ---------- Login ---------- */
   #vista-login{
     min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center;
@@ -99,7 +98,6 @@
   .login-nota{ margin-top:20px; max-width:300px; font-size:.78rem; color:var(--text-dim); line-height:1.5; }
   .login-nota strong{ color:var(--seal); font-weight:600; }
 
-  /* ---------- App shell (mobile-first, columna única) ---------- */
   #vista-app{ height:100dvh; overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
   @media (orientation:landscape){
     #vista-app{ max-width:100%; }
@@ -152,7 +150,6 @@
     main{ max-width:960px; margin:0 auto; width:100%; }
   }
 
-  /* ---------- Pantalla de personas ---------- */
   #pantalla-personas{ display:flex; flex-direction:column; min-height:100%; }
   .grid-personas{
     display:grid; grid-template-columns:repeat(2, 1fr); gap:26px 18px; position:relative;
@@ -160,20 +157,13 @@
   @media (orientation:landscape){
     .grid-personas{ grid-template-columns:repeat(4, 1fr); }
   }
-  /* Con 1, 2 o 3 personas: una sola columna centrada en la pantalla (por
-     estética, en vez de quedar arrinconadas arriba a la izquierda). Con
-     4, se mantiene la rejilla normal (2 columnas) pero centrada en
-     vertical. A partir de la quinta persona, ya no se centra nada. */
   .grid-personas.pocas{
     display:flex; flex-direction:column; align-items:center; gap:26px;
     width:100%; max-width:260px; margin:auto;
   }
   .grid-personas.centrado{ margin:auto 0; }
-  /* Con 3 personas, un poco más pequeñas para que quepan sin scroll. */
   .grid-personas.pocas.tres{ gap:14px; max-width:200px; }
   .grid-personas.pocas.tres .avatar-persona{ max-width:150px; }
-  /* En horizontal, con pocas personas se ponen en fila (no en columna) y
-     centradas en el ancho de la pantalla. */
   @media (orientation:landscape){
     .grid-personas.pocas{ flex-direction:row; justify-content:center; max-width:none; }
     .grid-personas.pocas .persona-tile{ width:210px; }
@@ -217,8 +207,6 @@
   }
   .spinner{ width:24px; height:24px; border-radius:50%; border:2.5px solid var(--borde); border-top-color:var(--seal); animation:girar .8s linear infinite; }
   @keyframes girar{ to{ transform:rotate(360deg); } }
-
-  /* ---------- Pantalla de persona (documentos) ---------- */
 
   .chips-categorias{
     display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
@@ -297,7 +285,6 @@
   }
   .doc-fila .badge-mini.alerta{ background:var(--stamp); color:var(--paper); }
 
-  /* ---------- Visor a pantalla completa ---------- */
   #visor-completo{
     position:fixed; inset:0; background:#0A0F14; z-index:60;
     display:flex; flex-direction:column;
@@ -320,7 +307,6 @@
     .visor-topbar{ padding-top:8px; padding-bottom:8px; }
   }
 
-  /* ---------- Modal ---------- */
   .modal-fondo{
     position:fixed; inset:0; background:rgba(10,15,20,.62); display:flex; align-items:flex-end; justify-content:center;
     z-index:65; backdrop-filter:blur(2px);
@@ -344,10 +330,6 @@
     width:100%; background:var(--ink-3); border:1px solid var(--borde);
     color:var(--text-light); border-radius:9px; padding:11px 12px; font-size:.92rem;
   }
-  /* type="search" evita la barra de contraseñas/tarjetas de Chrome en
-     Android, pero por defecto trae su propio aspecto (lupa, aspa para
-     borrar, bordes redondeados nativos); lo dejamos igual que un input
-     de texto normal. */
   .campo input[type=search]{
     -webkit-appearance:none; appearance:none;
   }
@@ -434,7 +416,6 @@
 </head>
 <body>
 
-<!-- ============ LOGIN ============ -->
 <div id="vista-login">
   <div class="login-sello" aria-hidden="true">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -449,7 +430,6 @@
   <p id="version-debug-login" style="margin-top:14px;font-size:.7rem;color:var(--text-dim);"></p>
 </div>
 
-<!-- ============ APP ============ -->
 <div id="vista-app" class="hidden">
   <div class="topbar" id="topbar">
     <button class="btn-volver hidden" id="btn-volver" aria-label="Volver">
@@ -484,12 +464,10 @@
   </div>
 
   <main>
-    <!-- Pantalla 1: personas -->
     <section id="pantalla-personas">
       <div class="grid-personas" id="grid-personas"></div>
     </section>
 
-    <!-- Pantalla 2: documentos de una persona -->
     <section id="pantalla-persona" class="hidden">
       <div class="chips-categorias" id="chips-categorias"></div>
 
@@ -510,18 +488,9 @@
 </div>
 
 <script>
-/* =========================================================================
-   DOCUMENTACIÓN — configuración
-   ========================================================================= */
-// 1) Ve a https://console.cloud.google.com/ , crea un proyecto.
-// 2) Habilita "Google Drive API".
-// 3) Configura la pantalla de consentimiento OAuth (tipo Externo).
-// 4) Crea credenciales > ID de cliente de OAuth > Aplicación web.
-//    Añade como "Orígenes de JavaScript autorizados" el dominio donde
-//    despliegues esta app. Instrucciones completas en README.md.
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.5.3';
+const VERSION_APP = '1.5.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -537,9 +506,6 @@ const CATEGORIAS_INICIALES = [
 
 const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
 
-// Iconos de avatar para quien prefiera no usar una foto propia. Dibujados
-// como SVG dentro del propio código: no hace falta subir ni cargar ningún
-// archivo de imagen aparte.
 const ICONOS_AVATAR = [
   { id: 'persona', nombre: 'Persona', svg: '<circle cx="12" cy="8" r="4.2"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3"/>' },
   { id: 'gato', nombre: 'Gato', svg: '<polygon points="5,11 3,3.5 9.5,8.5"/><polygon points="19,11 21,3.5 14.5,8.5"/><circle cx="12" cy="14.5" r="7"/>' },
@@ -562,9 +528,6 @@ function htmlGridIconosAvatar(seleccionadoId) {
     </button>`).join('')}</div>`;
 }
 
-/* =========================================================================
-   Estado
-   ========================================================================= */
 let tokenClient = null;
 let accessToken = null;
 let tokenExpiry = 0;
@@ -601,25 +564,13 @@ window.addEventListener('appinstalled', () => {
   pedirPermisoNotificaciones();
 });
 
-// Aviso de caducidad de documentos: pide permiso de notificaciones al
-// instalar la app (arriba) y también, por si ya estaba instalada de antes
-// de añadir esta función, la primera vez que se abre ya instalada.
 function pedirPermisoNotificaciones() {
   if (!('Notification' in window) || Notification.permission !== 'default') return;
   Notification.requestPermission();
 }
 
-/* =========================================================================
-   Arranque — local primero, Drive como copia de seguridad
-   ========================================================================= */
 let mostrandoDatosLocales = false;
 
-// Esto se dispara en cuanto el HTML está listo, sin esperar a que
-// terminen de cargar imágenes ni el script externo de Google — así, si ya
-// hay una copia guardada en este móvil, se muestra al instante y no llega
-// a verse ni un instante la pantalla de conectar con Drive. Solo se vería
-// esa pantalla si de verdad no hay ninguna copia local (primera vez en
-// este dispositivo, o tras cerrar sesión).
 document.addEventListener('DOMContentLoaded', () => {
   $('#btn-banner-instalar')?.addEventListener('click', async () => {
     if (!promptInstalacionDiferido) return;
@@ -630,8 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('#btn-banner-cerrar')?.addEventListener('click', () => $('#banner-instalar').classList.add('hidden'));
 
-  // Temporal: número de versión visible sin entrar en Ajustes, mientras
-  // seguimos puliendo la app. Quitar cuando ya no haga falta.
   $('#version-debug-login').textContent = 'v' + VERSION_APP;
   $('#version-debug-top').textContent = 'v' + VERSION_APP;
 
@@ -643,23 +592,14 @@ document.addEventListener('DOMContentLoaded', () => {
     usuarioEmail = localStorage.getItem('documentacion_email') || '';
     mostrarApp();
     mostrarPantallaPersonas();
-    // Las caducidades ya están en la copia local (se guardan ahí en cuanto
-    // se crean o se editan), así que no hace falta esperar a Drive para
-    // comprobarlas: funciona igual con o sin conexión.
     comprobarCaducidadesYNotificar();
   }
 });
 
-// El resto (registrar el service worker, iniciar el cliente de Google y
-// sincronizar con Drive) no necesita ser instantáneo — es la parte que de
-// verdad puede esperar a que la página termine de cargar del todo.
 window.addEventListener('load', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
 
-    // Si la app lleva un rato abierta y entretanto se publicó una versión
-    // nueva, en cuanto el service worker nuevo tome el control recargamos
-    // solos para no quedarnos con el JS antiguo en memoria.
     let recargandoPorActualizacion = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (recargandoPorActualizacion) return;
@@ -676,9 +616,6 @@ function mostrarApp() {
   $('#vista-app').classList.remove('hidden');
 }
 
-/* =========================================================================
-   Tema (claro / oscuro / automático)
-   ========================================================================= */
 const TEMA_STORAGE_KEY = 'documentacion_tema';
 const mediaOscuro = window.matchMedia('(prefers-color-scheme: dark)');
 
@@ -707,13 +644,6 @@ mediaOscuro.addEventListener('change', () => {
   if (obtenerTemaGuardado() === 'auto') aplicarTema('auto');
 });
 
-/* =========================================================================
-   Navegación con el botón/gesto "atrás" del móvil
-   ========================================================================= */
-// Cada vez que se abre una pantalla, modal o el visor, se añade una
-// "capa" con su función de cierre y se registra en el historial del
-// navegador. Al pulsar atrás, en vez de salir de la app, se deshace la
-// última capa; solo se sale de verdad cuando no queda ninguna.
 let pilaNavegacion = [];
 let ignorarProximoPopstate = false;
 
@@ -722,10 +652,6 @@ function pushNavegacion(cerrarFn) {
   history.pushState({ documentacionNav: true }, '');
 }
 
-// Usar esto en cualquier botón de "cerrar/cancelar/volver" de la UI, en
-// vez de llamar directamente a la función que cierra: así el botón atrás
-// físico y los botones en pantalla se comportan igual y no se desincroniza
-// el historial.
 function volverAtras() {
   if (pilaNavegacion.length > 0) history.back();
 }
@@ -742,8 +668,6 @@ function initGIS() {
     scope: SCOPES,
     callback: onTokenRecibido,
     error_callback: () => {
-      // Si ya había datos locales visibles, fallamos en silencio: el
-      // usuario ya está viendo su copia y no hace falta interrumpirle.
       if (!mostrandoDatosLocales) mostrarToast('No se pudo conectar con Google.', true);
     },
   });
@@ -773,11 +697,9 @@ function intentarSesionGuardada() {
       }
     } catch (e) { /* ignorar */ }
   }
-  // Sin token válido: si no hay datos locales que mostrar, no tiene
-  // sentido esperar a Google sin conexión.
   if (!navigator.onLine && mostrandoDatosLocales) return;
   if (CLIENT_ID.includes('TU_CLIENT_ID')) return;
-  setTimeout(() => tokenClient && tokenClient.requestAccessToken({ prompt: '' }), 300);
+  setTimeout(() => tokenClient && tokenClient.requestAccessToken({ prompt: 'none' }), 300);
 }
 
 function onTokenRecibido(resp) {
@@ -791,8 +713,6 @@ function onTokenRecibido(resp) {
   sincronizarConDrive();
 }
 
-// Sincroniza con Drive. Si ya había datos locales en pantalla, esto ocurre
-// en segundo plano y sin spinner; si no había nada, es la carga principal.
 async function sincronizarConDrive() {
   programarRenovacionSilenciosa();
   if (!mostrandoDatosLocales) {
@@ -812,8 +732,6 @@ async function sincronizarConDrive() {
     if (!mostrandoDatosLocales) {
       mostrarToast('Hubo un problema al conectar con Drive.', true);
     }
-    // Si ya había datos locales visibles, no interrumpimos: el usuario
-    // sigue viendo su copia y se reintentará la próxima vez.
   }
 }
 
@@ -830,7 +748,7 @@ function refrescarPantallaActual() {
 function programarRenovacionSilenciosa() {
   const margen = 5 * 60 * 1000;
   const espera = Math.max(tokenExpiry - Date.now() - margen, 30000);
-  setTimeout(() => tokenClient.requestAccessToken({ prompt: '' }), espera);
+  setTimeout(() => tokenClient.requestAccessToken({ prompt: 'none' }), espera);
 }
 
 function mostrarPantallaCarga() {
@@ -839,9 +757,6 @@ function mostrarPantallaCarga() {
   $('#grid-personas').innerHTML = `<div class="estado-carga" style="grid-column:1/-1"><div class="spinner"></div><span>Preparando tu carpeta en Drive…</span></div>`;
 }
 
-/* =========================================================================
-   Llamadas a Google
-   ========================================================================= */
 async function llamarGoogle(url, opciones = {}, timeoutMs = 8000) {
   const cabeceras = Object.assign({ Authorization: `Bearer ${accessToken}` }, opciones.headers || {});
   const controlador = new AbortController();
@@ -865,8 +780,6 @@ function escaparComillas(str) {
   return str.replace(/'/g, "\\'");
 }
 
-// Busca una subcarpeta por nombre dentro de un padre; si no existe, la crea.
-// Se usa para anidar: Documentación / <Persona> / <Categoría> / archivo
 async function buscarOCrearCarpeta(nombre, padreId) {
   const q = encodeURIComponent(`name='${escaparComillas(nombre)}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${padreId}' in parents`);
   const busq = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
@@ -880,8 +793,6 @@ async function buscarOCrearCarpeta(nombre, padreId) {
   return nueva.id;
 }
 
-// Caché en memoria de esta sesión, para no repetir búsquedas al subir varios
-// documentos seguidos de la misma persona/categoría.
 const cacheCarpetas = {};
 async function carpetaDestinoDocumento(persona, categoria) {
   const clave = `${persona.id}:${categoria.id}`;
@@ -928,8 +839,6 @@ async function cargarMetadatos() {
   }
 }
 
-// Guarda una copia de personas/categorías/documentos en este móvil
-// (localStorage), para poder abrir la app y verla sin conexión.
 function guardarDatosEnCacheLocal() {
   try {
     localStorage.setItem('documentacion_datos_cache', JSON.stringify(datos));
@@ -995,9 +904,6 @@ async function borrarArchivoDeDrive(fileId) {
   await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE' });
 }
 
-/* =========================================================================
-   Caché local (IndexedDB) — para ver documentos sin conexión
-   ========================================================================= */
 const DB_NOMBRE = 'documentacion_cache';
 const DB_TIENDA = 'archivos';
 let _dbPromesa = null;
@@ -1046,9 +952,6 @@ async function cacheBorrar(id) {
   } catch (e) { /* ignorar */ }
 }
 
-// Devuelve el blob del documento: primero de la caché local (rápido, sin
-// conexión) y si no está, lo trae de Drive y lo guarda en caché para la
-// próxima vez.
 async function obtenerBlobDocumento(doc) {
   const enCache = await cacheObtener(doc.driveFileId);
   if (enCache) return enCache;
@@ -1058,9 +961,6 @@ async function obtenerBlobDocumento(doc) {
   return blob;
 }
 
-/* =========================================================================
-   Navegación entre pantallas
-   ========================================================================= */
 function mostrarPantallaPersonas() {
   personaActivaId = null;
   salirModoSeleccion();
@@ -1097,9 +997,6 @@ function abrirPersona(personaId) {
 $('#btn-volver').addEventListener('click', volverAtras);
 $('#btn-anadir-persona-top').addEventListener('click', abrirModalNuevaPersona);
 
-/* =========================================================================
-   Render: personas
-   ========================================================================= */
 function colorParaPersona(persona) {
   const idx = datos.personas.findIndex((p) => p.id === persona.id);
   return COLORES_AVATAR[Math.max(idx, 0) % COLORES_AVATAR.length];
@@ -1137,16 +1034,10 @@ function renderizarPersonas() {
   habilitarArrastrePersonas();
 }
 
-// Permite reordenar las personas de la pantalla principal: mantener
-// pulsado un momento activa el arrastre, y al soltar se guarda el
-// nuevo orden.
 function habilitarArrastrePersonas() {
   const contenedor = $('#grid-personas');
   const zonaScroll = $('main');
   const DURACION_PULSACION = 320;
-  // Margen amplio a propósito: al mantener pulsado, el dedo nunca queda
-  // perfectamente quieto, y con un margen pequeño el arrastre se cancelaba
-  // (y se convertía en scroll) casi siempre que de verdad se quería arrastrar.
   const UMBRAL_MOVIMIENTO = 20;
 
   contenedor.querySelectorAll('.persona-tile').forEach((tile) => {
@@ -1161,10 +1052,6 @@ function habilitarArrastrePersonas() {
 
       const timer = setTimeout(() => {
         if (cancelado) return;
-        // Importante: hay que desactivar YA los listeners de esta fase de
-        // espera antes de arrancar el arrastre real. Si no, seguían vivos
-        // de fondo y, al alejarse el dedo del punto de pulsación inicial,
-        // disparaban un scroll manual que competía con el propio arrastre.
         cancelado = true;
         limpiar();
         iniciarArrastre(tile, ultimoEvento);
@@ -1177,10 +1064,6 @@ function habilitarArrastrePersonas() {
         if (!cancelado && (Math.abs(dx) > UMBRAL_MOVIMIENTO || Math.abs(dy) > UMBRAL_MOVIMIENTO)) {
           cancelado = true;
           clearTimeout(timer);
-          // El movimiento antes de que se active el arrastre se trata como
-          // un intento de hacer scroll (el navegador no lo hace solo,
-          // porque el tile bloquea el touch nativo para poder detectar
-          // bien la pulsación larga).
           if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
         }
         if (convertidoEnScroll) {
@@ -1232,18 +1115,12 @@ function habilitarArrastrePersonas() {
         if (iOrigen !== -1 && iDestino !== -1) {
           if (iOrigen < iDestino) tileDebajo.after(tile);
           else tileDebajo.before(tile);
-          // El tile cambia de celda en la rejilla al reordenar, así que su
-          // posición "natural" cambia: hay que recalcular ya el transform o
-          // se ve un salto/parpadeo hasta el siguiente movimiento del dedo.
           actualizarTransform(clientX, clientY);
         }
       }
     }
     actualizarTransform(punteroX, punteroY);
 
-    // Autoscroll: si mientras arrastras te acercas al borde superior o
-    // inferior de la zona con scroll, esta desplaza la pantalla sola para
-    // poder llevar la persona más allá de lo que cabe en la pantalla.
     const MARGEN_AUTOSCROLL = 70;
     const VELOCIDAD_MAX_AUTOSCROLL = 10;
     let rafAutoscroll = null;
@@ -1255,10 +1132,6 @@ function habilitarArrastrePersonas() {
       } else if (punteroY > rect.bottom - MARGEN_AUTOSCROLL) {
         velocidad = VELOCIDAD_MAX_AUTOSCROLL * Math.min((punteroY - (rect.bottom - MARGEN_AUTOSCROLL)) / MARGEN_AUTOSCROLL, 1);
       }
-      // No dejar que el scroll avance más de lo necesario para que el
-      // último (o primero) botón de persona quede a la vista: en vez de
-      // fiarse del alto total del contenedor (que incluye relleno extra
-      // al final), se mide dónde está de verdad el primer/último tile.
       if (velocidad > 0) {
         const ultimo = contenedor.lastElementChild;
         if (ultimo) {
@@ -1303,7 +1176,6 @@ function habilitarArrastrePersonas() {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
-      // Evita que el "click" que sigue a soltar abra la persona por error.
       momentoUltimoArrastrePersona = Date.now();
       guardarOrdenPersonasDesdeDOM();
     }
@@ -1331,9 +1203,6 @@ function renderizarCabeceraPersona() {
   $('#titulo-topbar').textContent = persona.nombre;
 }
 
-/* =========================================================================
-   Modal: nueva / editar persona
-   ========================================================================= */
 function abrirModalNuevaPersona() {
   fotoPendienteDataUrl = null;
   iconoPendienteId = null;
@@ -1428,11 +1297,6 @@ function abrirModalNuevaPersona() {
   });
 }
 
-/* =========================================================================
-   Ajustar posición de la foto de avatar (con la misma forma redondeada de
-   los botones de persona, arrastre y zoom), para poder centrar bien la
-   cara antes de guardarla.
-   ========================================================================= */
 function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar }) {
   const TAMANO_MARCO = 220;
   const TAMANO_SALIDA = 240;
@@ -1475,8 +1339,6 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   img.src = url;
   marco.appendChild(img);
 
-  // Gesto tipo Maps: un dedo mueve la foto, dos dedos (pellizco) hacen
-  // zoom manteniendo fijo el punto de la imagen que hay entre ambos dedos.
   const punteros = new Map();
   let panRef = null;
   let pinchRef = null;
@@ -1498,8 +1360,6 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
     } else if (punteros.size === 2) {
       const [a, b] = [...punteros.values()];
       const centro = puntoMedio(a, b);
-      // Punto de la imagen (en píxeles "naturales") que hay justo debajo
-      // del punto medio de los dos dedos al empezar el pellizco.
       pinchRef = {
         dist: distancia(a, b),
         zoomInicio: zoomMult,
@@ -1521,9 +1381,6 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
       const [a, b] = [...punteros.values()];
       const factor = distancia(a, b) / pinchRef.dist;
       zoomMult = clamp(pinchRef.zoomInicio * factor, 1, 4);
-      // Se ancla al punto medio ACTUAL de los dedos (no al de cuando
-      // empezó el gesto), para que el punto de la foto que pellizcaste
-      // se quede siempre debajo de los dedos aunque estos se desplacen.
       const centroActual = puntoMedio(a, b);
       offsetX = centroActual.x - pinchRef.relX * escalaEfectiva();
       offsetY = centroActual.y - pinchRef.relY * escalaEfectiva();
@@ -1563,9 +1420,6 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   });
 }
 
-/* =========================================================================
-   Menú de opciones de la persona (editar / eliminar)
-   ========================================================================= */
 $('#btn-menu-persona').addEventListener('click', () => {
   const persona = datos.personas.find((p) => p.id === personaActivaId);
   if (!persona) return;
@@ -1683,9 +1537,6 @@ $('#btn-menu-persona').addEventListener('click', () => {
   });
 });
 
-/* =========================================================================
-   Render: categorías (chips)
-   ========================================================================= */
 function renderizarChipsCategorias() {
   const cont = $('#chips-categorias');
   cont.innerHTML = '';
@@ -1697,9 +1548,6 @@ function renderizarChipsCategorias() {
   const categoriasConDocs = datos.categorias.filter((cat) => docsPersona.some((d) => d.categoria === cat.id));
   categoriasConDocs.forEach((cat) => cont.appendChild(crearChip(cat)));
 
-  // Si la categoría activa se queda sin documentos (se borró/movió el
-  // último), su chip deja de aparecer: volvemos a "Todos" para no dejar
-  // el filtro apuntando a algo que ya no se puede seleccionar.
   if (categoriaActiva !== 'todos' && !categoriasConDocs.some((c) => c.id === categoriaActiva)) {
     categoriaActiva = 'todos';
   }
@@ -1717,9 +1565,6 @@ function crearChip(cat) {
   return btn;
 }
 
-/* =========================================================================
-   Render: documentos (lista agrupada por categoría)
-   ========================================================================= */
 function renderizarDocumentos() {
   const lista = datos.documentos.filter((d) => {
     if (d.personaId !== personaActivaId) return false;
@@ -1737,9 +1582,6 @@ function renderizarDocumentos() {
     return;
   }
 
-  // Agrupar por categoría, manteniendo el orden en que aparecen las
-  // categorías en datos.categorias; los más recientes primero dentro
-  // de cada grupo.
   const porCategoria = new Map();
   lista.forEach((doc) => {
     if (!porCategoria.has(doc.categoria)) porCategoria.set(doc.categoria, []);
@@ -1749,7 +1591,6 @@ function renderizarDocumentos() {
   const ordenCategorias = datos.categorias
     .map((c) => c.id)
     .filter((id) => porCategoria.has(id));
-  // por si algún documento tiene una categoría que ya no existe en la lista
   porCategoria.forEach((_, id) => { if (!ordenCategorias.includes(id)) ordenCategorias.push(id); });
 
   cont.innerHTML = '';
@@ -1782,9 +1623,6 @@ function crearTarjetaDoc(doc) {
       ${badge ? `<span class="badge-mini ${badge.alerta ? 'alerta' : ''}">${badge.texto}</span>` : ''}
     </div>`;
 
-  // Mantener pulsado activa la selección múltiple (para compartir varios
-  // documentos a la vez); un toque normal abre el documento, salvo que ya
-  // se esté en modo selección, en cuyo caso alterna la marca.
   let temporizadorLP = null;
   const cancelarLP = () => { if (temporizadorLP) { clearTimeout(temporizadorLP); temporizadorLP = null; } };
   fila.addEventListener('pointerdown', () => {
@@ -1816,16 +1654,10 @@ function crearTarjetaDoc(doc) {
   return fila;
 }
 
-/* =========================================================================
-   Selección múltiple de documentos y "compartir" / adjuntar a un correo
-   ========================================================================= */
 function alternarSeleccionDoc(doc, fila, activarModo = false) {
   if (activarModo && !modoSeleccionDocs) {
     modoSeleccionDocs = true;
     document.body.classList.add('modo-seleccion');
-    // Empuja una "capa" de navegación propia: así, el botón atrás del
-    // móvil solo cancela la selección la primera vez, en vez de salir
-    // directamente de la pantalla de la persona.
     pushNavegacion(limpiarModoSeleccion);
   }
   if (!modoSeleccionDocs) return;
@@ -1846,8 +1678,6 @@ function actualizarBarraSeleccion() {
   $('#barra-seleccion').classList.toggle('hidden', !modoSeleccionDocs);
 }
 
-// Solo limpia el estado (la usa el propio sistema de navegación al
-// deshacer la capa, sea por el botón atrás o por volverAtras()).
 function limpiarModoSeleccion() {
   modoSeleccionDocs = false;
   docsSeleccionados.clear();
@@ -1855,8 +1685,6 @@ function limpiarModoSeleccion() {
   $$('.doc-fila.seleccionada').forEach((f) => f.classList.remove('seleccionada'));
   $('#barra-seleccion').classList.add('hidden');
 }
-// Para salir de fuera del propio flujo de selección (cambiar de pantalla,
-// de persona...), sin pasar por el botón atrás.
 function salirModoSeleccion() {
   if (!modoSeleccionDocs) return;
   limpiarModoSeleccion();
@@ -1878,11 +1706,6 @@ function nombreArchivoParaCompartir(doc) {
   return ext && doc.nombre.toLowerCase().endsWith(ext) ? doc.nombre : doc.nombre + ext;
 }
 
-// Comparte uno o varios documentos con el selector nativo del móvil (elegir
-// con qué app: WhatsApp, Gmail, Bluetooth...). Si se elige una app de
-// correo, esta abre un mensaje nuevo con los archivos ya adjuntos — no hay
-// forma de adjuntar archivos a un correo directamente desde la web sin
-// pasar por este selector, así que el usuario elige la app en ese paso.
 async function compartirDocumentos(docs) {
   if (!docs.length) return;
   if (!navigator.share) {
@@ -1920,18 +1743,6 @@ function formatearFecha(iso) {
   return `${d}/${m}/${a}`;
 }
 
-/* =========================================================================
-   Avisos de caducidad (notificaciones)
-   Se comprueba cada vez que se abre la app (con o sin conexión, usando la
-   copia local). No hay servidor detrás, así que no puede avisar si la app
-   lleva semanas sin abrirse: en cuanto se abre, revisa todos los documentos
-   y lanza los avisos pendientes. Si se abre la app es que hay alguien
-   despierto mirándola, así que se avisa en el momento, sin restricción de
-   horario.
-   Cada documento avisa como máximo una vez a 60 días y una vez a 30 días
-   mientras no cambie su fecha de caducidad (si se renueva con una fecha
-   nueva, los avisos se reinician).
-   ========================================================================= */
 function obtenerAvisosCaducidad() {
   try { return JSON.parse(localStorage.getItem('documentacion_avisos_caducidad') || '{}'); }
   catch (e) { return {}; }
@@ -1958,7 +1769,6 @@ function comprobarCaducidadesYNotificar() {
 
     let estado = avisos[doc.id];
     if (!estado || estado.fecha !== doc.fechaCaducidad) {
-      // Documento nuevo con caducidad, o fecha renovada: avisos a cero.
       estado = { fecha: doc.fechaCaducidad, aviso60: false, aviso30: false };
     }
 
@@ -1975,7 +1785,6 @@ function comprobarCaducidadesYNotificar() {
     avisos[doc.id] = estado;
   });
 
-  // Limpia avisos de documentos que ya no existen (borrados o sin caducidad).
   Object.keys(avisos).forEach((id) => {
     if (!idsVivos.has(id)) { delete avisos[id]; cambiado = true; }
   });
@@ -2000,9 +1809,6 @@ function notificarCaducidad(doc, dias) {
   }
 }
 
-/* =========================================================================
-   Visor a pantalla completa
-   ========================================================================= */
 async function abrirVisor(doc) {
   const esImagen = (doc.mimeType || '').startsWith('image/');
   const visor = $('#visor-completo');
@@ -2048,7 +1854,6 @@ async function abrirVisor(doc) {
       document.body.appendChild(a); a.click(); a.remove();
     });
     if (!esImagen) {
-      // Para PDFs, un toque en el cuerpo también abre/descarga.
       $('#visor-cuerpo').addEventListener('click', () => window.open(url, '_blank'));
     }
   } catch (e) {
@@ -2153,7 +1958,6 @@ function confirmarBorrado(doc) {
   checkAviso.addEventListener('change', () => {
     btnConfirmar.disabled = !checkAviso.checked;
     if (!checkAviso.checked) {
-      // Si desmarca la casilla, se reinicia también el doble toque.
       confirmando = false;
       clearTimeout(temporizadorAviso);
       btnConfirmar.textContent = 'Eliminar';
@@ -2163,7 +1967,6 @@ function confirmarBorrado(doc) {
   btnConfirmar.addEventListener('click', async () => {
     if (!checkAviso.checked) return;
     if (!confirmando) {
-      // Primer toque: solo arma la confirmación, todavía no borra nada.
       confirmando = true;
       btnConfirmar.textContent = '¿Seguro? Toca otra vez';
       temporizadorAviso = setTimeout(() => {
@@ -2191,9 +1994,6 @@ function confirmarBorrado(doc) {
   });
 }
 
-/* =========================================================================
-   Modal: subir documento
-   ========================================================================= */
 $('#btn-subir').addEventListener('click', abrirModalSubida);
 
 function abrirModalSubida() {
@@ -2294,9 +2094,6 @@ async function guardarDocumentoNuevo() {
   }
 }
 
-/* =========================================================================
-   Modal genérico
-   ========================================================================= */
 function abrirModal(htmlInterior) {
   const raiz = $('#raiz-modal');
   raiz.innerHTML = `<div class="modal-fondo" id="modal-fondo"><div class="modal">${htmlInterior}</div></div>`;
@@ -2317,20 +2114,12 @@ function cerrarCapas(n) {
 }
 function cerrarTodasLasCapas() { cerrarCapas(pilaNavegacion.length); }
 
-// La barra de autocompletar de Android/Chrome (llave, tarjeta...) solo se
-// ofrece sobre campos VACÍOS al recibir el foco; con texto ya escrito no
-// sale. El truco: el campo empieza en "solo lectura" y se activa justo al
-// tocarlo, así en el instante en que el sistema decide si ofrece la barra,
-// el campo todavía no es editable y no hay nada que ofrecer.
 function evitarBarraAutorrelleno(input) {
   const activar = () => { input.readOnly = false; };
   input.addEventListener('focus', activar, { once: true });
   input.addEventListener('touchstart', activar, { once: true });
 }
 
-// Modal de "cambiar nombre" con el mismo estilo del resto de la app (en vez
-// del prompt() nativo del navegador, que aparece como una ventana ajena a
-// la interfaz, arriba de la web).
 function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
   abrirModal(`
     <h3>${escapeHtml(titulo)}</h3>
@@ -2358,9 +2147,6 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarGuardar(); });
 }
 
-/* =========================================================================
-   Menú de cuenta
-   ========================================================================= */
 $('#btn-ajustes').addEventListener('click', () => {
   const temaActual = obtenerTemaGuardado();
   abrirModal(`
@@ -2414,9 +2200,6 @@ $('#btn-ajustes').addEventListener('click', () => {
   });
 });
 
-/* =========================================================================
-   Administrar categorías (crear / renombrar / eliminar)
-   ========================================================================= */
 function abrirModalCategorias() {
   abrirModal(htmlModalCategorias());
   cablearModalCategorias();
@@ -2554,9 +2337,6 @@ function cablearModalCategorias() {
   inputNombre.addEventListener('keydown', (e) => { if (e.key === 'Enter') guardarForm(); });
 }
 
-/* =========================================================================
-   Utilidades
-   ========================================================================= */
 function mostrarToast(msg, esError = false) {
   const t = $('#toast');
   t.textContent = msg;

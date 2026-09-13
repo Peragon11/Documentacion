@@ -1,12 +1,3 @@
-// Service worker de Documentación.
-// Solo cachea el "shell" estático de la app (HTML/CSS/JS/iconos).
-// NUNCA cachea llamadas a googleapis.com: ni tokens, ni metadatos, ni documentos.
-//
-// Estrategia: "red primero". Mientras haya conexión, siempre se sirve la
-// versión más reciente publicada; la copia en caché solo se usa como
-// respaldo cuando no hay red. Así, cada vez que se hace un nuevo deploy,
-// la app instalada lo recoge en la siguiente vez que se abra con conexión,
-// sin depender de que el propio sw.js haya cambiado de bytes.
 const CACHE = 'documentacion-shell-v2';
 const SHELL = ['./index.html', './manifest.json', './icono.png', './icono_notificacion.png'];
 
@@ -27,7 +18,6 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Nunca interceptar llamadas a Google (auth, Drive API, etc.)
   if (url.hostname.includes('google')) return;
 
   if (event.request.method !== 'GET') return;
@@ -45,7 +35,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Al tocar un aviso de caducidad, enfoca la app si ya está abierta o la abre.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
