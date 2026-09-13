@@ -63,7 +63,8 @@
     --topbar-fondo:rgba(216,218,223,.92);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); }
+  html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); touch-action:pan-x pan-y; }
+  body.zoom-doc{ touch-action:auto; }
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
     -webkit-font-smoothing:antialiased; transition:background-color .2s ease, color .2s ease;
@@ -491,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.4';
+const VERSION_APP = '1.7.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2011,7 +2012,11 @@ async function abrirVisor(doc) {
       <div class="estado-carga"><div class="spinner"></div><span>Abriendo…</span></div>
     </div>`;
   visor.classList.remove('hidden');
-  pushNavegacion(() => visor.classList.add('hidden'));
+  // Solo aquí se permite el zoom nativo del navegador; en el resto de
+  // la app está bloqueado para que un pellizco accidental no amplíe la
+  // pantalla entera.
+  document.body.classList.add('zoom-doc');
+  pushNavegacion(() => { visor.classList.add('hidden'); document.body.classList.remove('zoom-doc'); });
 
   $('#visor-cerrar').addEventListener('click', volverAtras);
   $('#visor-ajustes').addEventListener('click', () => abrirMenuDocumento(doc));
@@ -2537,8 +2542,6 @@ function abrirModalExportar(persona = null) {
       mostrarToast(persona ? `${persona.nombre} todavía no tiene documentos guardados.` : 'No hay nada que exportar todavía.', true);
       return;
     }
-    if (!navigator.share) { mostrarToast('Este móvil no permite compartir archivos desde el navegador.', true); return; }
-
     $('.modal').innerHTML = `
       <h3>${titulo}</h3>
       <div class="estado-carga"><div class="spinner"></div><span>Generando el archivo, un momento…</span></div>
@@ -2552,12 +2555,12 @@ function abrirModalExportar(persona = null) {
       // inventado se rechaza siempre. Se declara como texto para que
       // pase ese filtro, aunque por dentro sea nuestro formato propio.
       const archivo = new File([bytes], nombre, { type: 'text/plain' });
-      if (navigator.canShare && !navigator.canShare({ files: [archivo] })) {
-        mostrarToast('Este archivo no se puede compartir desde aquí.', true);
-        volverAtras();
-        return;
-      }
-      mostrarPantallaArchivoListo(archivo);
+      // Compartir es opcional (algunos móviles no lo soportan, o el
+      // selector del sistema no ofrece "Guardar" para este tipo de
+      // archivo); guardarlo directamente en el dispositivo con un enlace
+      // de descarga siempre funciona, así que esa opción va aparte.
+      const sePuedeCompartir = !!navigator.share && (!navigator.canShare || navigator.canShare({ files: [archivo] }));
+      mostrarPantallaArchivoListo(archivo, sePuedeCompartir);
     } catch (e) {
       console.error(e);
       mostrarToast('No se pudo generar el archivo: ' + (e.message || e.name || e), true);
@@ -2566,24 +2569,44 @@ function abrirModalExportar(persona = null) {
   });
 }
 
-function mostrarPantallaArchivoListo(archivo) {
+function mostrarPantallaArchivoListo(archivo, sePuedeCompartir = true) {
+  const textoAyuda = sePuedeCompartir
+    ? 'Toca "Guardar" para descargarlo en este móvil, o "Compartir" para enviarlo directamente al otro dispositivo.'
+    : 'Toca "Guardar" para descargarlo en este móvil y pasarlo después al otro dispositivo por donde prefieras.';
   $('.modal').innerHTML = `
     <h3>Archivo generado</h3>
-    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Ya está listo: <strong style="color:var(--text-light)">${escapeHtml(archivo.name)}</strong>. Toca "Compartir" para enviarlo al otro dispositivo.</p>
+    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Ya está listo: <strong style="color:var(--text-light)">${escapeHtml(archivo.name)}</strong>. ${textoAyuda}</p>
+    <div class="modal-acciones" style="margin-bottom:10px;">
+      <button class="btn-secundario" id="btn-guardar-archivo-listo" type="button">Guardar en el dispositivo</button>
+    </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="btn-cancelar-archivo-listo" type="button">Cancelar</button>
-      <button class="btn-primario" id="btn-compartir-archivo-listo" type="button">Compartir</button>
+      ${sePuedeCompartir ? '<button class="btn-primario" id="btn-compartir-archivo-listo" type="button">Compartir</button>' : ''}
     </div>
   `;
   $('#btn-cancelar-archivo-listo').addEventListener('click', volverAtras);
-  $('#btn-compartir-archivo-listo').addEventListener('click', async () => {
-    try {
-      await navigator.share({ files: [archivo], title: archivo.name });
-      cerrarCapas(2); // cierra este modal y el de Ajustes
-    } catch (e) {
-      if (e.name !== 'AbortError') { console.error(e); mostrarToast('No se pudo compartir: ' + (e.message || e.name || e), true); }
-    }
+  $('#btn-guardar-archivo-listo').addEventListener('click', () => {
+    const url = URL.createObjectURL(archivo);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = archivo.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    mostrarToast('Archivo guardado en Descargas.');
+    cerrarCapas(2); // cierra este modal y el de Ajustes
   });
+  if (sePuedeCompartir) {
+    $('#btn-compartir-archivo-listo').addEventListener('click', async () => {
+      try {
+        await navigator.share({ files: [archivo], title: archivo.name });
+        cerrarCapas(2); // cierra este modal y el de Ajustes
+      } catch (e) {
+        if (e.name !== 'AbortError') { console.error(e); mostrarToast('No se pudo compartir: ' + (e.message || e.name || e), true); }
+      }
+    });
+  }
 }
 
 function abrirModalImportar() {
