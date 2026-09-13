@@ -64,7 +64,7 @@
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); touch-action:pan-x pan-y; }
-  body.zoom-doc{ touch-action:auto; }
+  html.zoom-doc, html.zoom-doc body{ touch-action:auto; }
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
     -webkit-font-smoothing:antialiased; transition:background-color .2s ease, color .2s ease;
@@ -492,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.5';
+const VERSION_APP = '1.7.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2015,8 +2015,8 @@ async function abrirVisor(doc) {
   // Solo aquí se permite el zoom nativo del navegador; en el resto de
   // la app está bloqueado para que un pellizco accidental no amplíe la
   // pantalla entera.
-  document.body.classList.add('zoom-doc');
-  pushNavegacion(() => { visor.classList.add('hidden'); document.body.classList.remove('zoom-doc'); });
+  document.documentElement.classList.add('zoom-doc');
+  pushNavegacion(() => { visor.classList.add('hidden'); document.documentElement.classList.remove('zoom-doc'); });
 
   $('#visor-cerrar').addEventListener('click', volverAtras);
   $('#visor-ajustes').addEventListener('click', () => abrirMenuDocumento(doc));
