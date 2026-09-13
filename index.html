@@ -492,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.8';
+const VERSION_APP = '1.7.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -2421,7 +2421,7 @@ $('#btn-ajustes').addEventListener('click', () => {
   $('#op-ver-drive').addEventListener('click', () => {
     if (carpetaId) window.open(`https://drive.google.com/drive/folders/${carpetaId}`, '_blank');
   });
-  $('#op-exportar').addEventListener('click', abrirModalExportar);
+  $('#op-exportar').addEventListener('click', () => abrirModalExportar());
   $('#op-importar').addEventListener('click', abrirModalImportar);
   $('#op-cerrar-sesion').addEventListener('click', () => {
     if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
