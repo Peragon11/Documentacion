@@ -210,6 +210,11 @@
   .spinner{ width:24px; height:24px; border-radius:50%; border:2.5px solid var(--borde); border-top-color:var(--seal); animation:girar .8s linear infinite; }
   @keyframes girar{ to{ transform:rotate(360deg); } }
 
+  .overlay-reconectando{
+    position:fixed; inset:0; z-index:80; background:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+
   .chips-categorias{
     display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
     -ms-overflow-style:none; scrollbar-width:none;
@@ -398,7 +403,8 @@
 
   .lista-categorias-admin{ display:flex; flex-direction:column; gap:2px; margin-bottom:14px; }
   .fila-categoria{ display:flex; align-items:center; gap:10px; padding:9px 4px; }
-  .fila-categoria .punto-cat{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .punto-cat{ width:10px; height:10px; border-radius:50%; flex:none; }
+  .opcion-menu .nombre-opcion-cat{ flex:1; }
   .fila-categoria .nombre-cat{ flex:1; font-size:.88rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .icon-btn-cat{
     background:none; border:none; color:var(--text-dim); cursor:pointer; flex:none;
@@ -480,6 +486,7 @@
 
 <div id="visor-completo" class="hidden"></div>
 <div id="raiz-modal"></div>
+<div id="overlay-reconectando" class="overlay-reconectando hidden"><div class="spinner"></div></div>
 <div class="toast" id="toast"></div>
 <div class="barra-seleccion hidden" id="barra-seleccion">
   <button class="btn-icono-top" id="btn-cancelar-seleccion" aria-label="Cancelar selección">
@@ -492,7 +499,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.1';
+const VERSION_APP = '1.8.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -670,6 +677,8 @@ function initGIS() {
     scope: SCOPES,
     callback: onTokenRecibido,
     error_callback: () => {
+      renovacionEnCurso = false;
+      ocultarOverlayReconectando();
       if (!mostrandoDatosLocales) mostrarToast('No se pudo conectar con Google.', true);
     },
   });
@@ -701,10 +710,45 @@ function intentarSesionGuardada() {
   }
   if (!navigator.onLine && mostrandoDatosLocales) return;
   if (CLIENT_ID.includes('TU_CLIENT_ID')) return;
-  setTimeout(() => tokenClient && tokenClient.requestAccessToken({ prompt: 'none' }), 300);
+  // Si ya se ve la app con datos locales, esta reconexión puede hacer
+  // parpadear por debajo una ventana de Google — se tapa con una
+  // pantalla propia (que no es sospechosa, solo parece que tarda un
+  // poco más en abrir) mientras dura.
+  if (mostrandoDatosLocales) mostrarOverlayReconectando();
+  setTimeout(solicitarRenovacionSilenciosa, 300);
+}
+
+let overlayReconectandoDesde = 0;
+const MINIMO_OVERLAY_RECONECTANDO = 500;
+function mostrarOverlayReconectando() {
+  overlayReconectandoDesde = Date.now();
+  $('#overlay-reconectando').classList.remove('hidden');
+}
+function ocultarOverlayReconectando() {
+  const overlay = $('#overlay-reconectando');
+  if (overlay.classList.contains('hidden')) return;
+  const restante = Math.max(MINIMO_OVERLAY_RECONECTANDO - (Date.now() - overlayReconectandoDesde), 0);
+  setTimeout(() => overlay.classList.add('hidden'), restante);
+}
+
+// La renovación silenciosa (prompt:'none') abre por debajo una ventana
+// de Google de verdad, aunque se cierre casi al instante — si el móvil
+// no puede mantenerla realmente invisible, se ve como un parpadeo
+// blanco. No depende de nuestro código: es así siempre que la petición
+// no viene de un toque directo. Lo único que sí podemos controlar es
+// no pedirla dos veces a la vez, y pedirla en el momento en que menos
+// se note (ver el listener de visibilitychange, más abajo) en vez de a
+// medio uso.
+let renovacionEnCurso = false;
+function solicitarRenovacionSilenciosa() {
+  if (renovacionEnCurso || !tokenClient || CLIENT_ID.includes('TU_CLIENT_ID')) return;
+  renovacionEnCurso = true;
+  tokenClient.requestAccessToken({ prompt: 'none' });
 }
 
 function onTokenRecibido(resp) {
+  renovacionEnCurso = false;
+  ocultarOverlayReconectando();
   if (resp.error) {
     if (!mostrandoDatosLocales) mostrarToast('No se pudo completar la conexión.', true);
     return;
@@ -747,11 +791,22 @@ function refrescarPantallaActual() {
   }
 }
 
+const MARGEN_RENOVACION = 5 * 60 * 1000;
+
 function programarRenovacionSilenciosa() {
-  const margen = 5 * 60 * 1000;
-  const espera = Math.max(tokenExpiry - Date.now() - margen, 30000);
-  setTimeout(() => tokenClient.requestAccessToken({ prompt: 'none' }), espera);
+  const espera = Math.max(tokenExpiry - Date.now() - MARGEN_RENOVACION, 30000);
+  setTimeout(solicitarRenovacionSilenciosa, espera);
 }
+
+// Si el móvil pone la pestaña en segundo plano, este temporizador se
+// puede retrasar o no llegar a saltar a tiempo — por eso, además,
+// se comprueba aquí mismo en cuanto la app vuelve a primer plano,
+// para renovar el token justo al volver en vez de que salte de golpe
+// más tarde, a media consulta, sin que el usuario lo espere.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !mostrandoDatosLocales) return;
+  if (tokenExpiry && tokenExpiry - Date.now() < MARGEN_RENOVACION) solicitarRenovacionSilenciosa();
+});
 
 function mostrarPantallaCarga() {
   $('#pantalla-personas').classList.remove('hidden');
@@ -1061,6 +1116,11 @@ function habilitarArrastrePersonas() {
   const UMBRAL_MOVIMIENTO = 20;
 
   contenedor.querySelectorAll('.persona-tile').forEach((tile) => {
+    // El user-select:none del CSS no basta en algunos móviles Android: al
+    // mantener pulsado sale igualmente el menú/selección nativa de texto
+    // (las "gotas" azules) por encima del arrastre. Se anula a mano.
+    tile.addEventListener('contextmenu', (e) => e.preventDefault());
+    tile.addEventListener('selectstart', (e) => e.preventDefault());
     tile.addEventListener('pointerdown', (eventoInicial) => {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
@@ -2093,6 +2153,10 @@ function abrirMenuDocumento(doc) {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Cambiar nombre
       </button>
+      <button class="opcion-menu" id="op-categoria-doc">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        ${datos.categorias.some((c) => c.id === doc.categoria) ? 'Cambiar categoría' : 'Añadir categoría'}
+      </button>
       <button class="opcion-menu" id="op-caducidad-doc">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3v3M16 3v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         ${doc.fechaCaducidad ? 'Cambiar fecha de caducidad' : 'Añadir fecha de caducidad'}
@@ -2115,6 +2179,7 @@ function abrirMenuDocumento(doc) {
       });
     });
   });
+  $('#op-categoria-doc').addEventListener('click', () => abrirModalCategoriaDoc(doc));
   $('#op-caducidad-doc').addEventListener('click', () => abrirModalCaducidad(doc));
   $('#op-eliminar-doc').addEventListener('click', () => confirmarBorrado(doc));
   $('#op-compartir-doc').addEventListener('click', () => {
@@ -2124,6 +2189,31 @@ function abrirMenuDocumento(doc) {
   $('#op-compartir-pdf-doc')?.addEventListener('click', () => {
     volverAtras();
     compartirDocumentoComoPdf(doc);
+  });
+}
+
+function abrirModalCategoriaDoc(doc) {
+  const filas = datos.categorias.map((cat) => `
+    <button class="opcion-menu" data-id="${cat.id}">
+      <span class="punto-cat" style="background:${cat.color}"></span>
+      <span class="nombre-opcion-cat">${escapeHtml(cat.nombre)}</span>
+      ${cat.id === doc.categoria ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+    </button>`).join('');
+
+  abrirModal(`
+    <h3>Cambiar categoría</h3>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">${escapeHtml(doc.nombre)}</p>
+    <div class="menu-opciones">${filas}</div>
+  `);
+  $$('.menu-opciones button[data-id]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      doc.categoria = btn.dataset.id;
+      await guardarMetadatos();
+      volverAtras(); // cierra esta pantalla y el menú de opciones, vuelve al visor
+      renderizarChipsCategorias();
+      renderizarDocumentos();
+      mostrarToast('Categoría actualizada');
+    });
   });
 }
 
