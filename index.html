@@ -492,7 +492,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.7.7';
+const VERSION_APP = '1.7.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -818,16 +818,11 @@ async function asegurarCarpeta() {
   localStorage.setItem('documentacion_carpeta_id', carpetaId);
 }
 
-// "Otros" es la categoría de reserva a la que caen los documentos
-// huérfanos (categoría borrada, o sin categoría); ya no se puede borrar
-// desde el menú, pero por si alguien la había borrado antes de este
-// arreglo, se recupera sola en cuanto se detecta que falta.
-function asegurarCategoriaOtros() {
-  if (!datos.categorias.some((c) => c.id === 'otros')) {
-    const otros = CATEGORIAS_INICIALES.find((c) => c.id === 'otros');
-    if (otros) datos.categorias.push(Object.assign({}, otros));
-  }
-}
+// Pseudo-categoría de reserva, no es una categoría real (no vive en
+// datos.categorias, no se puede crear/renombrar/borrar): es solo lo que
+// se muestra para un documento cuya categoría ya no existe, porque se
+// borró. Cualquier categoría, incluidas las de fábrica, se puede borrar.
+const CATEGORIA_SIN_ASIGNAR = { id: null, nombre: 'Sin categoría', color: '#6B7686' };
 
 async function cargarMetadatos() {
   const q = encodeURIComponent(`name='${NOMBRE_METADATOS}' and '${carpetaId}' in parents and trashed=false`);
@@ -843,7 +838,6 @@ async function cargarMetadatos() {
       datos.personas = parsed.personas || [];
       datos.categorias = (parsed.categorias && parsed.categorias.length) ? parsed.categorias : CATEGORIAS_INICIALES;
       datos.documentos = parsed.documentos || [];
-      asegurarCategoriaOtros();
     } catch (e) {
       datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
     }
@@ -1672,20 +1666,29 @@ function renderizarDocumentos() {
     return;
   }
 
+  // Documentos cuya categoría ya no existe (borrada aquí, o traída de una
+  // importación con una categoría que en este dispositivo nunca existió):
+  // todos caen juntos bajo "Sin categoría", sin importar qué id concreto
+  // tuvieran guardado, para no acabar con varios grupos repetidos con
+  // ese mismo título.
+  const idsValidos = new Set(datos.categorias.map((c) => c.id));
+  const claveCategoria = (doc) => idsValidos.has(doc.categoria) ? doc.categoria : CATEGORIA_SIN_ASIGNAR.id;
+
   const porCategoria = new Map();
   lista.forEach((doc) => {
-    if (!porCategoria.has(doc.categoria)) porCategoria.set(doc.categoria, []);
-    porCategoria.get(doc.categoria).push(doc);
+    const clave = claveCategoria(doc);
+    if (!porCategoria.has(clave)) porCategoria.set(clave, []);
+    porCategoria.get(clave).push(doc);
   });
 
   const ordenCategorias = datos.categorias
     .map((c) => c.id)
     .filter((id) => porCategoria.has(id));
-  porCategoria.forEach((_, id) => { if (!ordenCategorias.includes(id)) ordenCategorias.push(id); });
+  if (porCategoria.has(CATEGORIA_SIN_ASIGNAR.id)) ordenCategorias.push(CATEGORIA_SIN_ASIGNAR.id);
 
   cont.innerHTML = '';
   ordenCategorias.forEach((catId) => {
-    const cat = datos.categorias.find((c) => c.id === catId) || { nombre: 'Otros', color: '#9FB0C3' };
+    const cat = datos.categorias.find((c) => c.id === catId) || CATEGORIA_SIN_ASIGNAR;
     const docs = porCategoria.get(catId).slice().sort((a, b) => (b.fechaSubida || '').localeCompare(a.fechaSubida || ''));
 
     const grupo = document.createElement('div');
@@ -2681,8 +2684,8 @@ async function procesarImportacion(file) {
       const personaId = mapaPersonas[meta.personaId];
       const persona = datos.personas.find((p) => p.id === personaId);
       if (!persona) continue;
-      const categoriaId = mapaCategorias[meta.categoria] || 'otros';
-      const categoriaObj = datos.categorias.find((c) => c.id === categoriaId) || { id: 'otros', nombre: 'Otros' };
+      const categoriaId = mapaCategorias[meta.categoria] || CATEGORIA_SIN_ASIGNAR.id;
+      const categoriaObj = datos.categorias.find((c) => c.id === categoriaId) || CATEGORIA_SIN_ASIGNAR;
 
       const blobArchivo = new Blob([bytes], { type: meta.mimeType || 'application/octet-stream' });
       const archivoFile = new File([blobArchivo], meta.nombre, { type: meta.mimeType || blobArchivo.type });
@@ -2725,10 +2728,9 @@ function htmlModalCategorias() {
         <button class="icon-btn-cat" data-accion="renombrar" data-id="${cat.id}" aria-label="Renombrar categoría">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         </button>
-        ${cat.id === 'otros' ? '' : `
         <button class="icon-btn-cat" data-accion="eliminar" data-id="${cat.id}" aria-label="Eliminar categoría">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </button>`}
+        </button>
       </div>`).join('');
 
   return `
@@ -2785,23 +2787,34 @@ function cablearModalCategorias() {
     zonaForm.classList.add('hidden');
     editandoId = null;
   }
-  function abrirConfirmEliminar(cat) {
+  function abrirConfirmEliminar(cat, num) {
     zonaForm.classList.add('hidden');
     editandoId = null;
     eliminandoId = cat.id;
-    const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
-    textoEliminar.textContent = num > 0
-      ? `¿Eliminar «${cat.nombre}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «Otros».`
-      : `¿Eliminar la categoría «${cat.nombre}»?`;
+    textoEliminar.textContent = `¿Eliminar «${cat.nombre}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «${CATEGORIA_SIN_ASIGNAR.nombre}».`;
     zonaEliminar.classList.remove('hidden');
   }
   function cerrarConfirmEliminar() {
     zonaEliminar.classList.add('hidden');
     eliminandoId = null;
   }
+  async function eliminarCategoria(cat) {
+    datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
+    await guardarMetadatos();
+    if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+    mostrarToast('Categoría eliminada');
+    refrescar();
+  }
   async function guardarForm() {
     const nombre = inputNombre.value.trim();
     if (!nombre) return;
+    // Nombre reservado: si se pudiera usar, un documento sin categoría
+    // real y otro metido a mano en una categoría con ese mismo nombre
+    // se verían agrupados bajo el mismo título, sin forma de distinguirlos.
+    if (nombre.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
+      mostrarToast(`"${CATEGORIA_SIN_ASIGNAR.nombre}" es un nombre reservado, elige otro.`, true);
+      return;
+    }
     if (editandoId) {
       const cat = datos.categorias.find((c) => c.id === editandoId);
       if (cat && nombre !== cat.nombre) {
@@ -2830,18 +2843,18 @@ function cablearModalCategorias() {
   $$('.icon-btn-cat[data-accion="eliminar"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
-      if (cat) abrirConfirmEliminar(cat);
+      if (!cat) return;
+      const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
+      // Sin documentos de por medio, no hay nada que avisar: se borra
+      // directamente en vez de pedir confirmación para nada.
+      if (num === 0) { eliminarCategoria(cat); return; }
+      abrirConfirmEliminar(cat, num);
     });
   });
   $('#btn-cancelar-eliminar-categoria').addEventListener('click', cerrarConfirmEliminar);
-  $('#btn-confirmar-eliminar-categoria').addEventListener('click', async () => {
+  $('#btn-confirmar-eliminar-categoria').addEventListener('click', () => {
     const cat = datos.categorias.find((c) => c.id === eliminandoId);
-    if (!cat) return;
-    datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
-    await guardarMetadatos();
-    if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
-    mostrarToast('Categoría eliminada');
-    refrescar();
+    if (cat) eliminarCategoria(cat);
   });
 
   $('#btn-nueva-categoria-admin').addEventListener('click', () => abrirForm(null));
