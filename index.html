@@ -499,7 +499,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.2';
+const VERSION_APP = '1.8.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -697,6 +697,12 @@ function intentarSesionGuardada() {
     localStorage.removeItem('documentacion_sesion_cerrada');
     return;
   }
+  // Se tapa la app con una pantalla propia (que no es sospechosa, solo
+  // parece que tarda un poco más en abrir) desde el primer momento y
+  // siempre, no solo cuando ya se sabe que hace falta reconectar — así,
+  // si en algún momento Google necesita renovar el token por debajo, su
+  // posible parpadeo queda tapado pase lo que pase.
+  if (mostrandoDatosLocales) mostrarOverlayReconectando();
   const guardado = localStorage.getItem('documentacion_sesion');
   if (guardado) {
     try {
@@ -704,17 +710,13 @@ function intentarSesionGuardada() {
       if (s.expiry > Date.now() + 60000) {
         accessToken = s.token; tokenExpiry = s.expiry;
         sincronizarConDrive();
+        ocultarOverlayReconectando();
         return;
       }
     } catch (e) { /* ignorar */ }
   }
-  if (!navigator.onLine && mostrandoDatosLocales) return;
-  if (CLIENT_ID.includes('TU_CLIENT_ID')) return;
-  // Si ya se ve la app con datos locales, esta reconexión puede hacer
-  // parpadear por debajo una ventana de Google — se tapa con una
-  // pantalla propia (que no es sospechosa, solo parece que tarda un
-  // poco más en abrir) mientras dura.
-  if (mostrandoDatosLocales) mostrarOverlayReconectando();
+  if (!navigator.onLine && mostrandoDatosLocales) { ocultarOverlayReconectando(); return; }
+  if (CLIENT_ID.includes('TU_CLIENT_ID')) { ocultarOverlayReconectando(); return; }
   setTimeout(solicitarRenovacionSilenciosa, 300);
 }
 
