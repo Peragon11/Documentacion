@@ -520,7 +520,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.8';
+const VERSION_APP = '1.8.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -830,7 +830,10 @@ function programarRenovacionSilenciosa() {
 // más tarde, a media consulta, sin que el usuario lo espere.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !mostrandoDatosLocales) return;
-  if (tokenExpiry && tokenExpiry - Date.now() < MARGEN_RENOVACION) solicitarRenovacionSilenciosa();
+  if (tokenExpiry && tokenExpiry - Date.now() < MARGEN_RENOVACION) {
+    mostrarOverlayReconectando();
+    solicitarRenovacionSilenciosa();
+  }
 });
 
 function mostrarPantallaCarga() {
