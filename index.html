@@ -210,27 +210,6 @@
   .spinner{ width:24px; height:24px; border-radius:50%; border:2.5px solid var(--borde); border-top-color:var(--seal); animation:girar .8s linear infinite; }
   @keyframes girar{ to{ transform:rotate(360deg); } }
 
-  .overlay-reconectando{
-    position:fixed; inset:0; z-index:80; background:var(--ink);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .caja-reconectando{
-    display:flex; flex-direction:column; align-items:center; gap:18px;
-    color:var(--text-dim); font-size:.92rem; letter-spacing:.02em;
-  }
-  .barra-reconectando{
-    width:150px; height:5px; border-radius:999px; background:var(--ink-3); overflow:hidden;
-  }
-  .barra-reconectando span{
-    display:block; width:35%; height:100%; border-radius:999px;
-    background:linear-gradient(90deg, var(--seal), var(--stamp));
-    animation:deslizar-barra 1.2s ease-in-out infinite;
-  }
-  @keyframes deslizar-barra{
-    0%{ transform:translateX(-120%); }
-    100%{ transform:translateX(385%); }
-  }
-
   .chips-categorias{
     display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
     -ms-overflow-style:none; scrollbar-width:none;
@@ -502,12 +481,6 @@
 
 <div id="visor-completo" class="hidden"></div>
 <div id="raiz-modal"></div>
-<div id="overlay-reconectando" class="overlay-reconectando hidden">
-  <div class="caja-reconectando">
-    <span>Conectando…</span>
-    <div class="barra-reconectando"><span></span></div>
-  </div>
-</div>
 <div class="toast" id="toast"></div>
 <div class="barra-seleccion hidden" id="barra-seleccion">
   <button class="btn-icono-top" id="btn-cancelar-seleccion" aria-label="Cancelar selección">
@@ -520,7 +493,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.8.9';
+const VERSION_APP = '1.9.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -620,10 +593,6 @@ document.addEventListener('DOMContentLoaded', () => {
     mostrandoDatosLocales = true;
     carpetaId = localStorage.getItem('documentacion_carpeta_id') || null;
     usuarioEmail = localStorage.getItem('documentacion_email') || '';
-    // Se tapa desde ya, antes incluso de mostrar nada, para que no se
-    // llegue a ver la pantalla de personas ni un instante antes de que
-    // intentarSesionGuardada() decida si hace falta reconectar o no.
-    mostrarOverlayReconectando();
     mostrarApp();
     mostrarPantallaPersonas();
     comprobarCaducidadesYNotificar();
@@ -703,7 +672,6 @@ function initGIS() {
     callback: onTokenRecibido,
     error_callback: () => {
       renovacionEnCurso = false;
-      ocultarOverlayReconectando();
       if (!mostrandoDatosLocales) mostrarToast('No se pudo conectar con Google.', true);
     },
   });
@@ -720,12 +688,8 @@ $('#btn-conectar').addEventListener('click', () => {
 function intentarSesionGuardada() {
   if (localStorage.getItem('documentacion_sesion_cerrada')) {
     localStorage.removeItem('documentacion_sesion_cerrada');
-    ocultarOverlayReconectando();
     return;
   }
-  // La pantalla de tapado (mismo icono que el arranque de Android) ya se
-  // puso al cargar los datos en caché, antes de mostrar nada — aquí solo
-  // se retira, una vez se sabe si hacía falta reconectar o no.
   const guardado = localStorage.getItem('documentacion_sesion');
   if (guardado) {
     try {
@@ -733,27 +697,13 @@ function intentarSesionGuardada() {
       if (s.expiry > Date.now() + 60000) {
         accessToken = s.token; tokenExpiry = s.expiry;
         sincronizarConDrive();
-        ocultarOverlayReconectando();
         return;
       }
     } catch (e) { /* ignorar */ }
   }
-  if (!navigator.onLine && mostrandoDatosLocales) { ocultarOverlayReconectando(); return; }
-  if (CLIENT_ID.includes('TU_CLIENT_ID')) { ocultarOverlayReconectando(); return; }
+  if (!navigator.onLine && mostrandoDatosLocales) return;
+  if (CLIENT_ID.includes('TU_CLIENT_ID')) return;
   setTimeout(solicitarRenovacionSilenciosa, 300);
-}
-
-let overlayReconectandoDesde = 0;
-const MINIMO_OVERLAY_RECONECTANDO = 1000;
-function mostrarOverlayReconectando() {
-  overlayReconectandoDesde = Date.now();
-  $('#overlay-reconectando').classList.remove('hidden');
-}
-function ocultarOverlayReconectando() {
-  const overlay = $('#overlay-reconectando');
-  if (overlay.classList.contains('hidden')) return;
-  const restante = Math.max(MINIMO_OVERLAY_RECONECTANDO - (Date.now() - overlayReconectandoDesde), 0);
-  setTimeout(() => overlay.classList.add('hidden'), restante);
 }
 
 // La renovación silenciosa (prompt:'none') abre por debajo una ventana
@@ -773,7 +723,6 @@ function solicitarRenovacionSilenciosa() {
 
 function onTokenRecibido(resp) {
   renovacionEnCurso = false;
-  ocultarOverlayReconectando();
   if (resp.error) {
     if (!mostrandoDatosLocales) mostrarToast('No se pudo completar la conexión.', true);
     return;
@@ -830,10 +779,7 @@ function programarRenovacionSilenciosa() {
 // más tarde, a media consulta, sin que el usuario lo espere.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !mostrandoDatosLocales) return;
-  if (tokenExpiry && tokenExpiry - Date.now() < MARGEN_RENOVACION) {
-    mostrarOverlayReconectando();
-    solicitarRenovacionSilenciosa();
-  }
+  if (tokenExpiry && tokenExpiry - Date.now() < MARGEN_RENOVACION) solicitarRenovacionSilenciosa();
 });
 
 function mostrarPantallaCarga() {
