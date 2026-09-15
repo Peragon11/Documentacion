@@ -493,7 +493,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.0';
+const VERSION_APP = '1.9.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -511,13 +511,16 @@ const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
 
 const ICONOS_AVATAR = [
   { id: 'persona', nombre: 'Persona', svg: '<circle cx="12" cy="8" r="4.2"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3"/>' },
-  { id: 'gato', nombre: 'Gato', svg: '<polygon points="5,11 3,3.5 9.5,8.5"/><polygon points="19,11 21,3.5 14.5,8.5"/><circle cx="12" cy="14.5" r="7"/>' },
-  { id: 'perro', nombre: 'Perro', svg: '<ellipse cx="4.8" cy="11" rx="3.4" ry="5.2" transform="rotate(-18 4.8 11)"/><ellipse cx="19.2" cy="11" rx="3.4" ry="5.2" transform="rotate(18 19.2 11)"/><circle cx="12" cy="14" r="7"/>' },
-  { id: 'zorro', nombre: 'Zorro', svg: '<polygon points="5,10 3,2.5 10,8"/><polygon points="19,10 21,2.5 14,8"/><path d="M12 8c4.5 0 7.5 3.2 7.5 7.3 0 4-3.3 6.7-7.5 6.7s-7.5-2.7-7.5-6.7C4.5 11.2 7.5 8 12 8z"/>' },
-  { id: 'oso', nombre: 'Oso', svg: '<circle cx="5.5" cy="6.5" r="2.8"/><circle cx="18.5" cy="6.5" r="2.8"/><circle cx="12" cy="14" r="7.5"/>' },
-  { id: 'conejo', nombre: 'Conejo', svg: '<ellipse cx="7" cy="5" rx="2.3" ry="6" transform="rotate(-12 7 5)"/><ellipse cx="17" cy="5" rx="2.3" ry="6" transform="rotate(12 17 5)"/><circle cx="12" cy="15" r="6.5"/>' },
+  { id: 'sol', nombre: 'Sol', svg: '<circle cx="12" cy="12" r="4.3"/><rect x="11" y="1" width="2" height="4.2" rx="1"/><rect x="11" y="18.8" width="2" height="4.2" rx="1"/><rect x="1" y="11" width="4.2" height="2" rx="1"/><rect x="18.8" y="11" width="4.2" height="2" rx="1"/><rect x="3.3" y="3.3" width="2" height="4.2" rx="1" transform="rotate(45 4.3 5.4)"/><rect x="18.7" y="3.3" width="2" height="4.2" rx="1" transform="rotate(-45 19.7 5.4)"/><rect x="3.3" y="16.5" width="2" height="4.2" rx="1" transform="rotate(-45 4.3 18.6)"/><rect x="18.7" y="16.5" width="2" height="4.2" rx="1" transform="rotate(45 19.7 18.6)"/>' },
+  { id: 'luna', nombre: 'Luna', svg: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>' },
+  { id: 'rayo', nombre: 'Rayo', svg: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>' },
+  { id: 'diamante', nombre: 'Diamante', svg: '<rect x="6" y="6" width="12" height="12" transform="rotate(45 12 12)"/>' },
+  { id: 'trebol', nombre: 'Trébol', svg: '<circle cx="8" cy="8" r="4.2"/><circle cx="16" cy="8" r="4.2"/><circle cx="8" cy="16" r="4.2"/><circle cx="16" cy="16" r="4.2"/><rect x="11" y="14" width="2" height="8" rx="1" transform="rotate(20 12 18)"/>' },
   { id: 'estrella', nombre: 'Estrella', svg: '<path d="M12 2.5l2.6 6.2 6.7.6-5.1 4.4 1.6 6.6L12 16.9 6.2 20.3l1.6-6.6-5.1-4.4 6.7-.6z"/>' },
   { id: 'corazon', nombre: 'Corazón', svg: '<path d="M12 20.5S3 14.8 3 8.9C3 5.9 5.3 3.8 8 3.8c1.7 0 3.2.9 4 2.3.8-1.4 2.3-2.3 4-2.3 2.7 0 5 2.1 5 5.1 0 5.9-9 11.6-9 11.6z"/>' },
+  { id: 'casa', nombre: 'Casa', svg: '<path d="M12 3 3 10.5V21h6v-6h6v6h6V10.5z"/>' },
+  { id: 'coche', nombre: 'Coche', svg: '<rect x="3" y="11" width="18" height="5" rx="2"/><path d="M6 11l2-4h8l2 4z"/><circle cx="7.5" cy="17.2" r="2.3"/><circle cx="16.5" cy="17.2" r="2.3"/>' },
+  { id: 'carpeta', nombre: 'Carpeta', svg: '<path d="M3 6a1 1 0 011-1h5l2 2h9a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1z"/>' },
 ];
 function htmlIconoAvatar(id) {
   const ic = ICONOS_AVATAR.find((i) => i.id === id);
@@ -1581,7 +1584,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
         Cambiar nombre
       </button>
       <button class="opcion-menu" id="op-exportar-persona">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 12l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Exportar copia
       </button>
       <button class="opcion-menu peligro" id="op-eliminar-persona">
@@ -2492,7 +2495,7 @@ $('#btn-ajustes').addEventListener('click', () => {
         Ver carpeta en Drive
       </button>
       <button class="opcion-menu" id="op-exportar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 12l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Exportar copia
       </button>
       <button class="opcion-menu" id="op-importar">
