@@ -348,7 +348,12 @@
 
   .galeria-paginas{
     flex:1; min-height:0; overflow-y:auto; padding:4px 12px calc(16px + var(--safe-b));
-    display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  @media (orientation:landscape){
+    .galeria-paginas{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+    .galeria-pagina .miniatura{ aspect-ratio:16/10 !important; }
+    .galeria-pagina .miniatura img{ object-position:top; }
   }
   .galeria-pagina{
     display:flex; flex-direction:column; width:100%; background:var(--ink-2);
@@ -565,7 +570,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.1';
+const VERSION_APP = '1.10.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -962,6 +967,36 @@ async function carpetaDestinoDocumento(persona, categoria) {
   const carpetaCategoriaId = await buscarOCrearCarpeta(categoria.nombre, carpetaPersonaId);
   cacheCarpetas[clave] = carpetaCategoriaId;
   return carpetaCategoriaId;
+}
+
+// Borra la carpeta si ya no tiene nada dentro (ni archivos ni otras
+// carpetas). Se usa después de borrar el último documento de una
+// categoría o de una persona, para no dejar carpetas vacías en Drive.
+async function borrarCarpetaSiVacia(idCarpeta) {
+  const q = encodeURIComponent(`'${idCarpeta}' in parents and trashed=false`);
+  const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`);
+  const info = await res.json();
+  if (info.files && info.files.length > 0) return false;
+  await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${idCarpeta}`, { method: 'DELETE' });
+  return true;
+}
+
+// Tras borrar el último documento de una categoría (para esa persona),
+// comprueba si su carpeta se ha quedado vacía y la borra; si con eso la
+// carpeta de la propia persona también se queda vacía (ya no le quedan
+// categorías con nada dentro), la borra también.
+async function limpiarCarpetasVaciasTrasBorrar(persona, categoriaObj) {
+  try {
+    const idCarpetaCategoria = await carpetaDestinoDocumento(persona, categoriaObj);
+    const categoriaQuedoVacia = await borrarCarpetaSiVacia(idCarpetaCategoria);
+    if (!categoriaQuedoVacia) return;
+    delete cacheCarpetas[`${persona.id}:${categoriaObj.id}`];
+    const idCarpetaPersona = await buscarOCrearCarpeta(persona.nombre, carpetaId);
+    const personaQuedoVacia = await borrarCarpetaSiVacia(idCarpetaPersona);
+    if (personaQuedoVacia) {
+      Object.keys(cacheCarpetas).forEach((clave) => { if (clave.startsWith(`${persona.id}:`)) delete cacheCarpetas[clave]; });
+    }
+  } catch (e) { /* si falla la limpieza no pasa nada, el documento ya se borró bien */ }
 }
 
 async function asegurarCarpeta() {
@@ -1837,10 +1872,16 @@ $('#btn-menu-persona').addEventListener('click', () => {
       if (inputConfirmar.value.trim().toLowerCase() !== persona.nombre.trim().toLowerCase()) return;
       cerrarTodasLasCapas();
       mostrarToast('Eliminando…');
+      const categoriasUsadas = new Map();
       for (const doc of docs) {
+        const categoriaObj = datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR;
+        categoriasUsadas.set(categoriaObj.id, categoriaObj);
         for (const pagina of doc.paginas) {
           try { await borrarArchivoDeDrive(pagina.driveFileId); cacheBorrar(pagina.driveFileId); } catch (e) { /* seguir */ }
         }
+      }
+      for (const categoriaObj of categoriasUsadas.values()) {
+        limpiarCarpetasVaciasTrasBorrar(persona, categoriaObj); // mejor esfuerzo, sin esperar
       }
       datos.documentos = datos.documentos.filter((d) => d.personaId !== persona.id);
       datos.personas = datos.personas.filter((p) => p.id !== persona.id);
@@ -2449,7 +2490,13 @@ function abrirGaleriaDocumento(doc) {
         const cont = btn.querySelector('.miniatura');
         const img = document.createElement('img');
         img.src = url; img.alt = pagina.nombre || ''; img.loading = 'lazy';
-        img.onload = () => { cont.querySelector('.skeleton')?.remove(); URL.revokeObjectURL(url); };
+        img.onload = () => {
+          cont.querySelector('.skeleton')?.remove();
+          if (img.naturalHeight > img.naturalWidth) {
+            cont.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+          }
+          URL.revokeObjectURL(url);
+        };
         img.onerror = () => URL.revokeObjectURL(url);
         cont.appendChild(img);
       }).catch(() => { btn.querySelector('.skeleton')?.remove(); });
@@ -2764,6 +2811,9 @@ function confirmarBorrado(doc, indicePagina = null) {
           await borrarArchivoDeDrive(pagina.driveFileId);
           cacheBorrar(pagina.driveFileId);
         }
+        const persona = datos.personas.find((p) => p.id === doc.personaId);
+        const categoriaObj = datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR;
+        if (persona) limpiarCarpetasVaciasTrasBorrar(persona, categoriaObj);
         datos.documentos = datos.documentos.filter((d) => d.id !== doc.id);
         await guardarMetadatos();
         cerrarTodasLasCapas();
