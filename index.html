@@ -62,7 +62,11 @@
     --borde-fuerte:rgba(20,26,36,.24);
     --topbar-fondo:rgba(216,218,223,.92);
   }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  *{
+    box-sizing:border-box; -webkit-tap-highlight-color:transparent;
+    -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
+  }
+  input, textarea, [contenteditable]{ -webkit-touch-callout:default; user-select:text; -webkit-user-select:text; }
   html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); touch-action:pan-x pan-y; }
   html.zoom-doc, html.zoom-doc body{ touch-action:auto; }
   body{
@@ -493,7 +497,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.2';
+const VERSION_APP = '1.9.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
