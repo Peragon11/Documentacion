@@ -239,7 +239,12 @@
 
   .lista-docs{ display:flex; flex-direction:column; gap:10px; }
   @media (orientation:landscape){
-    .lista-docs{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+    /* Mosaico tipo Pinterest en vez de cuadrícula: con fotos verticales
+       y horizontales mezcladas, una cuadrícula normal deja huecos (la
+       fila entera se estira a la más alta). En columnas, cada ficha
+       ocupa solo su alto real y la siguiente sube a rellenar el hueco. */
+    .lista-docs{ columns:2; column-gap:12px; }
+    .doc-fila{ break-inside:avoid; margin-bottom:12px; }
   }
 
   .doc-fila{
@@ -497,7 +502,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.4';
+const VERSION_APP = '1.9.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -1168,6 +1173,10 @@ function habilitarArrastrePersonas() {
       const inicioX = eventoInicial.clientX;
       const inicioY = eventoInicial.clientY;
       const scrollInicial = zonaScroll.scrollTop;
+      // Si todo cabe en la pantalla (pocas personas), no hay nada que
+      // desplazar — sin esto, el intento de "convertir en scroll" movía
+      // igualmente unos pocos píxeles aunque no hubiera más contenido.
+      const hayScrollDisponible = zonaScroll.scrollHeight - zonaScroll.clientHeight > 4;
       let ultimoEvento = eventoInicial;
       let cancelado = false;
       let convertidoEnScroll = false;
@@ -1188,7 +1197,7 @@ function habilitarArrastrePersonas() {
           clearTimeout(timer);
           if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
         }
-        if (convertidoEnScroll) {
+        if (convertidoEnScroll && hayScrollDisponible) {
           zonaScroll.scrollTop = scrollInicial - dy;
         }
       };
