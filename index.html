@@ -427,7 +427,7 @@
   <div class="login-sello" aria-hidden="true">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
-  <h1 style="color: green;">Documentación</h1>
+  <h1>Documentación</h1>
   <p class="lead">El DNI, carnet de conducir, tarjeta de discapacidad y demás papeles de tu gente, siempre a mano. Se guardan en tu Google Drive: si cambias de móvil, no pierdes nada.</p>
   <button class="btn-google" id="btn-conectar">
     <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
@@ -497,11 +497,13 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.3';
+const VERSION_APP = '1.9.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
 const NOMBRE_METADATOS = 'documentacion-datos.json';
+
+const MAPA_EXTENSIONES_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
 
 const CATEGORIAS_INICIALES = [
   { id: 'dni', nombre: 'DNI / NIE', color: '#5C8374' },
@@ -584,6 +586,28 @@ function pedirPermisoNotificaciones() {
 
 let mostrandoDatosLocales = false;
 
+// Si se llega aquí al tocar una notificación de caducidad, el service
+// worker pasa el id de la persona por la URL (ventana nueva) o por un
+// mensaje (ventana ya abierta) — ver más abajo y en sw.js.
+let personaIdPendienteNotificacion = new URLSearchParams(location.search).get('persona');
+if (personaIdPendienteNotificacion) history.replaceState(null, '', location.pathname);
+
+function irAPersonaPorNotificacion(personaId) {
+  if (!personaId) return;
+  // Tanto la carga desde caché como la sincronización posterior con
+  // Drive pueden llamar aquí para el mismo arranque — se limpia al
+  // consumirlo para no abrir la persona dos veces (y no duplicar la
+  // capa de navegación que añade abrirPersona).
+  if (personaId === personaIdPendienteNotificacion) personaIdPendienteNotificacion = null;
+  if (!datos.personas.some((p) => p.id === personaId)) return;
+  cerrarTodasLasCapas();
+  abrirPersona(personaId);
+}
+
+navigator.serviceWorker?.addEventListener('message', (e) => {
+  if (e.data && e.data.tipo === 'abrir-persona') irAPersonaPorNotificacion(e.data.personaId);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   $('#btn-banner-instalar')?.addEventListener('click', async () => {
     if (!promptInstalacionDiferido) return;
@@ -606,6 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mostrarApp();
     mostrarPantallaPersonas();
     comprobarCaducidadesYNotificar();
+    irAPersonaPorNotificacion(personaIdPendienteNotificacion);
   }
 });
 
@@ -681,8 +706,10 @@ function initGIS() {
     scope: SCOPES,
     callback: onTokenRecibido,
     error_callback: () => {
-      renovacionEnCurso = false;
+      const resolver = resolverRenovacion;
+      promesaRenovacion = null; resolverRenovacion = null;
       if (!mostrandoDatosLocales) mostrarToast('No se pudo conectar con Google.', true);
+      if (resolver) resolver(false);
     },
   });
 }
@@ -724,23 +751,35 @@ function intentarSesionGuardada() {
 // no pedirla dos veces a la vez, y pedirla en el momento en que menos
 // se note (ver el listener de visibilitychange, más abajo) en vez de a
 // medio uso.
-let renovacionEnCurso = false;
+// Devuelve una promesa que resuelve a true/false según si la renovación
+// consigue un token nuevo — así una petición que se encuentre con un
+// token caducado (ver llamarGoogle) puede esperar a que termine y
+// reintentarse, en vez de fallar sin más. Si ya hay una renovación en
+// marcha (por el temporizador o por volver a primer plano), se reutiliza
+// la misma promesa en vez de pedir otra por duplicado.
+let promesaRenovacion = null;
+let resolverRenovacion = null;
 function solicitarRenovacionSilenciosa() {
-  if (renovacionEnCurso || !tokenClient || CLIENT_ID.includes('TU_CLIENT_ID')) return;
-  renovacionEnCurso = true;
+  if (promesaRenovacion) return promesaRenovacion;
+  if (!tokenClient || CLIENT_ID.includes('TU_CLIENT_ID')) return Promise.resolve(false);
+  promesaRenovacion = new Promise((resolve) => { resolverRenovacion = resolve; });
   tokenClient.requestAccessToken({ prompt: 'none' });
+  return promesaRenovacion;
 }
 
 function onTokenRecibido(resp) {
-  renovacionEnCurso = false;
+  const resolver = resolverRenovacion;
+  promesaRenovacion = null; resolverRenovacion = null;
   if (resp.error) {
     if (!mostrandoDatosLocales) mostrarToast('No se pudo completar la conexión.', true);
+    if (resolver) resolver(false);
     return;
   }
   accessToken = resp.access_token;
   tokenExpiry = Date.now() + (resp.expires_in * 1000);
   localStorage.setItem('documentacion_sesion', JSON.stringify({ token: accessToken, expiry: tokenExpiry }));
   sincronizarConDrive();
+  if (resolver) resolver(true);
 }
 
 async function sincronizarConDrive() {
@@ -757,6 +796,7 @@ async function sincronizarConDrive() {
     mostrandoDatosLocales = true;
     refrescarPantallaActual();
     comprobarCaducidadesYNotificar();
+    irAPersonaPorNotificacion(personaIdPendienteNotificacion);
   } catch (err) {
     console.error(err);
     if (!mostrandoDatosLocales) {
@@ -799,16 +839,27 @@ function mostrarPantallaCarga() {
 }
 
 async function llamarGoogle(url, opciones = {}, timeoutMs = 8000) {
-  const cabeceras = Object.assign({ Authorization: `Bearer ${accessToken}` }, opciones.headers || {});
-  const controlador = new AbortController();
-  const limite = setTimeout(() => controlador.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, Object.assign({}, opciones, { headers: cabeceras, signal: controlador.signal }));
-    if (res.status === 401) throw new Error('token-caducado');
-    return res;
-  } finally {
-    clearTimeout(limite);
+  async function intentar() {
+    const cabeceras = Object.assign({ Authorization: `Bearer ${accessToken}` }, opciones.headers || {});
+    const controlador = new AbortController();
+    const limite = setTimeout(() => controlador.abort(), timeoutMs);
+    try {
+      return await fetch(url, Object.assign({}, opciones, { headers: cabeceras, signal: controlador.signal }));
+    } finally {
+      clearTimeout(limite);
+    }
   }
+  let res = await intentar();
+  if (res.status === 401) {
+    // El token pudo caducar justo entre que se preparó la petición y se
+    // envió (p.ej. la app llevaba un rato en segundo plano) — se renueva
+    // y se reintenta una vez, en vez de fallar directamente.
+    const renovado = await solicitarRenovacionSilenciosa();
+    if (!renovado) throw new Error('token-caducado');
+    res = await intentar();
+    if (res.status === 401) throw new Error('token-caducado');
+  }
+  return res;
 }
 
 async function cargarPerfil() {
@@ -875,7 +926,7 @@ async function cargarMetadatos() {
     try {
       const parsed = JSON.parse(texto);
       datos.personas = parsed.personas || [];
-      datos.categorias = (parsed.categorias && parsed.categorias.length) ? parsed.categorias : CATEGORIAS_INICIALES;
+      datos.categorias = parsed.categorias || CATEGORIAS_INICIALES;
       datos.documentos = parsed.documentos || [];
     } catch (e) {
       datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
@@ -928,8 +979,7 @@ async function guardarMetadatos(esNuevo = false) {
 function obtenerExtension(file) {
   const partes = file.name.split('.');
   if (partes.length > 1) return '.' + partes.pop().toLowerCase();
-  const mapa = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
-  return mapa[file.type] || '';
+  return MAPA_EXTENSIONES_MIME[file.type] || '';
 }
 function construirNombreArchivo(nombreElegido, file) {
   const ext = obtenerExtension(file);
@@ -1833,7 +1883,9 @@ function crearTarjetaDoc(doc) {
         if (img.naturalHeight > img.naturalWidth) {
           cont.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
         }
+        URL.revokeObjectURL(url);
       };
+      img.onerror = () => URL.revokeObjectURL(url);
       cont.appendChild(img);
     }).catch(() => { fila.querySelector('.skeleton')?.remove(); });
   }
@@ -1889,8 +1941,7 @@ $('#btn-compartir-seleccion').addEventListener('click', async () => {
 });
 
 function extensionPorMime(mime) {
-  const mapa = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
-  return mapa[mime] || '';
+  return MAPA_EXTENSIONES_MIME[mime] || '';
 }
 function nombreArchivoParaCompartir(doc) {
   const ext = extensionPorMime(doc.mimeType);
@@ -2029,6 +2080,7 @@ function guardarAvisosCaducidad(avisos) {
 }
 function diasHastaCaducidad(fecha) {
   const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
   const cad = new Date(fecha + 'T00:00:00');
   return Math.round((cad - hoy) / 86400000);
 }
@@ -2110,7 +2162,12 @@ async function abrirVisor(doc) {
   // la app está bloqueado para que un pellizco accidental no amplíe la
   // pantalla entera.
   document.documentElement.classList.add('zoom-doc');
-  pushNavegacion(() => { visor.classList.add('hidden'); document.documentElement.classList.remove('zoom-doc'); });
+  let urlActual = null;
+  pushNavegacion(() => {
+    visor.classList.add('hidden');
+    document.documentElement.classList.remove('zoom-doc');
+    if (urlActual) URL.revokeObjectURL(urlActual);
+  });
 
   $('#visor-cerrar').addEventListener('click', volverAtras);
   $('#visor-ajustes').addEventListener('click', () => abrirMenuDocumento(doc));
@@ -2118,6 +2175,7 @@ async function abrirVisor(doc) {
   try {
     const blob = await obtenerBlobDocumento(doc);
     const url = URL.createObjectURL(blob);
+    urlActual = url;
     const cuerpo = $('#visor-cuerpo');
     if (esImagen) {
       cuerpo.innerHTML = `<img src="${url}" alt="${escapeHtml(doc.nombre)}">`;
@@ -2317,7 +2375,7 @@ $('#btn-subir').addEventListener('click', abrirModalSubida);
 function abrirModalSubida() {
   archivoPendiente = null;
   const opcionesCat = datos.categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
-  const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : datos.categorias[0].id;
+  const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : null);
 
   abrirModal(`
     <h3>Subir documento</h3>

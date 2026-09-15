@@ -37,10 +37,19 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const personaId = event.notification.data && event.notification.data.personaId;
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((lista) => {
-      for (const c of lista) { if ('focus' in c) return c.focus(); }
-      if (self.clients.openWindow) return self.clients.openWindow('./index.html');
+      for (const c of lista) {
+        if ('focus' in c) {
+          if (personaId) c.postMessage({ tipo: 'abrir-persona', personaId });
+          return c.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        const destino = personaId ? `./index.html?persona=${encodeURIComponent(personaId)}` : './index.html';
+        return self.clients.openWindow(destino);
+      }
     })
   );
 });
