@@ -191,6 +191,11 @@
     box-shadow:0 10px 24px rgba(0,0,0,.32);
     position:relative;
   }
+  .aviso-caducidad-persona{
+    position:absolute; bottom:-3px; right:-3px; width:28%; height:28%; min-width:20px; min-height:20px; max-width:30px; max-height:30px;
+    border-radius:50%; background:var(--stamp); border:2px solid var(--ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+  }
   .persona-tile .nombre-persona{
     font-size:.95rem; font-weight:600; text-align:center; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
@@ -219,6 +224,15 @@
     -ms-overflow-style:none; scrollbar-width:none;
   }
   .chips-categorias::-webkit-scrollbar{ display:none; }
+
+  .aviso-caducidad-banner{
+    display:flex; align-items:center; gap:10px; padding:11px 14px; margin:-4px 0 16px;
+    border-radius:10px; font-size:.85rem; font-weight:600; color:#fff;
+  }
+  .aviso-caducidad-banner svg{ flex:none; color:#fff; }
+  .aviso-caducidad-banner.aviso{ background:#C77B22; }
+  .aviso-caducidad-banner.caducado{ background:#B23A2E; }
+
   .chip{
     flex:none; display:flex; align-items:center; gap:6px;
     background:var(--ink-2); border:1px solid transparent; color:var(--text-dim);
@@ -239,12 +253,14 @@
 
   .lista-docs{ display:flex; flex-direction:column; gap:10px; }
   @media (orientation:landscape){
-    /* Mosaico tipo Pinterest en vez de cuadrícula: con fotos verticales
-       y horizontales mezcladas, una cuadrícula normal deja huecos (la
-       fila entera se estira a la más alta). En columnas, cada ficha
-       ocupa solo su alto real y la siguiente sube a rellenar el hueco. */
-    .lista-docs{ columns:2; column-gap:12px; }
-    .doc-fila{ break-inside:avoid; margin-bottom:12px; }
+    .lista-docs{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+    /* En apaisado todas las fichas vuelven a la proporción fija, aunque
+       la foto sea vertical (el !important pisa el aspect-ratio que el
+       JS le pone a las verticales para el modo vertical de la pantalla),
+       enseñando solo la parte de arriba de la foto en vez de recortar
+       por el centro. */
+    .doc-fila .miniatura{ aspect-ratio:16/10 !important; }
+    .doc-fila .miniatura img{ object-position:top; }
   }
 
   .doc-fila{
@@ -294,7 +310,8 @@
     display:inline-block; flex:none; font-size:.68rem; font-weight:700; padding:3px 8px; border-radius:999px;
     background:var(--ink-3); color:var(--text-dim);
   }
-  .doc-fila .badge-mini.alerta{ background:var(--stamp); color:var(--paper); }
+  .doc-fila .badge-mini.aviso{ background:#C77B22; color:#fff; }
+  .doc-fila .badge-mini.caducado{ background:#B23A2E; color:#fff; }
 
   #visor-completo{
     position:fixed; inset:0; background:#0A0F14; z-index:60;
@@ -482,6 +499,7 @@
 
     <section id="pantalla-persona" class="hidden">
       <div class="chips-categorias" id="chips-categorias"></div>
+      <div class="aviso-caducidad-banner hidden" id="aviso-caducidad-persona"></div>
 
       <div id="contenido-documentos"></div>
     </section>
@@ -502,7 +520,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.5';
+const VERSION_APP = '1.9.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -814,6 +832,7 @@ function refrescarPantallaActual() {
   if (personaActivaId) {
     renderizarCabeceraPersona();
     renderizarChipsCategorias();
+    renderizarAvisoCaducidadPersona();
     renderizarDocumentos();
   } else {
     renderizarPersonas();
@@ -1092,6 +1111,7 @@ function abrirPersona(personaId) {
   $('#btn-ajustes').classList.add('hidden');
   renderizarCabeceraPersona();
   renderizarChipsCategorias();
+  renderizarAvisoCaducidadPersona();
   renderizarDocumentos();
   pushNavegacion(mostrarPantallaPersonas);
 }
@@ -1136,7 +1156,7 @@ function renderizarPersonas() {
     btn.className = 'persona-tile';
     btn.dataset.personaId = persona.id;
     btn.innerHTML = `
-      <div class="avatar-persona" style="${estiloAvatar(persona)}">${contenidoAvatar(persona)}</div>
+      <div class="avatar-persona" style="${estiloAvatar(persona)}">${contenidoAvatar(persona)}${htmlAvisoCaducidadPersona(persona.id)}</div>
       <span class="nombre-persona">${escapeHtml(persona.nombre)}</span>`;
     btn.addEventListener('click', () => {
       if (Date.now() - momentoUltimoArrastrePersona < 300) return;
@@ -1859,7 +1879,7 @@ function crearTarjetaDoc(doc) {
     </div>
     <div class="info">
       <p class="doc-nombre">${escapeHtml(doc.nombre)}</p>
-      ${badge ? `<span class="badge-mini ${badge.alerta ? 'alerta' : ''}">${badge.texto}</span>` : ''}
+      ${badge ? `<span class="badge-mini ${badge.estado}">${badge.texto}</span>` : ''}
     </div>`;
 
   let temporizadorLP = null;
@@ -2070,9 +2090,43 @@ async function compartirDocumentoComoPdf(doc) {
 function calcularBadgeCaducidad(fecha) {
   if (!fecha) return null;
   const dias = diasHastaCaducidad(fecha);
-  if (dias < 0) return { alerta: true, texto: 'Caducado' };
-  if (dias <= 60) return { alerta: true, texto: `${dias} d.` };
+  if (dias <= 0) return { estado: 'caducado', texto: 'Caducado' };
+  if (dias <= 60) return { estado: 'aviso', texto: `${dias} d.` };
   return null;
+}
+function personaTieneAvisoCaducidad(personaId) {
+  return datos.documentos.some((d) => d.personaId === personaId && calcularBadgeCaducidad(d.fechaCaducidad));
+}
+function svgAvisoCaducidad(tamano) {
+  return `<svg width="${tamano}" height="${tamano}" viewBox="0 0 24 24" fill="none"><path d="M12 7.5v6M12 17h.01" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>`;
+}
+function htmlAvisoCaducidadPersona(personaId) {
+  return personaTieneAvisoCaducidad(personaId)
+    ? `<span class="aviso-caducidad-persona" aria-label="Tiene documentos caducados o a punto de caducar">${svgAvisoCaducidad('60%')}</span>`
+    : '';
+}
+// 'caducado' (ya vencida la fecha) pesa más que 'aviso' (dentro de los
+// 60 días, pero aún no vencida) — si tiene de los dos, manda el peor.
+function estadoCaducidadPersona(personaId) {
+  let peor = null;
+  datos.documentos.forEach((d) => {
+    if (d.personaId !== personaId) return;
+    const badge = calcularBadgeCaducidad(d.fechaCaducidad);
+    if (badge && (badge.estado === 'caducado' || peor !== 'caducado')) peor = badge.estado;
+  });
+  return peor;
+}
+function renderizarAvisoCaducidadPersona() {
+  const banner = $('#aviso-caducidad-persona');
+  const estado = estadoCaducidadPersona(personaActivaId);
+  banner.classList.toggle('hidden', !estado);
+  banner.classList.remove('aviso', 'caducado');
+  if (!estado) return;
+  banner.classList.add(estado);
+  const texto = estado === 'caducado'
+    ? 'Tiene documentos caducados. Revísalos cuanto antes.'
+    : 'Tiene documentos a punto de caducar.';
+  banner.innerHTML = `${svgAvisoCaducidad(18)}<span>${texto}</span>`;
 }
 function formatearFecha(iso) {
   const [a, m, d] = iso.split('-');
@@ -2306,6 +2360,7 @@ function abrirModalCaducidad(doc) {
     doc.fechaCaducidad = $('#input-caducidad-doc').value || null;
     guardarMetadatos().then(() => {
       volverAtras();
+      renderizarAvisoCaducidadPersona();
       renderizarDocumentos();
       mostrarToast('Caducidad actualizada');
     });
@@ -2314,6 +2369,7 @@ function abrirModalCaducidad(doc) {
     doc.fechaCaducidad = null;
     guardarMetadatos().then(() => {
       volverAtras();
+      renderizarAvisoCaducidadPersona();
       renderizarDocumentos();
       mostrarToast('Fecha de caducidad eliminada');
     });
@@ -2371,6 +2427,7 @@ function confirmarBorrado(doc) {
       await guardarMetadatos();
       renderizarCabeceraPersona();
       renderizarChipsCategorias();
+      renderizarAvisoCaducidadPersona();
       renderizarDocumentos();
       mostrarToast('Documento eliminado');
     } catch (e) {
@@ -2499,6 +2556,7 @@ async function guardarDocumentoNuevo() {
     volverAtras();
     renderizarCabeceraPersona();
     renderizarChipsCategorias();
+    renderizarAvisoCaducidadPersona();
     renderizarDocumentos();
     mostrarToast('Documento guardado en tu Drive');
   } catch (e) {
