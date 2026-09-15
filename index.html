@@ -493,7 +493,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.1';
+const VERSION_APP = '1.9.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -511,16 +511,19 @@ const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
 
 const ICONOS_AVATAR = [
   { id: 'persona', nombre: 'Persona', svg: '<circle cx="12" cy="8" r="4.2"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3"/>' },
-  { id: 'sol', nombre: 'Sol', svg: '<circle cx="12" cy="12" r="4.3"/><rect x="11" y="1" width="2" height="4.2" rx="1"/><rect x="11" y="18.8" width="2" height="4.2" rx="1"/><rect x="1" y="11" width="4.2" height="2" rx="1"/><rect x="18.8" y="11" width="4.2" height="2" rx="1"/><rect x="3.3" y="3.3" width="2" height="4.2" rx="1" transform="rotate(45 4.3 5.4)"/><rect x="18.7" y="3.3" width="2" height="4.2" rx="1" transform="rotate(-45 19.7 5.4)"/><rect x="3.3" y="16.5" width="2" height="4.2" rx="1" transform="rotate(-45 4.3 18.6)"/><rect x="18.7" y="16.5" width="2" height="4.2" rx="1" transform="rotate(45 19.7 18.6)"/>' },
+  { id: 'sol', nombre: 'Sol', svg: '<circle cx="12" cy="12" r="5"/><rect x="10.7" y=".5" width="2.6" height="4.5" rx="1.3"/><rect x="10.7" y="19" width="2.6" height="4.5" rx="1.3"/><rect x=".5" y="10.7" width="4.5" height="2.6" rx="1.3"/><rect x="19" y="10.7" width="4.5" height="2.6" rx="1.3"/>' },
   { id: 'luna', nombre: 'Luna', svg: '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>' },
   { id: 'rayo', nombre: 'Rayo', svg: '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>' },
   { id: 'diamante', nombre: 'Diamante', svg: '<rect x="6" y="6" width="12" height="12" transform="rotate(45 12 12)"/>' },
-  { id: 'trebol', nombre: 'Trébol', svg: '<circle cx="8" cy="8" r="4.2"/><circle cx="16" cy="8" r="4.2"/><circle cx="8" cy="16" r="4.2"/><circle cx="16" cy="16" r="4.2"/><rect x="11" y="14" width="2" height="8" rx="1" transform="rotate(20 12 18)"/>' },
   { id: 'estrella', nombre: 'Estrella', svg: '<path d="M12 2.5l2.6 6.2 6.7.6-5.1 4.4 1.6 6.6L12 16.9 6.2 20.3l1.6-6.6-5.1-4.4 6.7-.6z"/>' },
   { id: 'corazon', nombre: 'Corazón', svg: '<path d="M12 20.5S3 14.8 3 8.9C3 5.9 5.3 3.8 8 3.8c1.7 0 3.2.9 4 2.3.8-1.4 2.3-2.3 4-2.3 2.7 0 5 2.1 5 5.1 0 5.9-9 11.6-9 11.6z"/>' },
   { id: 'casa', nombre: 'Casa', svg: '<path d="M12 3 3 10.5V21h6v-6h6v6h6V10.5z"/>' },
-  { id: 'coche', nombre: 'Coche', svg: '<rect x="3" y="11" width="18" height="5" rx="2"/><path d="M6 11l2-4h8l2 4z"/><circle cx="7.5" cy="17.2" r="2.3"/><circle cx="16.5" cy="17.2" r="2.3"/>' },
+  { id: 'coche', nombre: 'Coche', svg: '<rect x="2.5" y="12" width="19" height="4.5" rx="2"/><path d="M6.5 12l1.8-3.5a1 1 0 01.9-.5h5.6a1 1 0 01.9.5l1.8 3.5z"/><circle cx="7" cy="17.8" r="2.2"/><circle cx="17" cy="17.8" r="2.2"/>' },
+  { id: 'moto', nombre: 'Moto', svg: '<circle cx="5.5" cy="18" r="3.3"/><circle cx="18.5" cy="18" r="3.3"/><rect x="7" y="9" width="14" height="3" rx="1.5" transform="rotate(12 14 10.5)"/><rect x="4" y="13" width="3" height="6" rx="1.5" transform="rotate(-25 5.5 16)"/>' },
+  { id: 'avion', nombre: 'Avión', svg: '<path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2.5 1.5V22l4-1 4 1v-1.5L13 19v-5.5z"/>' },
   { id: 'carpeta', nombre: 'Carpeta', svg: '<path d="M3 6a1 1 0 011-1h5l2 2h9a1 1 0 011 1v11a1 1 0 01-1 1H4a1 1 0 01-1-1z"/>' },
+  { id: 'carrito', nombre: 'Carrito', svg: '<path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>' },
+  { id: 'sobre', nombre: 'Sobre', svg: '<path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>' },
 ];
 function htmlIconoAvatar(id) {
   const ic = ICONOS_AVATAR.find((i) => i.id === id);
@@ -1086,6 +1089,19 @@ function renderizarPersonas() {
   habilitarArrastrePersonas();
 }
 
+// El user-select:none del CSS no basta en algunos móviles Android: al
+// mantener pulsado (para arrastrar una persona, o un documento) sale
+// igualmente el menú/selección nativa de texto (las "gotas" azules),
+// incluso si el dedo pasa por huecos entre tarjetas mientras arrastra.
+// Se anula para toda la página (salvo en campos de texto de verdad,
+// donde sí hace falta poder seleccionar/pegar), una sola vez, en vez de
+// tarjeta por tarjeta.
+function debeBloquearSeleccion(e) {
+  return !e.target.closest('input, textarea, [contenteditable]');
+}
+document.addEventListener('contextmenu', (e) => { if (debeBloquearSeleccion(e)) e.preventDefault(); });
+document.addEventListener('selectstart', (e) => { if (debeBloquearSeleccion(e)) e.preventDefault(); });
+
 function habilitarArrastrePersonas() {
   const contenedor = $('#grid-personas');
   const zonaScroll = $('main');
@@ -1093,11 +1109,6 @@ function habilitarArrastrePersonas() {
   const UMBRAL_MOVIMIENTO = 20;
 
   contenedor.querySelectorAll('.persona-tile').forEach((tile) => {
-    // El user-select:none del CSS no basta en algunos móviles Android: al
-    // mantener pulsado sale igualmente el menú/selección nativa de texto
-    // (las "gotas" azules) por encima del arrastre. Se anula a mano.
-    tile.addEventListener('contextmenu', (e) => e.preventDefault());
-    tile.addEventListener('selectstart', (e) => e.preventDefault());
     tile.addEventListener('pointerdown', (eventoInicial) => {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
@@ -1583,6 +1594,10 @@ $('#btn-menu-persona').addEventListener('click', () => {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Cambiar nombre
       </button>
+      <button class="opcion-menu" id="op-seleccionar-docs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Seleccionar documentos
+      </button>
       <button class="opcion-menu" id="op-exportar-persona">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Exportar copia
@@ -1644,6 +1659,10 @@ $('#btn-menu-persona').addEventListener('click', () => {
     }, 30);
   });
 
+  $('#op-seleccionar-docs').addEventListener('click', () => {
+    volverAtras();
+    entrarModoSeleccion();
+  });
   $('#op-exportar-persona').addEventListener('click', () => abrirModalExportar(persona));
 
   $('#op-eliminar-persona').addEventListener('click', () => {
@@ -1818,12 +1837,16 @@ function crearTarjetaDoc(doc) {
   return fila;
 }
 
+function entrarModoSeleccion() {
+  if (modoSeleccionDocs) return;
+  modoSeleccionDocs = true;
+  document.body.classList.add('modo-seleccion');
+  pushNavegacion(limpiarModoSeleccion);
+  actualizarBarraSeleccion();
+}
+
 function alternarSeleccionDoc(doc, fila, activarModo = false) {
-  if (activarModo && !modoSeleccionDocs) {
-    modoSeleccionDocs = true;
-    document.body.classList.add('modo-seleccion');
-    pushNavegacion(limpiarModoSeleccion);
-  }
+  if (activarModo) entrarModoSeleccion();
   if (!modoSeleccionDocs) return;
   if (docsSeleccionados.has(doc.id)) {
     docsSeleccionados.delete(doc.id);
