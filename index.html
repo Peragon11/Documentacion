@@ -552,7 +552,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.9.9';
+const VERSION_APP = '1.10.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación (documentos personales)';
@@ -970,6 +970,21 @@ async function asegurarCarpeta() {
 // borró. Cualquier categoría, incluidas las de fábrica, se puede borrar.
 const CATEGORIA_SIN_ASIGNAR = { id: null, nombre: 'Sin categoría', color: '#6B7686' };
 
+// Documentos guardados antes de que existieran las "páginas" (un
+// driveFileId/mimeType sueltos en vez de un array paginas) se convierten
+// al nuevo formato al vuelo, tanto si vienen de Drive como de la copia
+// en caché del propio móvil — sin esto, los documentos antiguos
+// desaparecían de la lista.
+function normalizarDocumentosPaginas(documentos) {
+  documentos.forEach((doc) => {
+    if (!doc.paginas) {
+      doc.paginas = [{ driveFileId: doc.driveFileId, mimeType: doc.mimeType, nombre: doc.nombre }];
+      delete doc.driveFileId;
+      delete doc.mimeType;
+    }
+  });
+}
+
 async function cargarMetadatos() {
   const q = encodeURIComponent(`name='${NOMBRE_METADATOS}' and '${carpetaId}' in parents and trashed=false`);
   const busq = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
@@ -984,6 +999,7 @@ async function cargarMetadatos() {
       datos.personas = parsed.personas || [];
       datos.categorias = parsed.categorias || CATEGORIAS_INICIALES;
       datos.documentos = parsed.documentos || [];
+      normalizarDocumentosPaginas(datos.documentos);
     } catch (e) {
       datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
     }
@@ -1004,6 +1020,7 @@ function cargarDatosDesdeCacheLocal() {
   if (!guardado) return false;
   try {
     datos = JSON.parse(guardado);
+    normalizarDocumentosPaginas(datos.documentos || []);
     return true;
   } catch (e) { return false; }
 }
