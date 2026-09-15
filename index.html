@@ -570,10 +570,10 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.2';
+const VERSION_APP = '1.10.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-const NOMBRE_CARPETA = 'Documentación (documentos personales)';
+const NOMBRE_CARPETA = 'Documentación';
 const NOMBRE_METADATOS = 'documentacion-datos.json';
 
 const MAPA_EXTENSIONES_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
@@ -1002,10 +1002,19 @@ async function limpiarCarpetasVaciasTrasBorrar(persona, categoriaObj) {
 async function asegurarCarpeta() {
   const guardadoId = localStorage.getItem('documentacion_carpeta_id');
   if (guardadoId) {
-    const check = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${guardadoId}?fields=id,trashed`);
+    const check = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${guardadoId}?fields=id,trashed,name`);
     if (check.ok) {
       const info = await check.json();
-      if (!info.trashed) { carpetaId = guardadoId; return; }
+      if (!info.trashed) {
+        carpetaId = guardadoId;
+        if (info.name !== NOMBRE_CARPETA) {
+          llamarGoogle(`https://www.googleapis.com/drive/v3/files/${guardadoId}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: NOMBRE_CARPETA }),
+          }).catch(() => {});
+        }
+        return;
+      }
     }
   }
   carpetaId = await buscarOCrearCarpeta(NOMBRE_CARPETA, 'root');
