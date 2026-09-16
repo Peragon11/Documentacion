@@ -177,6 +177,13 @@
     .grid-personas.pocas.tres .persona-tile{ width:150px; }
   }
 
+  .grid-personas.modo-categorias{ display:flex; flex-direction:column; gap:12px; max-width:none; width:100%; margin:0; }
+  .categoria-barra{
+    display:flex; align-items:center; width:100%; min-height:64px; padding:16px 20px; border-radius:16px;
+    border:none; cursor:pointer; color:#fff; font-family:var(--serif); font-weight:600; font-size:1.08rem;
+    text-align:left; box-shadow:0 6px 16px rgba(0,0,0,.22);
+  }
+
   .persona-tile{
     background:none; border:none; color:var(--text-light); cursor:pointer;
     touch-action:none;
@@ -571,7 +578,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.5';
+const VERSION_APP = '1.10.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1314,7 +1321,7 @@ function contenidoAvatar(persona) {
 function renderizarPersonas() {
   const cont = $('#grid-personas');
   cont.innerHTML = '';
-  cont.classList.remove('pocas', 'tres', 'centrado', 'vacio');
+  cont.classList.remove('pocas', 'tres', 'centrado', 'vacio', 'modo-categorias');
 
   if (datos.personas.length === 0) {
     cont.classList.add('vacio');
@@ -1347,14 +1354,16 @@ function renderizarPersonas() {
   habilitarArrastrePersonas();
 }
 
-// Mismo grid que renderizarPersonas, pero con las categorías — la otra
-// mitad del modo de inicio "categorías" (ver modoInicio). A diferencia de
-// la cuadrícula de personas, no tiene arrastre para reordenar (el orden
-// de las categorías se gestiona desde Ajustes → Administrar categorías).
+// La otra mitad del modo de inicio "categorías" (ver modoInicio). A
+// diferencia de la cuadrícula de personas (tarjetas cuadradas con
+// avatar), aquí son barras horizontales a todo el ancho con el nombre
+// dentro — y sin arrastre para reordenar (el orden de las categorías se
+// gestiona desde Ajustes → Administrar categorías).
 function renderizarCategoriasHome() {
   const cont = $('#grid-personas');
   cont.innerHTML = '';
   cont.classList.remove('pocas', 'tres', 'centrado', 'vacio');
+  cont.classList.add('modo-categorias');
 
   if (datos.categorias.length === 0) {
     cont.classList.add('vacio');
@@ -1366,16 +1375,11 @@ function renderizarCategoriasHome() {
     return;
   }
 
-  cont.classList.toggle('pocas', datos.categorias.length <= 3);
-  cont.classList.toggle('tres', datos.categorias.length === 3);
-  cont.classList.toggle('centrado', datos.categorias.length === 4);
-
   datos.categorias.forEach((cat) => {
     const btn = document.createElement('button');
-    btn.className = 'persona-tile';
-    btn.innerHTML = `
-      <div class="avatar-persona" style="background:${cat.color}">${htmlIconoAvatar('carpeta')}</div>
-      <span class="nombre-persona">${escapeHtml(cat.nombre)}</span>`;
+    btn.className = 'categoria-barra';
+    btn.style.background = cat.color;
+    btn.textContent = cat.nombre;
     btn.addEventListener('click', () => abrirCategoriaGlobal(cat.id));
     cont.appendChild(btn);
   });
