@@ -67,7 +67,7 @@
     -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
   }
   input, textarea, [contenteditable]{ -webkit-touch-callout:default; user-select:text; -webkit-user-select:text; }
-  html,body{ height:100%; overscroll-behavior-y:none; background:var(--ink); touch-action:pan-x pan-y; }
+  html,body{ height:100%; overscroll-behavior-y:contain; background:var(--ink); touch-action:pan-x pan-y; }
   html.zoom-doc, html.zoom-doc body{ touch-action:auto; }
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
@@ -91,8 +91,12 @@
   }
   /* Más arriba que el login: la ventana blanca del sistema para verificar
      la huella tapa la parte central/baja de la pantalla, y así el título
-     y el texto quedan por encima, se pueden leer aunque esté abierta. */
-  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(9vh + var(--safe-t)); }
+     y el texto quedan por encima, se pueden leer aunque esté abierta. El
+     botón/teclado de más abajo, en cambio, se separan aposta (ver
+     #btn-reintentar-bloqueo y el margen que pone mostrarPantallaBloqueo()
+     en #zona-pin-bloqueo) para que queden tapados sin problema. */
+  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t)); }
+  #btn-reintentar-bloqueo{ margin-top:12vh; }
   .login-sello{
     width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
     display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
@@ -169,7 +173,7 @@
   }
 
   main{
-    flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain;
     padding:18px 16px calc(24px + var(--safe-b));
   }
   @media (orientation:landscape){
@@ -203,7 +207,7 @@
     display:flex; align-items:center; width:100%; min-height:64px; padding:16px 20px; border-radius:16px;
     border:none; cursor:pointer; color:#fff; font-family:var(--serif); font-weight:600; font-size:1.08rem;
     text-align:left; box-shadow:0 6px 16px rgba(0,0,0,.22);
-    touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
   }
   .categoria-barra.arrastrando-tile{
     z-index:30; cursor:grabbing; transition:none; pointer-events:none;
@@ -227,7 +231,6 @@
 
   .persona-tile{
     color:var(--text-light);
-    touch-action:none;
     -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
     display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px; width:100%; min-width:0;
   }
@@ -424,10 +427,10 @@
   .input-busqueda::-webkit-search-results-button, .input-busqueda::-webkit-search-results-decoration{
     -webkit-appearance:none; appearance:none;
   }
-  .busqueda-resultados{ flex:1; min-height:0; overflow-y:auto; padding:8px 16px calc(16px + var(--safe-b)); }
+  .busqueda-resultados{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; padding:8px 16px calc(16px + var(--safe-b)); }
 
   .galeria-paginas{
-    flex:1; min-height:0; overflow-y:auto; padding:4px 12px calc(16px + var(--safe-b));
+    flex:1; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; padding:4px 12px calc(16px + var(--safe-b));
     display:flex; flex-direction:column; gap:10px;
   }
   @media (orientation:landscape){
@@ -657,7 +660,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.6';
+const VERSION_APP = '2.0.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1056,7 +1059,13 @@ function mostrarPantallaBloqueo() {
     $('#btn-reintentar-bloqueo').classList.add('hidden');
     $('#btn-usar-pin').classList.add('hidden');
     $('#zona-pin-bloqueo').classList.remove('hidden');
+    // Aquí el teclado es lo primero que se ve (no hay botón de huella
+    // delante que ya lo separe de por sí), así que necesita su propio
+    // empujón hacia abajo para quedar bajo la ventana del sistema.
+    $('#zona-pin-bloqueo').style.marginTop = '12vh';
+    return;
   }
+  $('#zona-pin-bloqueo').style.marginTop = '';
 }
 
 async function intentarDesbloquear() {
@@ -2133,14 +2142,8 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
       const inicioY = eventoInicial.clientY;
-      const scrollInicial = zonaScroll.scrollTop;
-      // Si todo cabe en la pantalla (pocas personas), no hay nada que
-      // desplazar — sin esto, el intento de "convertir en scroll" movía
-      // igualmente unos pocos píxeles aunque no hubiera más contenido.
-      const hayScrollDisponible = zonaScroll.scrollHeight - zonaScroll.clientHeight > 4;
       let ultimoEvento = eventoInicial;
       let cancelado = false;
-      let convertidoEnScroll = false;
 
       const timer = setTimeout(() => {
         if (cancelado) return;
@@ -2149,6 +2152,14 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
         iniciarArrastre(tile, ultimoEvento);
       }, DURACION_PULSACION);
 
+      // Antes esto también movía la lista a mano (con touch-action:none
+      // permanente en la ficha, era la única forma de que el dedo
+      // scrolleara algo). Ahora la ficha permite el scroll nativo del
+      // navegador salvo mientras se arrastra de verdad (iniciarArrastre
+      // pone touch-action:none solo en ese momento), así que aquí basta
+      // con cancelar el temporizador de pulsación larga si el dedo se
+      // mueve lo bastante — el propio scroll nativo se encarga del resto,
+      // con su inercia y su rebote en los extremos.
       const cancelarSiSeMueve = (ev) => {
         ultimoEvento = ev;
         const dx = ev.clientX - inicioX;
@@ -2156,10 +2167,6 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
         if (!cancelado && (Math.abs(dx) > UMBRAL_MOVIMIENTO || Math.abs(dy) > UMBRAL_MOVIMIENTO)) {
           cancelado = true;
           clearTimeout(timer);
-          if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
-        }
-        if (convertidoEnScroll && hayScrollDisponible) {
-          zonaScroll.scrollTop = scrollInicial - dy;
         }
       };
       const cancelarPorSoltar = () => { cancelado = true; clearTimeout(timer); limpiar(); };
