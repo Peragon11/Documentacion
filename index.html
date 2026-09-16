@@ -182,6 +182,11 @@
     display:flex; align-items:center; width:100%; min-height:64px; padding:16px 20px; border-radius:16px;
     border:none; cursor:pointer; color:#fff; font-family:var(--serif); font-weight:600; font-size:1.08rem;
     text-align:left; box-shadow:0 6px 16px rgba(0,0,0,.22);
+    touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+  }
+  .categoria-barra.arrastrando-tile{
+    z-index:30; cursor:grabbing; transition:none; pointer-events:none;
+    box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
   }
 
   .persona-tile{
@@ -197,6 +202,13 @@
     background-size:cover; background-position:center;
     box-shadow:0 10px 24px rgba(0,0,0,.32);
     position:relative;
+    /* En algunos móviles Android, el navegador a veces deja una línea
+       fina sin recortar en el borde redondeado (se ve un hilo del fondo
+       de la página por encima de la foto), que desaparece con cualquier
+       repintado forzado (p. ej. cambiar de tema) y vuelve más tarde.
+       Forzar aquí su propia capa de composición evita que reutilice un
+       recorte "sucio" de una capa vecina. */
+    transform:translateZ(0);
   }
   .aviso-caducidad-persona{
     position:absolute; bottom:8%; right:8%; width:34%; height:34%; min-width:26px; min-height:26px; max-width:42px; max-height:42px;
@@ -578,7 +590,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.6';
+const VERSION_APP = '1.10.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1351,14 +1363,15 @@ function renderizarPersonas() {
     cont.appendChild(btn);
   });
 
-  habilitarArrastrePersonas();
+  habilitarArrastreTiles('.persona-tile', datos.personas, 'personaId');
 }
 
 // La otra mitad del modo de inicio "categorías" (ver modoInicio). A
 // diferencia de la cuadrícula de personas (tarjetas cuadradas con
 // avatar), aquí son barras horizontales a todo el ancho con el nombre
-// dentro — y sin arrastre para reordenar (el orden de las categorías se
-// gestiona desde Ajustes → Administrar categorías).
+// dentro. El orden se puede arrastrar igual que las personas, y como es
+// el mismo array datos.categorias que usa "Administrar categorías", el
+// nuevo orden también se ve ahí sin nada más que hacer.
 function renderizarCategoriasHome() {
   const cont = $('#grid-personas');
   cont.innerHTML = '';
@@ -1378,11 +1391,17 @@ function renderizarCategoriasHome() {
   datos.categorias.forEach((cat) => {
     const btn = document.createElement('button');
     btn.className = 'categoria-barra';
+    btn.dataset.catId = cat.id;
     btn.style.background = cat.color;
     btn.textContent = cat.nombre;
-    btn.addEventListener('click', () => abrirCategoriaGlobal(cat.id));
+    btn.addEventListener('click', () => {
+      if (Date.now() - momentoUltimoArrastrePersona < 300) return;
+      abrirCategoriaGlobal(cat.id);
+    });
     cont.appendChild(btn);
   });
+
+  habilitarArrastreTiles('.categoria-barra', datos.categorias, 'catId');
 }
 
 // El user-select:none del CSS no basta en algunos móviles Android: al
@@ -1398,13 +1417,19 @@ function debeBloquearSeleccion(e) {
 document.addEventListener('contextmenu', (e) => { if (debeBloquearSeleccion(e)) e.preventDefault(); });
 document.addEventListener('selectstart', (e) => { if (debeBloquearSeleccion(e)) e.preventDefault(); });
 
-function habilitarArrastrePersonas() {
+// Arrastrar para reordenar en la pantalla de inicio — usada tanto por la
+// cuadrícula de personas como por las barras de categorías (ver
+// renderizarPersonas/renderizarCategoriasHome). claseTile es el selector
+// CSS de cada ficha ('.persona-tile' o '.categoria-barra'), arrayDatos es
+// el array real (datos.personas o datos.categorias, se reordena en el
+// sitio) y atributoDataset el nombre del data-* que guarda su id.
+function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
   const contenedor = $('#grid-personas');
   const zonaScroll = $('main');
   const DURACION_PULSACION = 320;
   const UMBRAL_MOVIMIENTO = 20;
 
-  contenedor.querySelectorAll('.persona-tile').forEach((tile) => {
+  contenedor.querySelectorAll(claseTile).forEach((tile) => {
     tile.addEventListener('pointerdown', (eventoInicial) => {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
@@ -1475,7 +1500,7 @@ function habilitarArrastrePersonas() {
     }
     function comprobarIntercambio(clientX, clientY) {
       const debajo = document.elementFromPoint(clientX, clientY);
-      const tileDebajo = debajo && debajo.closest('.persona-tile');
+      const tileDebajo = debajo && debajo.closest(claseTile);
       if (tileDebajo && tileDebajo !== tile && contenedor.contains(tileDebajo)) {
         const tiles = Array.from(contenedor.children);
         const iOrigen = tiles.indexOf(tile);
@@ -1545,7 +1570,7 @@ function habilitarArrastrePersonas() {
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
       momentoUltimoArrastrePersona = Date.now();
-      guardarOrdenPersonasDesdeDOM();
+      guardarOrdenDesdeDOM();
     }
 
     window.addEventListener('pointermove', onMove);
@@ -1553,9 +1578,9 @@ function habilitarArrastrePersonas() {
     window.addEventListener('pointercancel', onUp);
   }
 
-  function guardarOrdenPersonasDesdeDOM() {
-    const idsEnOrden = Array.from(contenedor.querySelectorAll('.persona-tile')).map((el) => el.dataset.personaId);
-    datos.personas.sort((a, b) => idsEnOrden.indexOf(a.id) - idsEnOrden.indexOf(b.id));
+  function guardarOrdenDesdeDOM() {
+    const idsEnOrden = Array.from(contenedor.querySelectorAll(claseTile)).map((el) => el.dataset[atributoDataset]);
+    arrayDatos.sort((a, b) => idsEnOrden.indexOf(a.id) - idsEnOrden.indexOf(b.id));
     guardarMetadatos();
   }
 }
