@@ -81,7 +81,7 @@
   button:focus-visible, input:focus-visible, [tabindex]:focus-visible{ outline:2px solid var(--seal); outline-offset:2px; }
   @media (prefers-reduced-motion:reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
-  #vista-login{
+  #vista-login, #vista-bloqueo{
     min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center;
     background:
@@ -93,8 +93,8 @@
     width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
     display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
   }
-  #vista-login h1{ font-size:2.1rem; margin:0 0 10px; letter-spacing:-.01em; font-weight:600; }
-  #vista-login p.lead{ max-width:320px; color:var(--text-dim); line-height:1.55; margin:0 0 30px; font-size:.95rem; }
+  #vista-login h1, #vista-bloqueo h1{ font-size:2.1rem; margin:0 0 10px; letter-spacing:-.01em; font-weight:600; }
+  #vista-login p.lead, #vista-bloqueo p.lead{ max-width:320px; color:var(--text-dim); line-height:1.55; margin:0 0 30px; font-size:.95rem; }
   .btn-google{
     display:flex; align-items:center; gap:12px; background:var(--paper); color:var(--text-ink);
     border:none; border-radius:999px; padding:14px 26px; font-size:1rem; font-weight:600;
@@ -102,6 +102,16 @@
   }
   .login-nota{ margin-top:20px; max-width:300px; font-size:.78rem; color:var(--text-dim); line-height:1.5; }
   .login-nota strong{ color:var(--seal); font-weight:600; }
+  .link-discreto{
+    background:none; border:none; color:var(--text-dim); font-size:.85rem;
+    text-decoration:underline; cursor:pointer; margin-top:20px; padding:6px;
+  }
+  #zona-pin-bloqueo{ display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:14px; width:100%; }
+  .input-pin{
+    width:140px; text-align:center; letter-spacing:.5em; font-size:1.3rem;
+    background:var(--ink-3); border:1px solid var(--borde); color:var(--text-light);
+    border-radius:9px; padding:10px 8px 10px 14px;
+  }
 
   #vista-app{ height:100dvh; overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
   @media (orientation:landscape){
@@ -395,6 +405,16 @@
     .visor-topbar{ padding-top:8px; padding-bottom:8px; }
   }
 
+  .input-busqueda{
+    flex:1; min-width:0; background:var(--ink-3); border:1px solid var(--borde); color:var(--text-light);
+    border-radius:9px; padding:10px 12px; font-size:.92rem; -webkit-appearance:none; appearance:none;
+  }
+  .input-busqueda::-webkit-search-decoration, .input-busqueda::-webkit-search-cancel-button,
+  .input-busqueda::-webkit-search-results-button, .input-busqueda::-webkit-search-results-decoration{
+    -webkit-appearance:none; appearance:none;
+  }
+  .busqueda-resultados{ flex:1; min-height:0; overflow-y:auto; padding:8px 16px calc(16px + var(--safe-b)); }
+
   .galeria-paginas{
     flex:1; min-height:0; overflow-y:auto; padding:4px 12px calc(16px + var(--safe-b));
     display:flex; flex-direction:column; gap:10px;
@@ -549,6 +569,21 @@
   <p id="version-debug-login" style="margin-top:14px;font-size:.7rem;color:var(--text-dim);"></p>
 </div>
 
+<div id="vista-bloqueo" class="hidden">
+  <div class="login-sello" aria-hidden="true">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <h1>App bloqueada</h1>
+  <p class="lead">Verifica tu huella o rostro para ver tus documentos.</p>
+  <button class="btn-google" id="btn-reintentar-bloqueo">Desbloquear</button>
+  <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
+  <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
+  <div id="zona-pin-bloqueo" class="hidden">
+    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="input-pin-desbloqueo" class="input-pin" autocomplete="off" placeholder="PIN">
+    <button class="btn-google" id="btn-desbloquear-pin">Entrar con PIN</button>
+  </div>
+</div>
+
 <div id="vista-app" class="hidden">
   <div class="topbar" id="topbar">
     <button class="btn-volver hidden" id="btn-volver" aria-label="Volver">
@@ -560,6 +595,9 @@
       <span id="titulo-topbar">DOCUMENTACIÓN</span>
       <span id="version-debug-top" style="font-size:.62rem;color:var(--text-dim);font-family:var(--sans);font-weight:400;letter-spacing:0;margin-left:6px;flex:none;"></span>
     </div>
+    <button class="btn-icono-top" id="btn-buscar-top" aria-label="Buscar documento">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
     <button class="btn-icono-top" id="btn-ver-categorias-top" aria-label="Ver en lista (categorías)">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="3" rx="1.5"/><rect x="3" y="11" width="18" height="3" rx="1.5"/><rect x="3" y="17" width="18" height="3" rx="1.5"/></svg>
     </button>
@@ -611,7 +649,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.0';
+const VERSION_APP = '2.0.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -765,10 +803,201 @@ window.addEventListener('load', () => {
   intentarSesionGuardada();
 });
 
+// Bloqueo opcional con huella/Face ID (WebAuthn, sin servidor propio: solo
+// interesa si el sistema operativo verificó al usuario, no una firma que
+// nadie va a comprobar). Puramente local — no tiene nada que ver con la
+// cuenta de Google, es una capa aparte para cuando el móvil ya está
+// desbloqueado pero alguien más lo coge.
+const BLOQUEO_HUELLA_KEY = 'documentacion_bloqueo_huella';
+const BLOQUEO_CREDENCIAL_KEY = 'documentacion_credencial_huella';
+const BLOQUEO_PIN_HASH_KEY = 'documentacion_bloqueo_pin_hash';
+const BLOQUEO_PIN_SALT_KEY = 'documentacion_bloqueo_pin_salt';
+let biometriaSoportada = false;
+(async () => {
+  try {
+    biometriaSoportada = !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+  } catch (e) { biometriaSoportada = false; }
+})();
+
+function bloqueoHuellaActivado() {
+  return localStorage.getItem(BLOQUEO_HUELLA_KEY) === '1' && !!localStorage.getItem(BLOQUEO_CREDENCIAL_KEY);
+}
+function bufferABase64Url(buffer) {
+  let binario = '';
+  new Uint8Array(buffer).forEach((b) => { binario += String.fromCharCode(b); });
+  return btoa(binario).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function base64UrlABuffer(base64url) {
+  const relleno = (4 - (base64url.length % 4)) % 4;
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(relleno);
+  const binario = atob(base64);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return bytes.buffer;
+}
+
+async function activarBloqueoHuella() {
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const idUsuario = new Uint8Array(16);
+    crypto.getRandomValues(idUsuario);
+    const credencial = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'Documentación' },
+        user: { id: idUsuario, name: usuarioEmail || 'usuario', displayName: usuarioEmail || 'Usuario' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        timeout: 60000,
+      },
+    });
+    localStorage.setItem(BLOQUEO_CREDENCIAL_KEY, bufferABase64Url(credencial.rawId));
+    localStorage.setItem(BLOQUEO_HUELLA_KEY, '1');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+function desactivarBloqueoHuella() {
+  localStorage.removeItem(BLOQUEO_HUELLA_KEY);
+  localStorage.removeItem(BLOQUEO_CREDENCIAL_KEY);
+  localStorage.removeItem(BLOQUEO_PIN_HASH_KEY);
+  localStorage.removeItem(BLOQUEO_PIN_SALT_KEY);
+}
+
+// PIN de repuesto: obligatorio al activar el bloqueo por huella, por si
+// alguna vez la verificación biométrica no funciona (huella borrada del
+// sistema, fallo del sensor...). Se guarda solo su hash con sal, nunca el
+// PIN en sí, con la misma Web Crypto API que ya usa el resto de la app.
+async function hashPin(pin, salt) {
+  const datos = new TextEncoder().encode(`${salt}:${pin}`);
+  const buf = await crypto.subtle.digest('SHA-256', datos);
+  return bufferABase64Url(buf);
+}
+async function guardarPin(pin) {
+  const saltBytes = new Uint8Array(16);
+  crypto.getRandomValues(saltBytes);
+  const salt = bufferABase64Url(saltBytes.buffer);
+  const hash = await hashPin(pin, salt);
+  localStorage.setItem(BLOQUEO_PIN_SALT_KEY, salt);
+  localStorage.setItem(BLOQUEO_PIN_HASH_KEY, hash);
+}
+async function verificarPin(pin) {
+  const salt = localStorage.getItem(BLOQUEO_PIN_SALT_KEY);
+  const hashGuardado = localStorage.getItem(BLOQUEO_PIN_HASH_KEY);
+  if (!salt || !hashGuardado) return false;
+  return (await hashPin(pin, salt)) === hashGuardado;
+}
+function pinConfigurado() {
+  return !!localStorage.getItem(BLOQUEO_PIN_HASH_KEY);
+}
+
+// Modal para crear el PIN de repuesto — se abre justo tras activar el
+// bloqueo por huella (ver el checkbox en Ajustes), nunca por separado.
+// Si se cancela, alCancelar deshace también la activación de la huella:
+// nunca debe quedar el bloqueo activo sin un PIN de repuesto detrás.
+function abrirModalCrearPin(alCompletar, alCancelar) {
+  abrirModal(`
+    <h3>PIN de repuesto</h3>
+    <p style="color:var(--text-dim);font-size:.85rem;margin:0 0 14px;">Por si alguna vez no se puede verificar tu huella o rostro. Elige un PIN de 4 dígitos.</p>
+    <div class="campo">
+      <label for="input-pin-nuevo">PIN</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="input-pin-nuevo" autocomplete="off">
+    </div>
+    <div class="campo">
+      <label for="input-pin-confirmar">Repite el PIN</label>
+      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="input-pin-confirmar" autocomplete="off">
+    </div>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario" id="modal-guardar-pin" disabled>Guardar</button>
+    </div>
+  `);
+  const input1 = $('#input-pin-nuevo');
+  const input2 = $('#input-pin-confirmar');
+  const btnGuardar = $('#modal-guardar-pin');
+  const revisar = () => {
+    btnGuardar.disabled = !(/^\d{4}$/.test(input1.value) && input1.value === input2.value);
+  };
+  input1.addEventListener('input', revisar);
+  input2.addEventListener('input', revisar);
+  $('#modal-cancelar').addEventListener('click', () => {
+    volverAtras();
+    if (alCancelar) alCancelar();
+  });
+  btnGuardar.addEventListener('click', async () => {
+    await guardarPin(input1.value);
+    volverAtras();
+    if (alCompletar) alCompletar();
+  });
+}
+
+// Ya verificado en esta carga de página — para no volver a pedirlo si
+// mostrarApp() se llama más de una vez (primero con datos en caché,
+// luego otra vez al terminar de sincronizar con Drive).
+let bloqueoYaDesbloqueado = false;
+
 function mostrarApp() {
   $('#vista-login').classList.add('hidden');
+  if (bloqueoHuellaActivado() && !bloqueoYaDesbloqueado) {
+    mostrarPantallaBloqueo();
+    return;
+  }
   $('#vista-app').classList.remove('hidden');
 }
+
+function mostrarPantallaBloqueo() {
+  $('#vista-bloqueo').classList.remove('hidden');
+  $('#zona-pin-bloqueo').classList.add('hidden');
+  $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
+  $('#input-pin-desbloqueo').value = '';
+  intentarDesbloquear();
+}
+
+async function intentarDesbloquear() {
+  const estado = $('#bloqueo-estado');
+  estado.textContent = '';
+  const credId = localStorage.getItem(BLOQUEO_CREDENCIAL_KEY);
+  if (!credId) { desbloquearApp(); return; }
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ id: base64UrlABuffer(credId), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: 60000,
+      },
+    });
+    desbloquearApp();
+  } catch (e) {
+    estado.textContent = 'No se ha podido verificar. Inténtalo de nuevo.';
+  }
+}
+
+function desbloquearApp() {
+  bloqueoYaDesbloqueado = true;
+  $('#vista-bloqueo').classList.add('hidden');
+  $('#vista-app').classList.remove('hidden');
+}
+
+$('#btn-reintentar-bloqueo').addEventListener('click', intentarDesbloquear);
+$('#btn-usar-pin').addEventListener('click', () => {
+  $('#zona-pin-bloqueo').classList.remove('hidden');
+  $('#btn-usar-pin').classList.add('hidden');
+  $('#input-pin-desbloqueo').focus();
+});
+async function intentarDesbloquearConPin() {
+  const pin = $('#input-pin-desbloqueo').value;
+  if ((await verificarPin(pin))) { desbloquearApp(); return; }
+  $('#bloqueo-estado').textContent = 'PIN incorrecto.';
+  $('#input-pin-desbloqueo').value = '';
+  $('#input-pin-desbloqueo').focus();
+}
+$('#btn-desbloquear-pin').addEventListener('click', intentarDesbloquearConPin);
+$('#input-pin-desbloqueo').addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarDesbloquearConPin(); });
 
 const TEMA_STORAGE_KEY = 'documentacion_tema';
 const mediaOscuro = window.matchMedia('(prefers-color-scheme: dark)');
@@ -1274,6 +1503,7 @@ function mostrarPantallaPersonas() {
   $('#btn-volver').classList.add('hidden');
   $('#btn-subir').classList.add('hidden');
   $('#btn-menu-persona').classList.add('hidden');
+  $('#btn-buscar-top').classList.remove('hidden');
   $('#btn-ver-categorias-top').classList.remove('hidden');
   $('#btn-ajustes').classList.remove('hidden');
   $('#topbar-punto').classList.remove('hidden');
@@ -1294,6 +1524,7 @@ function abrirPersona(personaId) {
   $('#btn-volver').classList.remove('hidden');
   $('#btn-subir').classList.remove('hidden');
   $('#btn-menu-persona').classList.remove('hidden');
+  $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
   renderizarCabeceraPersona();
@@ -1322,6 +1553,7 @@ function abrirCategoriaGlobal(categoriaId) {
   $('#btn-volver').classList.remove('hidden');
   $('#btn-subir').classList.add('hidden');
   $('#btn-menu-persona').classList.add('hidden');
+  $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
   $('#topbar-punto').classList.remove('hidden');
@@ -1351,6 +1583,83 @@ $('#btn-ver-categorias-top').addEventListener('click', () => {
   actualizarBotonAlternarVista();
   renderizarPantallaInicio();
 });
+
+// Búsqueda global: por nombre de documento o de página, cruzando todas
+// las personas y categorías a la vez. Reutiliza #visor-completo (como el
+// visor de imágenes/PDF y la galería) en vez del sistema de modales,
+// porque necesita su propia barra superior con un campo de texto.
+$('#btn-buscar-top').addEventListener('click', abrirBusqueda);
+
+function abrirBusqueda() {
+  const visor = $('#visor-completo');
+  visor.innerHTML = `
+    <div class="visor-topbar busqueda-topbar">
+      <button class="btn-icono-top" id="busqueda-cerrar" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <input type="search" id="input-busqueda" class="input-busqueda" placeholder="Buscar documento…" name="q" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" data-lpignore="true" data-1p-ignore data-form-type="other">
+    </div>
+    <div class="busqueda-resultados" id="busqueda-resultados"></div>`;
+  visor.classList.remove('hidden');
+  pushNavegacion(() => visor.classList.add('hidden'));
+
+  $('#busqueda-cerrar').addEventListener('click', volverAtras);
+  const input = $('#input-busqueda');
+  evitarBarraAutorrelleno(input);
+  input.focus();
+  input.addEventListener('input', () => renderizarResultadosBusqueda(input.value));
+  renderizarResultadosBusqueda('');
+}
+
+function normalizarBusqueda(str) {
+  return (str || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+function renderizarResultadosBusqueda(query) {
+  const cont = $('#busqueda-resultados');
+  const q = normalizarBusqueda(query);
+
+  if (!q) {
+    cont.innerHTML = `
+      <div class="estado-vacio">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <p>Escribe el nombre de un documento para buscarlo entre todas las personas.</p>
+      </div>`;
+    return;
+  }
+
+  const coincide = (doc) => normalizarBusqueda(doc.nombre).includes(q)
+    || doc.paginas.some((pagina) => normalizarBusqueda(pagina.nombre).includes(q));
+  const lista = datos.documentos.filter(coincide);
+
+  if (lista.length === 0) {
+    cont.innerHTML = `
+      <div class="estado-vacio">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <p>No se ha encontrado ningún documento con ese nombre.</p>
+      </div>`;
+    return;
+  }
+
+  const porPersona = new Map();
+  lista.forEach((doc) => {
+    if (!porPersona.has(doc.personaId)) porPersona.set(doc.personaId, []);
+    porPersona.get(doc.personaId).push(doc);
+  });
+
+  cont.innerHTML = '';
+  datos.personas.forEach((persona) => {
+    if (!porPersona.has(persona.id)) return;
+    const docs = porPersona.get(persona.id).slice().sort((a, b) => (b.fechaSubida || '').localeCompare(a.fechaSubida || ''));
+
+    const grupo = document.createElement('div');
+    grupo.className = 'grupo-documentos';
+    grupo.innerHTML = `<h3 class="titulo-grupo"><span class="avatar-persona avatar-mini-grupo" style="${estiloAvatar(persona)}">${contenidoAvatar(persona)}</span>${escapeHtml(persona.nombre)}</h3><div class="lista-docs"></div>`;
+    const listaEl = grupo.querySelector('.lista-docs');
+    docs.forEach((doc) => listaEl.appendChild(crearTarjetaDoc(doc)));
+    cont.appendChild(grupo);
+  });
+}
 
 function colorParaPersona(persona) {
   const idx = datos.personas.findIndex((p) => p.id === persona.id);
@@ -3447,6 +3756,11 @@ $('#btn-ajustes').addEventListener('click', () => {
         <button type="button" class="segmento ${temaActual === 'oscuro' ? 'activo' : ''}" data-valor="oscuro">Oscuro</button>
       </div>
     </div>
+    ${biometriaSoportada ? `
+    <label class="check-aviso" id="fila-bloqueo-huella">
+      <input type="checkbox" id="check-bloqueo-huella" ${bloqueoHuellaActivado() ? 'checked' : ''}>
+      <span>Bloquear la app con huella o Face ID</span>
+    </label>` : ''}
     <div class="menu-opciones">
       <button class="opcion-menu" id="op-administrar-personas">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.6"/></svg>
@@ -3509,6 +3823,31 @@ $('#btn-ajustes').addEventListener('click', () => {
       guardarTema(btn.dataset.valor);
     });
   });
+  const checkBloqueoHuella = $('#check-bloqueo-huella');
+  if (checkBloqueoHuella) {
+    checkBloqueoHuella.addEventListener('change', async () => {
+      const activar = checkBloqueoHuella.checked;
+      checkBloqueoHuella.disabled = true;
+      if (activar) {
+        const ok = await activarBloqueoHuella();
+        checkBloqueoHuella.disabled = false;
+        if (!ok) { checkBloqueoHuella.checked = false; mostrarToast('No se pudo activar el bloqueo.', true); return; }
+        // El PIN de repuesto es obligatorio: sin él, un fallo de la huella
+        // dejaría fuera de la app sin ninguna forma de volver a entrar.
+        abrirModalCrearPin(
+          () => mostrarToast('Bloqueo con huella activado'),
+          () => {
+            desactivarBloqueoHuella();
+            mostrarToast('Bloqueo cancelado: hace falta un PIN de repuesto.', true);
+          },
+        );
+      } else {
+        desactivarBloqueoHuella();
+        mostrarToast('Bloqueo con huella desactivado');
+        checkBloqueoHuella.disabled = false;
+      }
+    });
+  }
   $('#op-ver-drive').addEventListener('click', () => {
     if (carpetaId) window.open(`https://drive.google.com/drive/folders/${carpetaId}`, '_blank');
   });
