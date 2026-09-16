@@ -653,7 +653,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.3';
+const VERSION_APP = '2.0.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -852,7 +852,14 @@ async function activarBloqueoHuella() {
         rp: { name: 'Documentación' },
         user: { id: idUsuario, name: usuarioEmail || 'usuario', displayName: usuarioEmail || 'Usuario' },
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        // 'preferred' en vez de 'required': con 'required', Android solo
+        // deja pasar biometría "fuerte" (clase 3) para esto, que en la
+        // mayoría de móviles es solo la huella — el desbloqueo facial por
+        // cámara normal (sin sensor de profundidad) suele ser clase 2 y
+        // directamente no se ofrece como opción. 'preferred' le pide al
+        // sistema que verifique si puede, sin exigirlo como requisito
+        // duro, a ver si así el propio Android decide ofrecer el rostro.
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'preferred' },
         timeout: 60000,
       },
     });
@@ -1060,7 +1067,7 @@ async function intentarDesbloquear() {
       publicKey: {
         challenge,
         allowCredentials: [{ id: base64UrlABuffer(credId), type: 'public-key' }],
-        userVerification: 'required',
+        userVerification: 'preferred',
         timeout: 60000,
       },
     });
