@@ -251,7 +251,7 @@
     display:flex; align-items:center; gap:7px;
   }
   .titulo-grupo .punto-grupo{ width:8px; height:8px; border-radius:50%; background:currentColor; flex:none; }
-  .titulo-grupo .avatar-mini-grupo{ width:20px; height:20px; max-width:none; border-radius:50%; flex:none; box-shadow:none; }
+  .titulo-grupo .avatar-mini-grupo{ width:30px; height:30px; max-width:none; border-radius:50%; flex:none; box-shadow:none; }
 
   .lista-docs{ display:flex; flex-direction:column; gap:10px; }
   @media (orientation:landscape){
@@ -482,11 +482,6 @@
     width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
   }
   .icon-btn-cat:active{ background:var(--ink-3); color:var(--text-light); }
-  .fila-categoria-clic{
-    width:100%; background:none; border:none; text-align:left; cursor:pointer;
-    border-radius:10px; font-family:inherit;
-  }
-  .fila-categoria-clic:active{ background:var(--ink-3); }
 
   .toast{
     position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%);
@@ -576,7 +571,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.4';
+const VERSION_APP = '1.10.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -632,6 +627,7 @@ let personaActivaId = null;
 let categoriaGlobalActivaId = null;
 let momentoUltimoArrastrePersona = 0;
 let categoriaActiva = 'todos';
+let personaFiltroActiva = 'todos';
 let modoSeleccionDocs = false;
 const docsSeleccionados = new Set();
 let usuarioEmail = '';
@@ -892,9 +888,10 @@ function refrescarPantallaActual() {
     renderizarAvisoCaducidadPersona();
     renderizarDocumentos();
   } else if (categoriaGlobalActivaId !== null) {
+    renderizarChipsPersonas();
     renderizarDocumentos();
   } else {
-    renderizarPersonas();
+    renderizarPantallaInicio();
   }
 }
 
@@ -1197,6 +1194,35 @@ async function obtenerBlobPagina(pagina) {
   return blob;
 }
 
+// La pantalla de inicio tiene dos modos permanentes, elegidos con el botón
+// de la topbar (actualizarBotonAlternarVista/renderizarPantallaInicio):
+// "personas" (por defecto, cuadrícula de personas) o "categorías"
+// (cuadrícula de categorías). El modo elegido se recuerda entre visitas,
+// no solo mientras se navega, hasta que se vuelva a cambiar.
+function obtenerModoInicioGuardado() {
+  return localStorage.getItem('documentacion_modo_inicio') === 'categorias' ? 'categorias' : 'personas';
+}
+function guardarModoInicio(modo) {
+  localStorage.setItem('documentacion_modo_inicio', modo);
+}
+let modoInicio = obtenerModoInicioGuardado();
+
+function renderizarPantallaInicio() {
+  if (modoInicio === 'categorias') renderizarCategoriasHome();
+  else renderizarPersonas();
+}
+
+function actualizarBotonAlternarVista() {
+  const btn = $('#btn-ver-categorias-top');
+  if (modoInicio === 'categorias') {
+    btn.setAttribute('aria-label', 'Ver por persona');
+    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.6"/></svg>';
+  } else {
+    btn.setAttribute('aria-label', 'Ver por categoría');
+    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  }
+}
+
 function mostrarPantallaPersonas() {
   personaActivaId = null;
   categoriaGlobalActivaId = null;
@@ -1211,7 +1237,8 @@ function mostrarPantallaPersonas() {
   $('#topbar-punto').classList.remove('hidden');
   $('#avatar-topbar').classList.add('hidden');
   $('#titulo-topbar').textContent = 'DOCUMENTACIÓN';
-  renderizarPersonas();
+  actualizarBotonAlternarVista();
+  renderizarPantallaInicio();
 }
 
 function abrirPersona(personaId) {
@@ -1236,16 +1263,18 @@ function abrirPersona(personaId) {
 
 // Vista transversal: todos los documentos de una categoría, de todas las
 // personas a la vez (a diferencia de abrirPersona, que filtra por una
-// sola persona). Reutiliza la misma sección #pantalla-persona, pero sin
-// chips de categoría (ya está fija) ni avisos de caducidad por persona.
+// sola persona). Reutiliza la misma sección #pantalla-persona, pero con
+// la barra de chips mostrando personas en vez de categorías (al revés
+// que en abrirPersona) y sin avisos de caducidad por persona.
 function abrirCategoriaGlobal(categoriaId) {
   personaActivaId = null;
   categoriaGlobalActivaId = categoriaId;
+  personaFiltroActiva = 'todos';
   salirModoSeleccion();
   const cat = datos.categorias.find((c) => c.id === categoriaId);
   $('#pantalla-personas').classList.add('hidden');
   $('#pantalla-persona').classList.remove('hidden');
-  $('#chips-categorias').classList.add('hidden');
+  $('#chips-categorias').classList.remove('hidden');
   $('#aviso-caducado-persona').classList.add('hidden');
   $('#aviso-porcaducar-persona').classList.add('hidden');
   $('#btn-volver').classList.remove('hidden');
@@ -1256,35 +1285,18 @@ function abrirCategoriaGlobal(categoriaId) {
   $('#topbar-punto').classList.remove('hidden');
   $('#avatar-topbar').classList.add('hidden');
   $('#titulo-topbar').textContent = cat ? cat.nombre : 'Categoría';
+  renderizarChipsPersonas();
   renderizarDocumentos();
   pushNavegacion(mostrarPantallaPersonas);
 }
 
-// Ventana flotante para elegir una categoría y ver, de un vistazo, todos
-// los documentos de ese tipo de todas las personas juntas.
-function abrirModalCategoriasGlobal() {
-  const categoriasConDocs = datos.categorias.filter((cat) => datos.documentos.some((d) => d.categoria === cat.id));
-  const filas = categoriasConDocs.map((cat) => `
-    <button class="fila-categoria fila-categoria-clic" type="button" data-cat="${cat.id}">
-      <span class="punto-cat" style="background:${cat.color}"></span>
-      <span class="nombre-cat">${escapeHtml(cat.nombre)}</span>
-    </button>`).join('');
-
-  abrirModal(`
-    <h3>Ver por categoría</h3>
-    <div class="lista-categorias-admin">${filas || '<p style="color:var(--text-dim);font-size:.85rem;">Todavía no hay documentos guardados.</p>'}</div>
-  `);
-  $$('.fila-categoria-clic').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const catId = btn.dataset.cat;
-      cerrarCapas(1);
-      abrirCategoriaGlobal(catId);
-    });
-  });
-}
-
 $('#btn-volver').addEventListener('click', volverAtras);
-$('#btn-ver-categorias-top').addEventListener('click', abrirModalCategoriasGlobal);
+$('#btn-ver-categorias-top').addEventListener('click', () => {
+  modoInicio = modoInicio === 'categorias' ? 'personas' : 'categorias';
+  guardarModoInicio(modoInicio);
+  actualizarBotonAlternarVista();
+  renderizarPantallaInicio();
+});
 
 function colorParaPersona(persona) {
   const idx = datos.personas.findIndex((p) => p.id === persona.id);
@@ -1333,6 +1345,40 @@ function renderizarPersonas() {
   });
 
   habilitarArrastrePersonas();
+}
+
+// Mismo grid que renderizarPersonas, pero con las categorías — la otra
+// mitad del modo de inicio "categorías" (ver modoInicio). A diferencia de
+// la cuadrícula de personas, no tiene arrastre para reordenar (el orden
+// de las categorías se gestiona desde Ajustes → Administrar categorías).
+function renderizarCategoriasHome() {
+  const cont = $('#grid-personas');
+  cont.innerHTML = '';
+  cont.classList.remove('pocas', 'tres', 'centrado', 'vacio');
+
+  if (datos.categorias.length === 0) {
+    cont.classList.add('vacio');
+    cont.innerHTML = `
+      <div class="estado-vacio">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <p>No hay categorías todavía.<br>Ve a Ajustes → "Administrar categorías" para crear alguna.</p>
+      </div>`;
+    return;
+  }
+
+  cont.classList.toggle('pocas', datos.categorias.length <= 3);
+  cont.classList.toggle('tres', datos.categorias.length === 3);
+  cont.classList.toggle('centrado', datos.categorias.length === 4);
+
+  datos.categorias.forEach((cat) => {
+    const btn = document.createElement('button');
+    btn.className = 'persona-tile';
+    btn.innerHTML = `
+      <div class="avatar-persona" style="background:${cat.color}">${htmlIconoAvatar('carpeta')}</div>
+      <span class="nombre-persona">${escapeHtml(cat.nombre)}</span>`;
+    btn.addEventListener('click', () => abrirCategoriaGlobal(cat.id));
+    cont.appendChild(btn);
+  });
 }
 
 // El user-select:none del CSS no basta en algunos móviles Android: al
@@ -1610,7 +1656,7 @@ function abrirModalNuevaPersona() {
     datos.personas.push({ id: 'p-' + Date.now(), nombre, foto: fotoPendienteDataUrl, icono: iconoPendienteId });
     await guardarMetadatos();
     volverAtras();
-    renderizarPersonas();
+    renderizarPantallaInicio();
     mostrarToast('Persona añadida');
   });
 }
@@ -1990,6 +2036,37 @@ function crearChip(cat) {
   return btn;
 }
 
+// Mismo patrón que renderizarChipsCategorias/crearChip, pero al revés:
+// aquí la categoría ya está fija (es la pantalla) y los chips filtran por
+// persona — usados en abrirCategoriaGlobal, la vista transversal.
+function renderizarChipsPersonas() {
+  const cont = $('#chips-categorias');
+  cont.innerHTML = '';
+  const docsCategoria = datos.documentos.filter((d) => d.categoria === categoriaGlobalActivaId);
+
+  const chipTodos = crearChipPersona({ id: 'todos', nombre: 'Todos' }, '#EDE9DE');
+  cont.appendChild(chipTodos);
+
+  const personasConDocs = datos.personas.filter((p) => docsCategoria.some((d) => d.personaId === p.id));
+  personasConDocs.forEach((p) => cont.appendChild(crearChipPersona(p, colorParaPersona(p))));
+
+  if (personaFiltroActiva !== 'todos' && !personasConDocs.some((p) => p.id === personaFiltroActiva)) {
+    personaFiltroActiva = 'todos';
+  }
+}
+
+function crearChipPersona(persona, color) {
+  const btn = document.createElement('button');
+  btn.className = 'chip' + (persona.id === personaFiltroActiva ? ' activo' : '');
+  btn.innerHTML = `<span class="punto-chip" style="color:${color}"></span>${escapeHtml(persona.nombre)}`;
+  btn.addEventListener('click', () => {
+    personaFiltroActiva = persona.id;
+    renderizarChipsPersonas();
+    renderizarDocumentos();
+  });
+  return btn;
+}
+
 function renderizarDocumentos() {
   if (categoriaGlobalActivaId !== null) { renderizarDocumentosPorCategoria(); return; }
 
@@ -2048,7 +2125,11 @@ function renderizarDocumentos() {
 // categoría (ya está fija, sería redundante), agrupa por persona, con su
 // nombre y avatar encabezando cada grupo.
 function renderizarDocumentosPorCategoria() {
-  const lista = datos.documentos.filter((d) => d.categoria === categoriaGlobalActivaId);
+  const lista = datos.documentos.filter((d) => {
+    if (d.categoria !== categoriaGlobalActivaId) return false;
+    if (personaFiltroActiva !== 'todos' && d.personaId !== personaFiltroActiva) return false;
+    return true;
+  });
   const cont = $('#contenido-documentos');
   if (lista.length === 0) {
     cont.innerHTML = `
@@ -3502,13 +3583,13 @@ async function procesarImportacion(file) {
 
     await guardarMetadatos();
     cerrarCapas(2); // cierra este modal y el de Ajustes
-    renderizarPersonas();
+    renderizarPantallaInicio();
     mostrarToast(`Importadas ${nuevasPersonas.length} persona${nuevasPersonas.length === 1 ? '' : 's'} y ${hechos} documento${hechos === 1 ? '' : 's'}`);
   } catch (e) {
     console.error(e);
     try { await guardarMetadatos(); } catch (e2) { /* ignorar */ }
     cerrarCapas(2);
-    renderizarPersonas();
+    renderizarPantallaInicio();
     mostrarToast('No se pudo importar el archivo (o se importó solo en parte). ¿Seguro que es una copia válida?', true);
   }
 }
@@ -3600,6 +3681,7 @@ function cablearModalCategorias() {
     datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
     await guardarMetadatos();
     if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+    else if (modoInicio === 'categorias') { renderizarCategoriasHome(); }
     mostrarToast('Categoría eliminada');
     refrescar();
   }
@@ -3628,6 +3710,7 @@ function cablearModalCategorias() {
       mostrarToast('Categoría creada');
     }
     if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
+    else if (modoInicio === 'categorias') { renderizarCategoriasHome(); }
     refrescar();
   }
 
