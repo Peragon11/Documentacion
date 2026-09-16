@@ -666,7 +666,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.0';
+const VERSION_APP = '2.1.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1057,12 +1057,7 @@ function mostrarPantallaBloqueo() {
     $('#btn-reintentar-bloqueo').classList.remove('hidden');
     $('#zona-pin-bloqueo').classList.add('hidden');
     $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
-    // Un pequeño respiro antes de lanzar la petición de huella: pedirla
-    // en el mismo instante en que la pestaña recupera el foco (justo al
-    // volver de segundo plano, ver el listener de visibilitychange) a
-    // veces no llega a mostrar la ventana del sistema — como si el
-    // navegador todavía no tuviera el foco de verdad ese primer instante.
-    setTimeout(intentarDesbloquear, 250);
+    intentarDesbloquear();
   } else {
     // Solo hay PIN (sin huella activa): se pide directamente, sin pasar
     // por la huella ni por el enlace "Usar PIN".
@@ -1115,11 +1110,24 @@ const MARGEN_REBLOQUEO_MS = 60000;
 let momentoOcultacion = null;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { momentoOcultacion = Date.now(); return; }
-  if (!bloqueoActivado() || !bloqueoYaDesbloqueado) return;
-  if (momentoOcultacion !== null && Date.now() - momentoOcultacion < MARGEN_REBLOQUEO_MS) return;
-  bloqueoYaDesbloqueado = false;
-  $('#vista-app').classList.add('hidden');
-  mostrarPantallaBloqueo();
+  if (!bloqueoActivado()) return;
+  if (bloqueoYaDesbloqueado) {
+    // Ya estaba desbloqueada: se vuelve a bloquear solo si ha pasado el
+    // margen mínimo en segundo plano.
+    if (momentoOcultacion !== null && Date.now() - momentoOcultacion < MARGEN_REBLOQUEO_MS) return;
+    bloqueoYaDesbloqueado = false;
+    $('#vista-app').classList.add('hidden');
+    mostrarPantallaBloqueo();
+    return;
+  }
+  // No llegó a desbloquearse (p. ej. se canceló la ventana de la huella
+  // con el botón atrás y se salió de la app sin poner el PIN): seguía en
+  // la pantalla de bloqueo, así que al volver se reintenta la huella de
+  // nuevo — aquí no aplica el margen de un minuto, nunca hubo nada que
+  // "seguir" desbloqueado.
+  if (bloqueoHuellaActivado() && !$('#vista-bloqueo').classList.contains('hidden')) {
+    intentarDesbloquear();
+  }
 });
 
 $('#btn-reintentar-bloqueo').addEventListener('click', intentarDesbloquear);
