@@ -581,7 +581,7 @@
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
   <h1>App bloqueada</h1>
-  <p class="lead" id="texto-bloqueo-lead">Verifica tu huella o rostro para ver tus documentos.</p>
+  <p class="lead" id="texto-bloqueo-lead">Verifica tu huella para ver tus documentos.</p>
   <button class="btn-google" id="btn-reintentar-bloqueo">Desbloquear</button>
   <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
   <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
@@ -653,7 +653,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.4';
+const VERSION_APP = '2.0.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -807,7 +807,7 @@ window.addEventListener('load', () => {
   intentarSesionGuardada();
 });
 
-// Bloqueo opcional con huella/rostro (WebAuthn, sin servidor propio: solo
+// Bloqueo opcional con huella (WebAuthn, sin servidor propio: solo
 // interesa si el sistema operativo verificó al usuario, no una firma que
 // nadie va a comprobar). Puramente local — no tiene nada que ver con la
 // cuenta de Google, es una capa aparte para cuando el móvil ya está
@@ -852,14 +852,14 @@ async function activarBloqueoHuella() {
         rp: { name: 'Documentación' },
         user: { id: idUsuario, name: usuarioEmail || 'usuario', displayName: usuarioEmail || 'Usuario' },
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-        // 'preferred' en vez de 'required': con 'required', Android solo
-        // deja pasar biometría "fuerte" (clase 3) para esto, que en la
-        // mayoría de móviles es solo la huella — el desbloqueo facial por
-        // cámara normal (sin sensor de profundidad) suele ser clase 2 y
-        // directamente no se ofrece como opción. 'preferred' le pide al
-        // sistema que verifique si puede, sin exigirlo como requisito
-        // duro, a ver si así el propio Android decide ofrecer el rostro.
-        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'preferred' },
+        // Solo huella, a propósito: Android exige biometría "fuerte" (clase
+        // 3) para esto, y en la inmensa mayoría de móviles el rostro (sin
+        // sensor de profundidad) es clase 2 y ni se ofrece como opción —
+        // se probó relajar esto a 'preferred' sin efecto, es una
+        // restricción del propio sistema. Ofrecer solo huella evita
+        // prometer un "o rostro" que en la práctica no funciona; el rostro
+        // de verdad tendría que esperar a una futura app nativa.
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
         timeout: 60000,
       },
     });
@@ -1040,7 +1040,7 @@ function mostrarPantallaBloqueo() {
   $('#bloqueo-estado').textContent = '';
   tecladoPinBloqueo.reset();
   if (bloqueoHuellaActivado()) {
-    $('#texto-bloqueo-lead').textContent = 'Verifica tu huella o rostro para ver tus documentos.';
+    $('#texto-bloqueo-lead').textContent = 'Verifica tu huella para ver tus documentos.';
     $('#btn-reintentar-bloqueo').classList.remove('hidden');
     $('#zona-pin-bloqueo').classList.add('hidden');
     $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
@@ -1067,7 +1067,7 @@ async function intentarDesbloquear() {
       publicKey: {
         challenge,
         allowCredentials: [{ id: base64UrlABuffer(credId), type: 'public-key' }],
-        userVerification: 'preferred',
+        userVerification: 'required',
         timeout: 60000,
       },
     });
@@ -3860,7 +3860,7 @@ $('#btn-ajustes').addEventListener('click', () => {
     ${biometriaSoportada ? `
     <label class="check-aviso" id="fila-bloqueo-huella">
       <input type="checkbox" id="check-bloqueo-huella" ${bloqueoHuellaActivado() ? 'checked' : ''}>
-      <span>Bloquear la app con huella o rostro</span>
+      <span>Bloquear la app con huella</span>
     </label>` : ''}
     <div class="menu-opciones">
       <button class="opcion-menu" id="op-administrar-personas">
