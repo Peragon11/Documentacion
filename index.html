@@ -207,7 +207,7 @@
     display:flex; align-items:center; width:100%; min-height:64px; padding:16px 20px; border-radius:16px;
     border:none; cursor:pointer; color:#fff; font-family:var(--serif); font-weight:600; font-size:1.08rem;
     text-align:left; box-shadow:0 6px 16px rgba(0,0,0,.22);
-    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+    touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
   }
   .categoria-barra.arrastrando-tile{
     z-index:30; cursor:grabbing; transition:none; pointer-events:none;
@@ -231,6 +231,7 @@
 
   .persona-tile{
     color:var(--text-light);
+    touch-action:none;
     -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
     display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px; width:100%; min-width:0;
   }
@@ -660,7 +661,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.7';
+const VERSION_APP = '2.0.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -2125,6 +2126,45 @@ function debeBloquearSeleccion(e) {
 document.addEventListener('contextmenu', (e) => { if (debeBloquearSeleccion(e)) e.preventDefault(); });
 document.addEventListener('selectstart', (e) => { if (debeBloquearSeleccion(e)) e.preventDefault(); });
 
+// Inercia hecha a mano para el scroll "convertido" de habilitarArrastreTiles
+// — hace falta porque esas fichas necesitan touch-action:none permanente
+// (para distinguir de forma fiable "mantener pulsado para arrastrar" de
+// "deslizar para hacer scroll" con JS), y con touch-action:none el
+// navegador nunca coge el gesto, así que no hay inercia nativa de por sí.
+// Un WeakMap por zona de scroll permite cancelar la inercia en marcha si
+// se empieza a tocar otra vez antes de que termine de frenar.
+const inerciaScrollActiva = new WeakMap();
+function detenerInerciaScroll(zona) {
+  const id = inerciaScrollActiva.get(zona);
+  if (id) { cancelAnimationFrame(id); inerciaScrollActiva.delete(zona); }
+}
+function lanzarInerciaScroll(zona, historial) {
+  if (historial.length < 2) return;
+  const primero = historial[0];
+  const ultimo = historial[historial.length - 1];
+  const dt = ultimo.t - primero.t;
+  if (dt <= 0 || dt > 150) return; // el dedo ya estaba parado antes de soltar
+  let velocidad = (ultimo.y - primero.y) / dt; // px/ms, con el signo del gesto (subir dedo = valor negativo)
+  const VELOCIDAD_MIN = 0.02;
+  const FRICCION = 0.94;
+  if (Math.abs(velocidad) < VELOCIDAD_MIN) return;
+  function paso() {
+    velocidad *= FRICCION;
+    const maximo = Math.max(0, zona.scrollHeight - zona.clientHeight);
+    const siguiente = zona.scrollTop - velocidad * 16;
+    zona.scrollTop = siguiente;
+    // scrollTop se autolimita a [0, máximo] — si ya no se ha movido más
+    // que lo que tocaba (topó con un extremo), no merece la pena seguir.
+    const topoBorde = (siguiente <= 0 && velocidad > 0) || (siguiente >= maximo && velocidad < 0);
+    if (topoBorde || Math.abs(velocidad) < VELOCIDAD_MIN) {
+      inerciaScrollActiva.delete(zona);
+      return;
+    }
+    inerciaScrollActiva.set(zona, requestAnimationFrame(paso));
+  }
+  inerciaScrollActiva.set(zona, requestAnimationFrame(paso));
+}
+
 // Arrastrar para reordenar en la pantalla de inicio — usada tanto por la
 // cuadrícula de personas como por las barras de categorías (ver
 // renderizarPersonas/renderizarCategoriasHome). claseTile es el selector
@@ -2142,8 +2182,24 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
       if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
       const inicioX = eventoInicial.clientX;
       const inicioY = eventoInicial.clientY;
+      const scrollInicial = zonaScroll.scrollTop;
+      // Si todo cabe en la pantalla (pocas personas), no hay nada que
+      // desplazar — sin esto, el intento de "convertir en scroll" movía
+      // igualmente unos pocos píxeles aunque no hubiera más contenido.
+      const hayScrollDisponible = zonaScroll.scrollHeight - zonaScroll.clientHeight > 4;
       let ultimoEvento = eventoInicial;
       let cancelado = false;
+      let convertidoEnScroll = false;
+      detenerInerciaScroll(zonaScroll);
+
+      // Para poder seguir deslizando un poco al soltar el dedo (inercia):
+      // guarda las últimas posiciones con su instante, para estimar la
+      // velocidad justo antes de soltar.
+      const historial = [];
+      function registrarMuestra(y) {
+        historial.push({ t: performance.now(), y });
+        if (historial.length > 5) historial.shift();
+      }
 
       const timer = setTimeout(() => {
         if (cancelado) return;
@@ -2152,14 +2208,6 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
         iniciarArrastre(tile, ultimoEvento);
       }, DURACION_PULSACION);
 
-      // Antes esto también movía la lista a mano (con touch-action:none
-      // permanente en la ficha, era la única forma de que el dedo
-      // scrolleara algo). Ahora la ficha permite el scroll nativo del
-      // navegador salvo mientras se arrastra de verdad (iniciarArrastre
-      // pone touch-action:none solo en ese momento), así que aquí basta
-      // con cancelar el temporizador de pulsación larga si el dedo se
-      // mueve lo bastante — el propio scroll nativo se encarga del resto,
-      // con su inercia y su rebote en los extremos.
       const cancelarSiSeMueve = (ev) => {
         ultimoEvento = ev;
         const dx = ev.clientX - inicioX;
@@ -2167,9 +2215,19 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
         if (!cancelado && (Math.abs(dx) > UMBRAL_MOVIMIENTO || Math.abs(dy) > UMBRAL_MOVIMIENTO)) {
           cancelado = true;
           clearTimeout(timer);
+          if (Math.abs(dy) > Math.abs(dx)) convertidoEnScroll = true;
+        }
+        if (convertidoEnScroll && hayScrollDisponible) {
+          registrarMuestra(ev.clientY);
+          zonaScroll.scrollTop = scrollInicial - dy;
         }
       };
-      const cancelarPorSoltar = () => { cancelado = true; clearTimeout(timer); limpiar(); };
+      const cancelarPorSoltar = () => {
+        cancelado = true;
+        clearTimeout(timer);
+        limpiar();
+        if (convertidoEnScroll && hayScrollDisponible) lanzarInerciaScroll(zonaScroll, historial);
+      };
       function limpiar() {
         window.removeEventListener('pointermove', cancelarSiSeMueve);
         window.removeEventListener('pointerup', cancelarPorSoltar);
