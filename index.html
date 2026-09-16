@@ -95,8 +95,8 @@
      botón/teclado de más abajo, en cambio, se separan aposta (ver
      #btn-reintentar-bloqueo y el margen que pone mostrarPantallaBloqueo()
      en #zona-pin-bloqueo) para que queden tapados sin problema. */
-  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t)); }
-  #btn-reintentar-bloqueo{ margin-top:calc(12vh + 57px); }
+  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 76px); }
+  #btn-reintentar-bloqueo{ margin-top:calc(12vh - 19px); }
   .login-sello{
     width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
     display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
@@ -139,6 +139,11 @@
     padding:calc(12px + var(--safe-t)) 16px 12px;
     background:var(--topbar-fondo); backdrop-filter:blur(10px);
     border-bottom:1px solid var(--borde-sutil);
+    /* Mismo fallo de renderizado que en los avatares: position:sticky +
+       backdrop-filter puede dejar una línea sin pintar bien justo en el
+       borde superior, pegada a la barra de estado de Android. Forzar su
+       propia capa de composición evita el hueco. */
+    transform:translateZ(0);
   }
   .topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
   .topbar .marca span#titulo-topbar{
@@ -661,7 +666,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.9';
+const VERSION_APP = '2.1.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1052,7 +1057,12 @@ function mostrarPantallaBloqueo() {
     $('#btn-reintentar-bloqueo').classList.remove('hidden');
     $('#zona-pin-bloqueo').classList.add('hidden');
     $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
-    intentarDesbloquear();
+    // Un pequeño respiro antes de lanzar la petición de huella: pedirla
+    // en el mismo instante en que la pestaña recupera el foco (justo al
+    // volver de segundo plano, ver el listener de visibilitychange) a
+    // veces no llega a mostrar la ventana del sistema — como si el
+    // navegador todavía no tuviera el foco de verdad ese primer instante.
+    setTimeout(intentarDesbloquear, 250);
   } else {
     // Solo hay PIN (sin huella activa): se pide directamente, sin pasar
     // por la huella ni por el enlace "Usar PIN".
@@ -1063,7 +1073,7 @@ function mostrarPantallaBloqueo() {
     // Aquí el teclado es lo primero que se ve (no hay botón de huella
     // delante que ya lo separe de por sí), así que necesita su propio
     // empujón hacia abajo para quedar bajo la ventana del sistema.
-    $('#zona-pin-bloqueo').style.marginTop = 'calc(12vh + 57px)';
+    $('#zona-pin-bloqueo').style.marginTop = 'calc(12vh - 19px)';
     return;
   }
   $('#zona-pin-bloqueo').style.marginTop = '';
