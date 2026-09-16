@@ -581,7 +581,7 @@
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
   <h1>App bloqueada</h1>
-  <p class="lead">Verifica tu huella o rostro para ver tus documentos.</p>
+  <p class="lead" id="texto-bloqueo-lead">Verifica tu huella o rostro para ver tus documentos.</p>
   <button class="btn-google" id="btn-reintentar-bloqueo">Desbloquear</button>
   <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
   <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
@@ -653,7 +653,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.2';
+const VERSION_APP = '2.0.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -863,19 +863,21 @@ async function activarBloqueoHuella() {
     return false;
   }
 }
-// No borra el PIN a propósito: desde que tiene su propio botón en
-// Ajustes ("PIN de respaldo"), es independiente de la huella — apagar y
-// volver a encender el bloqueo por huella no debería obligar a crear el
-// PIN otra vez si ya había uno.
+// No borra el PIN a propósito: es una casilla independiente en Ajustes
+// (encima de esta), no algo exclusivo de la huella — apagar y volver a
+// encender el bloqueo por huella no debería obligar a crear el PIN otra
+// vez si ya había uno.
 function desactivarBloqueoHuella() {
   localStorage.removeItem(BLOQUEO_HUELLA_KEY);
   localStorage.removeItem(BLOQUEO_CREDENCIAL_KEY);
 }
 
-// PIN de repuesto: obligatorio al activar el bloqueo por huella, por si
-// alguna vez la verificación biométrica no funciona (huella borrada del
-// sistema, fallo del sensor...). Se guarda solo su hash con sal, nunca el
-// PIN en sí, con la misma Web Crypto API que ya usa el resto de la app.
+// PIN: la propia forma de bloquear la app, no solo un respaldo de la
+// huella (aunque también sirve como tal, ya que la huella exige que
+// haya uno detrás por si alguna vez la verificación biométrica falla —
+// huella borrada del sistema, fallo del sensor...). Se guarda solo su
+// hash con sal, nunca el PIN en sí, con la misma Web Crypto API que ya
+// usa el resto de la app.
 async function hashPin(pin, salt) {
   const datos = new TextEncoder().encode(`${salt}:${pin}`);
   const buf = await crypto.subtle.digest('SHA-256', datos);
@@ -934,13 +936,10 @@ function cablearTecladoPin(contenedor, onCompleto) {
   return { reset };
 }
 
-// Modal para crear (o cambiar) el PIN de respaldo — pide el PIN dos
-// veces con el mismo teclado y lo guarda solo al confirmar que coinciden,
-// sin botón de guardar aparte. Se llega aquí desde un botón propio en
-// Ajustes ("PIN de respaldo"), o encadenado justo tras activar el
-// bloqueo por huella si todavía no había ninguno — en ese segundo caso,
-// si se cancela, alCancelar deshace también la activación de la huella:
-// nunca debe quedar el bloqueo activo sin un PIN de respaldo detrás.
+// Modal para crear el PIN — pide el valor dos veces con el mismo teclado
+// y lo guarda solo al confirmar que coinciden, sin botón de guardar
+// aparte. Se llega aquí solo desde la casilla "Bloquear la app con PIN"
+// de Ajustes; alCancelar deshace la activación si se cierra sin terminar.
 function abrirModalCrearPin(alCompletar, alCancelar) {
   abrirModal(`
     <h3 id="titulo-crear-pin">Crea tu PIN</h3>
@@ -978,6 +977,43 @@ function abrirModalCrearPin(alCompletar, alCancelar) {
   });
 }
 
+// Quitar el PIN exige escribirlo correctamente primero — no basta con
+// destildar la casilla. No se ofrece si el bloqueo por huella está
+// activo (lo necesita como respaldo); eso se comprueba antes de llamar
+// a esta función, no aquí dentro.
+function abrirModalQuitarPin(alCompletar, alCancelar) {
+  abrirModal(`
+    <h3>Quitar PIN</h3>
+    <p id="texto-quitar-pin" style="color:var(--text-dim);font-size:.85rem;margin:0 0 6px;">Introduce tu PIN actual para quitarlo.</p>
+    ${htmlTecladoPin()}
+    <button class="btn-secundario" id="modal-cancelar" style="margin-top:20px;width:100%;">Cancelar</button>
+  `);
+  const texto = $('#texto-quitar-pin');
+  const teclado = cablearTecladoPin($('.modal'), async (valor) => {
+    const ok = await verificarPin(valor);
+    if (!ok) {
+      texto.textContent = 'PIN incorrecto. Inténtalo de nuevo.';
+      texto.style.color = '#E0897A';
+      teclado.reset();
+      return;
+    }
+    localStorage.removeItem(BLOQUEO_PIN_HASH_KEY);
+    localStorage.removeItem(BLOQUEO_PIN_SALT_KEY);
+    volverAtras();
+    if (alCompletar) alCompletar();
+  });
+  $('#modal-cancelar').addEventListener('click', () => {
+    volverAtras();
+    if (alCancelar) alCancelar();
+  });
+}
+
+// El bloqueo de la app está activo si hay un PIN configurado, o huella
+// activada (que a su vez exige que haya un PIN detrás), o ambos.
+function bloqueoActivado() {
+  return pinConfigurado() || bloqueoHuellaActivado();
+}
+
 // Ya verificado en esta carga de página — para no volver a pedirlo si
 // mostrarApp() se llama más de una vez (primero con datos en caché,
 // luego otra vez al terminar de sincronizar con Drive).
@@ -985,7 +1021,7 @@ let bloqueoYaDesbloqueado = false;
 
 function mostrarApp() {
   $('#vista-login').classList.add('hidden');
-  if (bloqueoHuellaActivado() && !bloqueoYaDesbloqueado) {
+  if (bloqueoActivado() && !bloqueoYaDesbloqueado) {
     mostrarPantallaBloqueo();
     return;
   }
@@ -994,10 +1030,22 @@ function mostrarApp() {
 
 function mostrarPantallaBloqueo() {
   $('#vista-bloqueo').classList.remove('hidden');
-  $('#zona-pin-bloqueo').classList.add('hidden');
-  $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
+  $('#bloqueo-estado').textContent = '';
   tecladoPinBloqueo.reset();
-  intentarDesbloquear();
+  if (bloqueoHuellaActivado()) {
+    $('#texto-bloqueo-lead').textContent = 'Verifica tu huella o rostro para ver tus documentos.';
+    $('#btn-reintentar-bloqueo').classList.remove('hidden');
+    $('#zona-pin-bloqueo').classList.add('hidden');
+    $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
+    intentarDesbloquear();
+  } else {
+    // Solo hay PIN (sin huella activa): se pide directamente, sin pasar
+    // por la huella ni por el enlace "Usar PIN".
+    $('#texto-bloqueo-lead').textContent = 'Introduce tu PIN para ver tus documentos.';
+    $('#btn-reintentar-bloqueo').classList.add('hidden');
+    $('#btn-usar-pin').classList.add('hidden');
+    $('#zona-pin-bloqueo').classList.remove('hidden');
+  }
 }
 
 async function intentarDesbloquear() {
@@ -3798,17 +3846,16 @@ $('#btn-ajustes').addEventListener('click', () => {
         <button type="button" class="segmento ${temaActual === 'oscuro' ? 'activo' : ''}" data-valor="oscuro">Oscuro</button>
       </div>
     </div>
+    <label class="check-aviso" id="fila-bloqueo-pin">
+      <input type="checkbox" id="check-bloqueo-pin" ${pinConfigurado() ? 'checked' : ''}>
+      <span>Bloquear la app con PIN</span>
+    </label>
     ${biometriaSoportada ? `
     <label class="check-aviso" id="fila-bloqueo-huella">
       <input type="checkbox" id="check-bloqueo-huella" ${bloqueoHuellaActivado() ? 'checked' : ''}>
       <span>Bloquear la app con huella o rostro</span>
     </label>` : ''}
     <div class="menu-opciones">
-      ${biometriaSoportada ? `
-      <button class="opcion-menu" id="op-pin-respaldo">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6"/></svg>
-        ${pinConfigurado() ? 'Cambiar PIN de respaldo' : 'Crear PIN de respaldo'}
-      </button>` : ''}
       <button class="opcion-menu" id="op-administrar-personas">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.6"/></svg>
         Administrar personas
@@ -3870,41 +3917,52 @@ $('#btn-ajustes').addEventListener('click', () => {
       guardarTema(btn.dataset.valor);
     });
   });
+  const checkBloqueoPin = $('#check-bloqueo-pin');
+  checkBloqueoPin.addEventListener('change', () => {
+    const activar = checkBloqueoPin.checked;
+    checkBloqueoPin.disabled = true;
+    if (activar) {
+      abrirModalCrearPin(
+        () => { mostrarToast('Bloqueo con PIN activado'); checkBloqueoPin.disabled = false; },
+        () => { checkBloqueoPin.checked = false; checkBloqueoPin.disabled = false; },
+      );
+    } else {
+      if (bloqueoHuellaActivado()) {
+        // El PIN es el respaldo del bloqueo por huella: no se puede
+        // quitar mientras la huella siga activa.
+        checkBloqueoPin.checked = true;
+        checkBloqueoPin.disabled = false;
+        mostrarToast('Desactiva antes el bloqueo por huella: necesita el PIN.', true);
+        return;
+      }
+      abrirModalQuitarPin(
+        () => { mostrarToast('PIN eliminado'); checkBloqueoPin.disabled = false; },
+        () => { checkBloqueoPin.checked = true; checkBloqueoPin.disabled = false; },
+      );
+    }
+  });
   const checkBloqueoHuella = $('#check-bloqueo-huella');
   if (checkBloqueoHuella) {
     checkBloqueoHuella.addEventListener('change', async () => {
       const activar = checkBloqueoHuella.checked;
+      if (activar && !pinConfigurado()) {
+        // La huella necesita un PIN detrás como respaldo — se pide
+        // activarlo primero con su propia casilla, aquí arriba.
+        checkBloqueoHuella.checked = false;
+        mostrarToast('Antes activa el bloqueo con PIN, aquí arriba.', true);
+        return;
+      }
       checkBloqueoHuella.disabled = true;
       if (activar) {
         const ok = await activarBloqueoHuella();
         checkBloqueoHuella.disabled = false;
         if (!ok) { checkBloqueoHuella.checked = false; mostrarToast('No se pudo activar el bloqueo.', true); return; }
-        if (pinConfigurado()) {
-          // Ya había un PIN de respaldo (creado con su propio botón, o de
-          // una vez anterior) — se reutiliza, no hace falta volver a pedirlo.
-          mostrarToast('Bloqueo con huella activado');
-          return;
-        }
-        // Sin PIN de respaldo, un fallo de la huella dejaría fuera de la
-        // app sin ninguna forma de volver a entrar — es obligatorio.
-        abrirModalCrearPin(
-          () => mostrarToast('Bloqueo con huella activado'),
-          () => {
-            desactivarBloqueoHuella();
-            mostrarToast('Bloqueo cancelado: hace falta un PIN de respaldo.', true);
-          },
-        );
+        mostrarToast('Bloqueo con huella activado');
       } else {
         desactivarBloqueoHuella();
         mostrarToast('Bloqueo con huella desactivado');
         checkBloqueoHuella.disabled = false;
       }
-    });
-  }
-  const btnPinRespaldo = $('#op-pin-respaldo');
-  if (btnPinRespaldo) {
-    btnPinRespaldo.addEventListener('click', () => {
-      abrirModalCrearPin(() => mostrarToast('PIN guardado'), null);
     });
   }
   $('#op-ver-drive').addEventListener('click', () => {
