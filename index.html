@@ -106,12 +106,19 @@
     background:none; border:none; color:var(--text-dim); font-size:.85rem;
     text-decoration:underline; cursor:pointer; margin-top:20px; padding:6px;
   }
-  #zona-pin-bloqueo{ display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:14px; width:100%; }
-  .input-pin{
-    width:140px; text-align:center; letter-spacing:.5em; font-size:1.3rem;
-    background:var(--ink-3); border:1px solid var(--borde); color:var(--text-light);
-    border-radius:9px; padding:10px 8px 10px 14px;
+  #zona-pin-bloqueo{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:10px; width:100%; }
+  .puntos-pin{ display:flex; gap:16px; justify-content:center; margin:6px 0 22px; }
+  .punto-pin{ width:15px; height:15px; border-radius:50%; border:2px solid var(--borde); flex:none; }
+  .punto-pin.lleno{ background:var(--stamp); border-color:var(--stamp); }
+  .teclas-pin{ display:grid; grid-template-columns:repeat(3, 64px); gap:14px; justify-content:center; }
+  .tecla-pin{
+    width:64px; height:64px; border-radius:50%; border:none; background:var(--ink-3); color:var(--text-light);
+    font-size:1.4rem; font-family:var(--serif); font-weight:600; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
   }
+  .tecla-pin:active{ background:var(--ink-2); }
+  .tecla-borrar{ background:none; color:var(--text-dim); }
+  .tecla-borrar:active{ background:var(--ink-3); }
 
   #vista-app{ height:100dvh; overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
   @media (orientation:landscape){
@@ -578,10 +585,7 @@
   <button class="btn-google" id="btn-reintentar-bloqueo">Desbloquear</button>
   <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
   <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
-  <div id="zona-pin-bloqueo" class="hidden">
-    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="input-pin-desbloqueo" class="input-pin" autocomplete="off" placeholder="PIN">
-    <button class="btn-google" id="btn-desbloquear-pin">Entrar con PIN</button>
-  </div>
+  <div id="zona-pin-bloqueo" class="hidden"></div>
 </div>
 
 <div id="vista-app" class="hidden">
@@ -649,7 +653,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.1';
+const VERSION_APP = '2.0.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -803,7 +807,7 @@ window.addEventListener('load', () => {
   intentarSesionGuardada();
 });
 
-// Bloqueo opcional con huella/Face ID (WebAuthn, sin servidor propio: solo
+// Bloqueo opcional con huella/rostro (WebAuthn, sin servidor propio: solo
 // interesa si el sistema operativo verificó al usuario, no una firma que
 // nadie va a comprobar). Puramente local — no tiene nada que ver con la
 // cuenta de Google, es una capa aparte para cuando el móvil ya está
@@ -859,11 +863,13 @@ async function activarBloqueoHuella() {
     return false;
   }
 }
+// No borra el PIN a propósito: desde que tiene su propio botón en
+// Ajustes ("PIN de respaldo"), es independiente de la huella — apagar y
+// volver a encender el bloqueo por huella no debería obligar a crear el
+// PIN otra vez si ya había uno.
 function desactivarBloqueoHuella() {
   localStorage.removeItem(BLOQUEO_HUELLA_KEY);
   localStorage.removeItem(BLOQUEO_CREDENCIAL_KEY);
-  localStorage.removeItem(BLOQUEO_PIN_HASH_KEY);
-  localStorage.removeItem(BLOQUEO_PIN_SALT_KEY);
 }
 
 // PIN de repuesto: obligatorio al activar el bloqueo por huella, por si
@@ -893,43 +899,82 @@ function pinConfigurado() {
   return !!localStorage.getItem(BLOQUEO_PIN_HASH_KEY);
 }
 
-// Modal para crear el PIN de repuesto — se abre justo tras activar el
-// bloqueo por huella (ver el checkbox en Ajustes), nunca por separado.
-// Si se cancela, alCancelar deshace también la activación de la huella:
-// nunca debe quedar el bloqueo activo sin un PIN de repuesto detrás.
+// Teclado numérico en pantalla para el PIN — se usa tanto para crearlo
+// (abrirModalCrearPin) como para desbloquear con él (más abajo). No usa
+// ids (solo clases) porque puede haber más de una copia en el DOM a la
+// vez (la de la pantalla de bloqueo, fija, y la de un modal, temporal) —
+// cablearTecladoPin busca siempre dentro del contenedor que se le pasa.
+function htmlTecladoPin() {
+  const teclas = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button type="button" class="tecla-pin" data-tecla="${n}">${n}</button>`).join('');
+  return `
+    <div class="puntos-pin">${'<span class="punto-pin"></span>'.repeat(4)}</div>
+    <div class="teclas-pin">
+      ${teclas}
+      <span></span>
+      <button type="button" class="tecla-pin" data-tecla="0">0</button>
+      <button type="button" class="tecla-pin tecla-borrar" data-tecla="borrar" aria-label="Borrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 4H8l-6 8 6 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 9l5 6M19 9l-5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>`;
+}
+function cablearTecladoPin(contenedor, onCompleto) {
+  let valor = '';
+  const puntos = contenedor.querySelectorAll('.punto-pin');
+  function actualizar() { puntos.forEach((p, i) => p.classList.toggle('lleno', i < valor.length)); }
+  function reset() { valor = ''; actualizar(); }
+  contenedor.querySelectorAll('.tecla-pin').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tecla === 'borrar') { valor = valor.slice(0, -1); actualizar(); return; }
+      if (valor.length >= 4) return;
+      valor += btn.dataset.tecla;
+      actualizar();
+      if (valor.length === 4) onCompleto(valor);
+    });
+  });
+  return { reset };
+}
+
+// Modal para crear (o cambiar) el PIN de respaldo — pide el PIN dos
+// veces con el mismo teclado y lo guarda solo al confirmar que coinciden,
+// sin botón de guardar aparte. Se llega aquí desde un botón propio en
+// Ajustes ("PIN de respaldo"), o encadenado justo tras activar el
+// bloqueo por huella si todavía no había ninguno — en ese segundo caso,
+// si se cancela, alCancelar deshace también la activación de la huella:
+// nunca debe quedar el bloqueo activo sin un PIN de respaldo detrás.
 function abrirModalCrearPin(alCompletar, alCancelar) {
   abrirModal(`
-    <h3>PIN de repuesto</h3>
-    <p style="color:var(--text-dim);font-size:.85rem;margin:0 0 14px;">Por si alguna vez no se puede verificar tu huella o rostro. Elige un PIN de 4 dígitos.</p>
-    <div class="campo">
-      <label for="input-pin-nuevo">PIN</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="input-pin-nuevo" autocomplete="off">
-    </div>
-    <div class="campo">
-      <label for="input-pin-confirmar">Repite el PIN</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="input-pin-confirmar" autocomplete="off">
-    </div>
-    <div class="modal-acciones">
-      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
-      <button class="btn-primario" id="modal-guardar-pin" disabled>Guardar</button>
-    </div>
+    <h3 id="titulo-crear-pin">Crea tu PIN</h3>
+    <p id="texto-crear-pin" style="color:var(--text-dim);font-size:.85rem;margin:0 0 6px;">Elige un PIN de 4 dígitos. Te lo pediremos dos veces.</p>
+    ${htmlTecladoPin()}
+    <button class="btn-secundario" id="modal-cancelar" style="margin-top:20px;width:100%;">Cancelar</button>
   `);
-  const input1 = $('#input-pin-nuevo');
-  const input2 = $('#input-pin-confirmar');
-  const btnGuardar = $('#modal-guardar-pin');
-  const revisar = () => {
-    btnGuardar.disabled = !(/^\d{4}$/.test(input1.value) && input1.value === input2.value);
-  };
-  input1.addEventListener('input', revisar);
-  input2.addEventListener('input', revisar);
+  const titulo = $('#titulo-crear-pin');
+  const texto = $('#texto-crear-pin');
+  let primerPin = null;
+  const teclado = cablearTecladoPin($('.modal'), async (valor) => {
+    if (!primerPin) {
+      primerPin = valor;
+      titulo.textContent = 'Repite el PIN';
+      texto.textContent = 'Vuelve a escribirlo para confirmarlo.';
+      texto.style.color = '';
+      teclado.reset();
+      return;
+    }
+    if (valor !== primerPin) {
+      titulo.textContent = 'Crea tu PIN';
+      texto.textContent = 'No coincidía. Empieza de nuevo.';
+      texto.style.color = '#E0897A';
+      primerPin = null;
+      teclado.reset();
+      return;
+    }
+    await guardarPin(valor);
+    volverAtras();
+    if (alCompletar) alCompletar();
+  });
   $('#modal-cancelar').addEventListener('click', () => {
     volverAtras();
     if (alCancelar) alCancelar();
-  });
-  btnGuardar.addEventListener('click', async () => {
-    await guardarPin(input1.value);
-    volverAtras();
-    if (alCompletar) alCompletar();
   });
 }
 
@@ -951,7 +996,7 @@ function mostrarPantallaBloqueo() {
   $('#vista-bloqueo').classList.remove('hidden');
   $('#zona-pin-bloqueo').classList.add('hidden');
   $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
-  $('#input-pin-desbloqueo').value = '';
+  tecladoPinBloqueo.reset();
   intentarDesbloquear();
 }
 
@@ -987,17 +1032,14 @@ $('#btn-reintentar-bloqueo').addEventListener('click', intentarDesbloquear);
 $('#btn-usar-pin').addEventListener('click', () => {
   $('#zona-pin-bloqueo').classList.remove('hidden');
   $('#btn-usar-pin').classList.add('hidden');
-  $('#input-pin-desbloqueo').focus();
 });
-async function intentarDesbloquearConPin() {
-  const pin = $('#input-pin-desbloqueo').value;
-  if ((await verificarPin(pin))) { desbloquearApp(); return; }
+$('#zona-pin-bloqueo').innerHTML = htmlTecladoPin();
+const tecladoPinBloqueo = cablearTecladoPin($('#zona-pin-bloqueo'), async (valor) => {
+  const ok = await verificarPin(valor);
+  if (ok) { desbloquearApp(); return; }
   $('#bloqueo-estado').textContent = 'PIN incorrecto.';
-  $('#input-pin-desbloqueo').value = '';
-  $('#input-pin-desbloqueo').focus();
-}
-$('#btn-desbloquear-pin').addEventListener('click', intentarDesbloquearConPin);
-$('#input-pin-desbloqueo').addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarDesbloquearConPin(); });
+  tecladoPinBloqueo.reset();
+});
 
 const TEMA_STORAGE_KEY = 'documentacion_tema';
 const mediaOscuro = window.matchMedia('(prefers-color-scheme: dark)');
@@ -3759,9 +3801,14 @@ $('#btn-ajustes').addEventListener('click', () => {
     ${biometriaSoportada ? `
     <label class="check-aviso" id="fila-bloqueo-huella">
       <input type="checkbox" id="check-bloqueo-huella" ${bloqueoHuellaActivado() ? 'checked' : ''}>
-      <span>Bloquear la app con huella o Face ID</span>
+      <span>Bloquear la app con huella o rostro</span>
     </label>` : ''}
     <div class="menu-opciones">
+      ${biometriaSoportada ? `
+      <button class="opcion-menu" id="op-pin-respaldo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6"/></svg>
+        ${pinConfigurado() ? 'Cambiar PIN de respaldo' : 'Crear PIN de respaldo'}
+      </button>` : ''}
       <button class="opcion-menu" id="op-administrar-personas">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.6"/></svg>
         Administrar personas
@@ -3832,13 +3879,19 @@ $('#btn-ajustes').addEventListener('click', () => {
         const ok = await activarBloqueoHuella();
         checkBloqueoHuella.disabled = false;
         if (!ok) { checkBloqueoHuella.checked = false; mostrarToast('No se pudo activar el bloqueo.', true); return; }
-        // El PIN de repuesto es obligatorio: sin él, un fallo de la huella
-        // dejaría fuera de la app sin ninguna forma de volver a entrar.
+        if (pinConfigurado()) {
+          // Ya había un PIN de respaldo (creado con su propio botón, o de
+          // una vez anterior) — se reutiliza, no hace falta volver a pedirlo.
+          mostrarToast('Bloqueo con huella activado');
+          return;
+        }
+        // Sin PIN de respaldo, un fallo de la huella dejaría fuera de la
+        // app sin ninguna forma de volver a entrar — es obligatorio.
         abrirModalCrearPin(
           () => mostrarToast('Bloqueo con huella activado'),
           () => {
             desactivarBloqueoHuella();
-            mostrarToast('Bloqueo cancelado: hace falta un PIN de repuesto.', true);
+            mostrarToast('Bloqueo cancelado: hace falta un PIN de respaldo.', true);
           },
         );
       } else {
@@ -3846,6 +3899,12 @@ $('#btn-ajustes').addEventListener('click', () => {
         mostrarToast('Bloqueo con huella desactivado');
         checkBloqueoHuella.disabled = false;
       }
+    });
+  }
+  const btnPinRespaldo = $('#op-pin-respaldo');
+  if (btnPinRespaldo) {
+    btnPinRespaldo.addEventListener('click', () => {
+      abrirModalCrearPin(() => mostrarToast('PIN guardado'), null);
     });
   }
   $('#op-ver-drive').addEventListener('click', () => {
