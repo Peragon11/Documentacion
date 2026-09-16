@@ -89,6 +89,10 @@
       radial-gradient(600px 500px at 110% 10%, rgba(193,80,46,.14), transparent 55%),
       var(--ink);
   }
+  /* Más arriba que el login: la ventana blanca del sistema para verificar
+     la huella tapa la parte central/baja de la pantalla, y así el título
+     y el texto quedan por encima, se pueden leer aunque esté abierta. */
+  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(9vh + var(--safe-t)); }
   .login-sello{
     width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
     display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
@@ -653,7 +657,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.5';
+const VERSION_APP = '2.0.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
