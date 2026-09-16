@@ -611,7 +611,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.9';
+const VERSION_APP = '2.0.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1333,11 +1333,21 @@ function abrirCategoriaGlobal(categoriaId) {
 }
 
 $('#btn-volver').addEventListener('click', volverAtras);
-$('#btn-ver-categorias-top').addEventListener('click', () => {
-  modoInicio = modoInicio === 'categorias' ? 'personas' : 'categorias';
-  guardarModoInicio(modoInicio);
+// Cierra el modo administrar (categorías o personas) y vuelve a la vista
+// normal de la pantalla de inicio — se usa tanto como capa de navegación
+// (botón atrás/gesto) como al alternar la vista con el botón de arriba.
+function salirModoAdministrarInicio() {
   modoEdicionCategorias = false;
   modoEdicionPersonas = false;
+  renderizarPantallaInicio();
+}
+
+$('#btn-ver-categorias-top').addEventListener('click', () => {
+  // Si se estaba administrando, primero se quita esa capa de navegación
+  // (cerrarCapas ya llama a salirModoAdministrarInicio al cerrarla).
+  if (modoEdicionCategorias || modoEdicionPersonas) cerrarCapas(1);
+  modoInicio = modoInicio === 'categorias' ? 'personas' : 'categorias';
+  guardarModoInicio(modoInicio);
   actualizarBotonAlternarVista();
   renderizarPantallaInicio();
 });
@@ -1532,7 +1542,11 @@ function confirmarEliminarPersona(persona) {
   });
   btnConfirmar.addEventListener('click', async () => {
     if (inputConfirmar.value.trim().toLowerCase() !== persona.nombre.trim().toLowerCase()) return;
-    cerrarTodasLasCapas();
+    // Solo esta capa (el propio modal de confirmación), no
+    // cerrarTodasLasCapas(): si se borra estando en modo administrar
+    // (capa persistente, ver salirModoAdministrarInicio), cerrarlo todo
+    // saldría también de ese modo sin querer.
+    cerrarCapas(1);
     mostrarToast('Eliminando…');
     const categoriasUsadas = new Map();
     for (const doc of docs) {
@@ -1651,7 +1665,7 @@ function confirmarEliminarCategoria(cat) {
   const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
   // Sin documentos de por medio, no hay nada que avisar: se borra
   // directamente en vez de pedir confirmación para nada.
-  if (num === 0) { eliminarCategoriaGuardando(cat); return; }
+  if (num === 0) { eliminarCategoriaGuardando(cat, false); return; }
   abrirModal(`
     <h3>Eliminar categoría</h3>
     <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;">¿Eliminar «${escapeHtml(cat.nombre)}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «${CATEGORIA_SIN_ASIGNAR.nombre}».</p>
@@ -1661,13 +1675,20 @@ function confirmarEliminarCategoria(cat) {
     </div>
   `);
   $('#modal-cancelar').addEventListener('click', volverAtras);
-  $('#btn-confirmar-eliminar-cat').addEventListener('click', () => eliminarCategoriaGuardando(cat));
+  $('#btn-confirmar-eliminar-cat').addEventListener('click', () => eliminarCategoriaGuardando(cat, true));
 }
 
-async function eliminarCategoriaGuardando(cat) {
+// habiaModalAbierto: si se pasó por el modal de confirmación (había
+// documentos), hay que cerrar exactamente esa capa. Si no (el atajo sin
+// confirmación de arriba), no se abrió ningún modal y no hay nada que
+// cerrar. No se usa cerrarTodasLasCapas() aquí a propósito: si se borra
+// estando en modo administrar (una capa de navegación propia y
+// persistente, ver salirModoAdministrarInicio), cerrarlo todo saldría
+// también de ese modo sin querer.
+async function eliminarCategoriaGuardando(cat, habiaModalAbierto) {
   datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
   await guardarMetadatos();
-  cerrarTodasLasCapas();
+  if (habiaModalAbierto) cerrarCapas(1);
   renderizarCategoriasHome();
   mostrarToast('Categoría eliminada');
 }
@@ -3456,20 +3477,30 @@ $('#btn-ajustes').addEventListener('click', () => {
     <p style="color:var(--text-dim);font-size:.72rem;margin:2px 2px 0;">Versión ${VERSION_APP}</p>
   `);
   $('#op-administrar-personas').addEventListener('click', () => {
-    volverAtras(); // cierra este menú de Ajustes
+    // Cierra este menú de Ajustes a mano (sin history.go real) porque
+    // justo después se empuja una capa nueva — ver la nota en
+    // abrirModalCategoriasGlobal (ya retirada) sobre por qué no conviene
+    // encadenar cerrarCapas con un pushNavegacion inmediato.
+    cerrarModal();
+    pilaNavegacion.pop();
     modoInicio = 'personas';
     guardarModoInicio(modoInicio);
     modoEdicionPersonas = true;
     actualizarBotonAlternarVista();
     renderizarPantallaInicio();
+    // Así el botón atrás sale primero del modo administrar y se queda en
+    // la vista normal, en vez de salir directamente de la app.
+    pushNavegacion(salirModoAdministrarInicio);
   });
   $('#op-categorias').addEventListener('click', () => {
-    volverAtras(); // cierra este menú de Ajustes
+    cerrarModal();
+    pilaNavegacion.pop();
     modoInicio = 'categorias';
     guardarModoInicio(modoInicio);
     modoEdicionCategorias = true;
     actualizarBotonAlternarVista();
     renderizarPantallaInicio();
+    pushNavegacion(salirModoAdministrarInicio);
   });
   $$('#selector-tema .segmento').forEach((btn) => {
     btn.addEventListener('click', () => {
