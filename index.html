@@ -96,7 +96,7 @@
      #btn-reintentar-bloqueo y el margen que pone mostrarPantallaBloqueo()
      en #zona-pin-bloqueo) para que queden tapados sin problema. */
   #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t)); }
-  #btn-reintentar-bloqueo{ margin-top:12vh; }
+  #btn-reintentar-bloqueo{ margin-top:calc(12vh + 57px); }
   .login-sello{
     width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
     display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
@@ -661,7 +661,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.0.8';
+const VERSION_APP = '2.0.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1063,7 +1063,7 @@ function mostrarPantallaBloqueo() {
     // Aquí el teclado es lo primero que se ve (no hay botón de huella
     // delante que ya lo separe de por sí), así que necesita su propio
     // empujón hacia abajo para quedar bajo la ventana del sistema.
-    $('#zona-pin-bloqueo').style.marginTop = '12vh';
+    $('#zona-pin-bloqueo').style.marginTop = 'calc(12vh + 57px)';
     return;
   }
   $('#zona-pin-bloqueo').style.marginTop = '';
@@ -1096,6 +1096,21 @@ function desbloquearApp() {
   $('#vista-bloqueo').classList.add('hidden');
   $('#vista-app').classList.remove('hidden');
 }
+
+// Vuelve a pedir la huella/PIN si la app estaba desbloqueada y pasa a
+// segundo plano (pantalla apagada, cambio a otra app...) y luego vuelve
+// a primer plano, pero solo si ha pasado al menos un minuto en segundo
+// plano — un cambio de app breve no lo vuelve a pedir.
+const MARGEN_REBLOQUEO_MS = 60000;
+let momentoOcultacion = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { momentoOcultacion = Date.now(); return; }
+  if (!bloqueoActivado() || !bloqueoYaDesbloqueado) return;
+  if (momentoOcultacion !== null && Date.now() - momentoOcultacion < MARGEN_REBLOQUEO_MS) return;
+  bloqueoYaDesbloqueado = false;
+  $('#vista-app').classList.add('hidden');
+  mostrarPantallaBloqueo();
+});
 
 $('#btn-reintentar-bloqueo').addEventListener('click', intentarDesbloquear);
 $('#btn-usar-pin').addEventListener('click', () => {
