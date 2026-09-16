@@ -188,6 +188,21 @@
     z-index:30; cursor:grabbing; transition:none; pointer-events:none;
     box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
   }
+  .categoria-barra-nombre{
+    flex:1; min-width:0; background:none; border:none; color:inherit; font:inherit;
+    text-align:left; cursor:pointer; padding:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .icon-btn-cat-bar{
+    flex:none; width:32px; height:32px; margin-left:8px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(255,255,255,.22); color:#fff; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn-cat-bar:active{ background:rgba(255,255,255,.4); }
+  .categoria-barra-nueva{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:56px;
+    padding:14px 20px; border-radius:16px; border:2px dashed var(--borde); background:none;
+    color:var(--text-dim); cursor:pointer; font-family:var(--serif); font-weight:600; font-size:1rem;
+  }
+  .categoria-barra-nueva:active{ background:var(--ink-2); }
 
   .persona-tile{
     background:none; border:none; color:var(--text-light); cursor:pointer;
@@ -491,16 +506,8 @@
   .opcion-menu:active{ background:var(--ink-3); }
   .opcion-menu.peligro{ color:#E0897A; }
 
-  .lista-categorias-admin{ display:flex; flex-direction:column; gap:2px; margin-bottom:14px; }
-  .fila-categoria{ display:flex; align-items:center; gap:10px; padding:9px 4px; }
   .punto-cat{ width:10px; height:10px; border-radius:50%; flex:none; }
   .opcion-menu .nombre-opcion-cat{ flex:1; }
-  .fila-categoria .nombre-cat{ flex:1; font-size:.88rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .icon-btn-cat{
-    background:none; border:none; color:var(--text-dim); cursor:pointer; flex:none;
-    width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
-  }
-  .icon-btn-cat:active{ background:var(--ink-3); color:var(--text-light); }
 
   .toast{
     position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%);
@@ -539,8 +546,8 @@
       <span id="titulo-topbar">DOCUMENTACIÓN</span>
       <span id="version-debug-top" style="font-size:.62rem;color:var(--text-dim);font-family:var(--sans);font-weight:400;letter-spacing:0;margin-left:6px;flex:none;"></span>
     </div>
-    <button class="btn-icono-top" id="btn-ver-categorias-top" aria-label="Ver documentos por categoría">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 4h7l2 2h7v12H4V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <button class="btn-icono-top" id="btn-ver-categorias-top" aria-label="Ver en lista (categorías)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="3" rx="1.5"/><rect x="3" y="11" width="18" height="3" rx="1.5"/><rect x="3" y="17" width="18" height="3" rx="1.5"/></svg>
     </button>
     <button class="btn-icono-top" id="btn-ajustes" aria-label="Ajustes">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -590,7 +597,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '1.10.7';
+const VERSION_APP = '1.10.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1234,11 +1241,13 @@ function renderizarPantallaInicio() {
 function actualizarBotonAlternarVista() {
   const btn = $('#btn-ver-categorias-top');
   if (modoInicio === 'categorias') {
-    btn.setAttribute('aria-label', 'Ver por persona');
-    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.6"/></svg>';
+    // Ya se ve en lista (categorías) — el icono anuncia a qué se cambia: cuadrícula.
+    btn.setAttribute('aria-label', 'Ver en cuadrícula (personas)');
+    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>';
   } else {
-    btn.setAttribute('aria-label', 'Ver por categoría');
-    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+    // Ya se ve en cuadrícula (personas) — el icono anuncia a qué se cambia: lista.
+    btn.setAttribute('aria-label', 'Ver en lista (categorías)');
+    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="3" rx="1.5"/><rect x="3" y="11" width="18" height="3" rx="1.5"/><rect x="3" y="17" width="18" height="3" rx="1.5"/></svg>';
   }
 }
 
@@ -1369,39 +1378,107 @@ function renderizarPersonas() {
 // La otra mitad del modo de inicio "categorías" (ver modoInicio). A
 // diferencia de la cuadrícula de personas (tarjetas cuadradas con
 // avatar), aquí son barras horizontales a todo el ancho con el nombre
-// dentro. El orden se puede arrastrar igual que las personas, y como es
-// el mismo array datos.categorias que usa "Administrar categorías", el
-// nuevo orden también se ve ahí sin nada más que hacer.
+// dentro. El orden se puede arrastrar igual que las personas. Esta misma
+// pantalla hace también de "administrar categorías" — cada barra lleva
+// sus propios botones de renombrar/eliminar, y al final hay uno para
+// añadir una nueva — no existe ya una ventana aparte para esto.
 function renderizarCategoriasHome() {
   const cont = $('#grid-personas');
   cont.innerHTML = '';
   cont.classList.remove('pocas', 'tres', 'centrado', 'vacio');
   cont.classList.add('modo-categorias');
 
-  if (datos.categorias.length === 0) {
-    cont.classList.add('vacio');
-    cont.innerHTML = `
-      <div class="estado-vacio">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-        <p>No hay categorías todavía.<br>Ve a Ajustes → "Administrar categorías" para crear alguna.</p>
-      </div>`;
-    return;
-  }
+  datos.categorias.forEach((cat) => cont.appendChild(crearBarraCategoriaHome(cat)));
 
-  datos.categorias.forEach((cat) => {
-    const btn = document.createElement('button');
-    btn.className = 'categoria-barra';
-    btn.dataset.catId = cat.id;
-    btn.style.background = cat.color;
-    btn.textContent = cat.nombre;
-    btn.addEventListener('click', () => {
-      if (Date.now() - momentoUltimoArrastrePersona < 300) return;
-      abrirCategoriaGlobal(cat.id);
-    });
-    cont.appendChild(btn);
-  });
+  const btnNueva = document.createElement('button');
+  btnNueva.className = 'categoria-barra-nueva';
+  btnNueva.type = 'button';
+  btnNueva.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Nueva categoría';
+  btnNueva.addEventListener('click', abrirNuevaCategoria);
+  cont.appendChild(btnNueva);
 
   habilitarArrastreTiles('.categoria-barra', datos.categorias, 'catId');
+}
+
+function crearBarraCategoriaHome(cat) {
+  const fila = document.createElement('div');
+  fila.className = 'categoria-barra';
+  fila.dataset.catId = cat.id;
+  fila.style.background = cat.color;
+  fila.innerHTML = `
+    <button class="categoria-barra-nombre" type="button">${escapeHtml(cat.nombre)}</button>
+    <button class="icon-btn-cat-bar" type="button" aria-label="Renombrar categoría">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="icon-btn-cat-bar" type="button" aria-label="Eliminar categoría">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>`;
+  fila.querySelector('.categoria-barra-nombre').addEventListener('click', () => {
+    if (Date.now() - momentoUltimoArrastrePersona < 300) return;
+    abrirCategoriaGlobal(cat.id);
+  });
+  const [btnRenombrar, btnEliminar] = fila.querySelectorAll('.icon-btn-cat-bar');
+  btnRenombrar.addEventListener('click', () => abrirRenombrarCategoria(cat));
+  btnEliminar.addEventListener('click', () => confirmarEliminarCategoria(cat));
+  return fila;
+}
+
+function abrirRenombrarCategoria(cat) {
+  abrirModalRenombrar('Renombrar categoría', cat.nombre, (nuevo) => {
+    if (nuevo.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
+      mostrarToast(`"${CATEGORIA_SIN_ASIGNAR.nombre}" es un nombre reservado, elige otro.`, true);
+      return;
+    }
+    if (nuevo === cat.nombre) { volverAtras(); return; }
+    cat.nombre = nuevo;
+    guardarMetadatos().then(() => {
+      volverAtras();
+      renderizarCategoriasHome();
+      mostrarToast('Categoría renombrada');
+    });
+  }, 30);
+}
+
+function abrirNuevaCategoria() {
+  abrirModalRenombrar('Nueva categoría', '', (nombre) => {
+    if (nombre.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
+      mostrarToast(`"${CATEGORIA_SIN_ASIGNAR.nombre}" es un nombre reservado, elige otro.`, true);
+      return;
+    }
+    const id = 'cat-' + Date.now();
+    const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
+    datos.categorias.push({ id, nombre, color });
+    guardarMetadatos().then(() => {
+      volverAtras();
+      renderizarCategoriasHome();
+      mostrarToast('Categoría creada');
+    });
+  }, 30);
+}
+
+function confirmarEliminarCategoria(cat) {
+  const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
+  // Sin documentos de por medio, no hay nada que avisar: se borra
+  // directamente en vez de pedir confirmación para nada.
+  if (num === 0) { eliminarCategoriaGuardando(cat); return; }
+  abrirModal(`
+    <h3>Eliminar categoría</h3>
+    <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;">¿Eliminar «${escapeHtml(cat.nombre)}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «${CATEGORIA_SIN_ASIGNAR.nombre}».</p>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
+      <button class="btn-primario btn-peligro" id="btn-confirmar-eliminar-cat">Eliminar</button>
+    </div>
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#btn-confirmar-eliminar-cat').addEventListener('click', () => eliminarCategoriaGuardando(cat));
+}
+
+async function eliminarCategoriaGuardando(cat) {
+  datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
+  await guardarMetadatos();
+  cerrarTodasLasCapas();
+  renderizarCategoriasHome();
+  mostrarToast('Categoría eliminada');
 }
 
 // El user-select:none del CSS no basta en algunos móviles Android: al
@@ -3301,7 +3378,13 @@ $('#btn-ajustes').addEventListener('click', () => {
     <p style="color:var(--text-dim);font-size:.72rem;margin:2px 2px 0;">Versión ${VERSION_APP}</p>
   `);
   $('#op-anadir-persona').addEventListener('click', abrirModalNuevaPersona);
-  $('#op-categorias').addEventListener('click', abrirModalCategorias);
+  $('#op-categorias').addEventListener('click', () => {
+    volverAtras(); // cierra este menú de Ajustes
+    modoInicio = 'categorias';
+    guardarModoInicio(modoInicio);
+    actualizarBotonAlternarVista();
+    renderizarPantallaInicio();
+  });
   $$('#selector-tema .segmento').forEach((btn) => {
     btn.addEventListener('click', () => {
       $$('#selector-tema .segmento').forEach((b) => b.classList.remove('activo'));
@@ -3623,155 +3706,6 @@ async function procesarImportacion(file) {
   }
 }
 
-function abrirModalCategorias() {
-  abrirModal(htmlModalCategorias());
-  cablearModalCategorias();
-}
-
-function htmlModalCategorias() {
-  const filas = datos.categorias.map((cat) => `
-      <div class="fila-categoria">
-        <span class="punto-cat" style="background:${cat.color}"></span>
-        <span class="nombre-cat">${escapeHtml(cat.nombre)}</span>
-        <button class="icon-btn-cat" data-accion="renombrar" data-id="${cat.id}" aria-label="Renombrar categoría">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="icon-btn-cat" data-accion="eliminar" data-id="${cat.id}" aria-label="Eliminar categoría">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </button>
-      </div>`).join('');
-
-  return `
-    <h3>Categorías</h3>
-    <div class="lista-categorias-admin">${filas || '<p style="color:var(--text-dim);font-size:.85rem;">No hay categorías todavía.</p>'}</div>
-    <div id="zona-form-categoria" class="hidden">
-      <div class="campo">
-        <label for="input-nombre-categoria" id="label-form-categoria">Nombre de la categoría</label>
-        <input type="search" id="input-nombre-categoria" name="q" maxlength="30" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
-      </div>
-      <div class="modal-acciones">
-        <button class="btn-secundario" id="btn-cancelar-form-categoria" type="button">Cancelar</button>
-        <button class="btn-primario" id="btn-guardar-form-categoria" type="button">Guardar</button>
-      </div>
-    </div>
-    <div id="zona-eliminar-categoria" class="hidden">
-      <p id="texto-eliminar-categoria" style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;"></p>
-      <div class="modal-acciones">
-        <button class="btn-secundario" id="btn-cancelar-eliminar-categoria" type="button">Cancelar</button>
-        <button class="btn-primario btn-peligro" id="btn-confirmar-eliminar-categoria" type="button">Eliminar</button>
-      </div>
-    </div>
-    <button class="opcion-menu" id="btn-nueva-categoria-admin" type="button">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      Nueva categoría
-    </button>`;
-}
-
-function cablearModalCategorias() {
-  const refrescar = () => { $('.modal').innerHTML = htmlModalCategorias(); cablearModalCategorias(); };
-
-  const zonaForm = $('#zona-form-categoria');
-  const inputNombre = $('#input-nombre-categoria');
-  const labelForm = $('#label-form-categoria');
-  const btnGuardarForm = $('#btn-guardar-form-categoria');
-  const zonaEliminar = $('#zona-eliminar-categoria');
-  const textoEliminar = $('#texto-eliminar-categoria');
-  let editandoId = null;
-  let eliminandoId = null;
-
-  function abrirForm(cat) {
-    zonaEliminar.classList.add('hidden');
-    eliminandoId = null;
-    editandoId = cat ? cat.id : null;
-    labelForm.textContent = cat ? 'Nuevo nombre' : 'Nombre de la categoría';
-    btnGuardarForm.textContent = cat ? 'Guardar' : 'Añadir';
-    inputNombre.value = cat ? cat.nombre : '';
-    inputNombre.readOnly = true;
-    zonaForm.classList.remove('hidden');
-    evitarBarraAutorrelleno(inputNombre);
-    inputNombre.focus();
-  }
-  function cerrarForm() {
-    zonaForm.classList.add('hidden');
-    editandoId = null;
-  }
-  function abrirConfirmEliminar(cat, num) {
-    zonaForm.classList.add('hidden');
-    editandoId = null;
-    eliminandoId = cat.id;
-    textoEliminar.textContent = `¿Eliminar «${cat.nombre}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «${CATEGORIA_SIN_ASIGNAR.nombre}».`;
-    zonaEliminar.classList.remove('hidden');
-  }
-  function cerrarConfirmEliminar() {
-    zonaEliminar.classList.add('hidden');
-    eliminandoId = null;
-  }
-  async function eliminarCategoria(cat) {
-    datos.categorias = datos.categorias.filter((c) => c.id !== cat.id);
-    await guardarMetadatos();
-    if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
-    else if (modoInicio === 'categorias') { renderizarCategoriasHome(); }
-    mostrarToast('Categoría eliminada');
-    refrescar();
-  }
-  async function guardarForm() {
-    const nombre = inputNombre.value.trim();
-    if (!nombre) return;
-    // Nombre reservado: si se pudiera usar, un documento sin categoría
-    // real y otro metido a mano en una categoría con ese mismo nombre
-    // se verían agrupados bajo el mismo título, sin forma de distinguirlos.
-    if (nombre.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
-      mostrarToast(`"${CATEGORIA_SIN_ASIGNAR.nombre}" es un nombre reservado, elige otro.`, true);
-      return;
-    }
-    if (editandoId) {
-      const cat = datos.categorias.find((c) => c.id === editandoId);
-      if (cat && nombre !== cat.nombre) {
-        cat.nombre = nombre;
-        await guardarMetadatos();
-        mostrarToast('Categoría renombrada');
-      }
-    } else {
-      const id = 'cat-' + Date.now();
-      const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
-      datos.categorias.push({ id, nombre, color });
-      await guardarMetadatos();
-      mostrarToast('Categoría creada');
-    }
-    if (personaActivaId) { renderizarChipsCategorias(); renderizarDocumentos(); }
-    else if (modoInicio === 'categorias') { renderizarCategoriasHome(); }
-    refrescar();
-  }
-
-  $$('.icon-btn-cat[data-accion="renombrar"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
-      if (cat) abrirForm(cat);
-    });
-  });
-
-  $$('.icon-btn-cat[data-accion="eliminar"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const cat = datos.categorias.find((c) => c.id === btn.dataset.id);
-      if (!cat) return;
-      const num = datos.documentos.filter((d) => d.categoria === cat.id).length;
-      // Sin documentos de por medio, no hay nada que avisar: se borra
-      // directamente en vez de pedir confirmación para nada.
-      if (num === 0) { eliminarCategoria(cat); return; }
-      abrirConfirmEliminar(cat, num);
-    });
-  });
-  $('#btn-cancelar-eliminar-categoria').addEventListener('click', cerrarConfirmEliminar);
-  $('#btn-confirmar-eliminar-categoria').addEventListener('click', () => {
-    const cat = datos.categorias.find((c) => c.id === eliminandoId);
-    if (cat) eliminarCategoria(cat);
-  });
-
-  $('#btn-nueva-categoria-admin').addEventListener('click', () => abrirForm(null));
-  $('#btn-cancelar-form-categoria').addEventListener('click', cerrarForm);
-  $('#btn-guardar-form-categoria').addEventListener('click', guardarForm);
-  inputNombre.addEventListener('keydown', (e) => { if (e.key === 'Enter') guardarForm(); });
-}
 
 function mostrarToast(msg, esError = false) {
   const t = $('#toast');
