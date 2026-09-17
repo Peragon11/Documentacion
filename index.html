@@ -92,12 +92,24 @@
   /* Más arriba que el login: la ventana blanca del sistema para verificar
      la huella tapa la parte central/baja de la pantalla, y así el título
      y el texto quedan por encima, se pueden leer aunque esté abierta. El
-     botón/teclado de más abajo, en cambio, se separan aposta (ver
-     #btn-reintentar-bloqueo y el margen que pone mostrarPantallaBloqueo()
-     en #zona-pin-bloqueo) para que queden tapados sin problema. */
+     teclado del PIN, más abajo, se separa aposta (ver el margen que pone
+     mostrarPantallaBloqueo() en #zona-pin-bloqueo) para que quede tapado
+     sin problema. */
   #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 76px); overflow-y:auto; }
-  #btn-reintentar-bloqueo{ margin-top:calc(12vh - 19px); }
   #zona-pin-bloqueo.pin-directo{ margin-top:calc(12vh - 19px); }
+  /* Experimento: en vez de un botón normal, un dibujo de huella colocado
+     a la altura habitual del sensor de huella bajo pantalla en Android,
+     fuera del flujo normal (position:fixed) — la idea es que, si coincide
+     más o menos con donde aparece el propio botón de la ventana del
+     sistema, tocarlo también llegue a activar el sensor real de verdad. */
+  .icono-huella-sensor{
+    position:fixed; left:50%; top:62vh; transform:translate(-50%, -50%); z-index:5;
+    width:72px; height:72px; border-radius:50%; border:2px solid var(--stamp);
+    background:var(--ink-2); color:var(--stamp);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 8px 20px rgba(0,0,0,.3);
+  }
+  .icono-huella-sensor:active{ background:var(--ink-3); }
   /* En apaisado hay mucha menos altura de sobra: los mismos huecos en
      vh + px fijos (pensados para vertical) no caben y cortan contenido.
      Aquí se reducen todos a la vez — icono, título, separaciones y el
@@ -108,7 +120,7 @@
     #vista-bloqueo .login-sello{ width:40px; height:40px; margin-bottom:10px; }
     #vista-bloqueo h1{ font-size:1.5rem; margin-bottom:4px; }
     #vista-bloqueo p.lead{ margin-bottom:14px; }
-    #btn-reintentar-bloqueo, #zona-pin-bloqueo.pin-directo{ margin-top:2vh; }
+    #zona-pin-bloqueo.pin-directo{ margin-top:2vh; }
     #vista-bloqueo .teclas-pin{ grid-template-columns:repeat(3, 50px); gap:8px; }
     #vista-bloqueo .tecla-pin{ width:50px; height:50px; font-size:1.15rem; }
     #vista-bloqueo .puntos-pin{ margin:4px 0 12px; }
@@ -611,7 +623,9 @@
   </div>
   <h1>App bloqueada</h1>
   <p class="lead" id="texto-bloqueo-lead">Verifica tu huella para ver tus documentos.</p>
-  <button class="btn-google" id="btn-reintentar-bloqueo">Desbloquear</button>
+  <button type="button" id="btn-reintentar-bloqueo" class="icono-huella-sensor" aria-label="Desbloquear con huella">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2M3.5 12A8.5 8.5 0 0 1 8 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
   <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
   <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
   <div id="zona-pin-bloqueo" class="hidden"></div>
@@ -682,7 +696,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.2';
+const VERSION_APP = '2.1.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1070,11 +1084,12 @@ function mostrarPantallaBloqueo() {
   tecladoPinBloqueo.reset();
   if (bloqueoHuellaActivado()) {
     $('#texto-bloqueo-lead').textContent = 'Verifica tu huella para ver tus documentos.';
-    // El botón y "Usar PIN" empiezan ocultos: solo se enseñan si el
-    // intento automático de huella falla o se cancela (ver el catch de
-    // intentarDesbloquear) — mientras se enseñaban siempre, se veían de
-    // primeras sin necesidad, delante de la propia ventana del sistema.
-    $('#btn-reintentar-bloqueo').classList.add('hidden');
+    // El dibujo de huella se enseña ya desde el principio (a diferencia
+    // de "Usar PIN", que sigue esperando a que falle el intento
+    // automático) — para el experimento de que coincida con el propio
+    // aviso de Android hace falta que esté visible mientras esa ventana
+    // sigue abierta, no solo después.
+    $('#btn-reintentar-bloqueo').classList.remove('hidden');
     $('#btn-usar-pin').classList.add('hidden');
     $('#zona-pin-bloqueo').classList.add('hidden');
     intentarDesbloquear();
@@ -1112,10 +1127,9 @@ async function intentarDesbloquear() {
     });
     desbloquearApp();
   } catch (e) {
-    estado.textContent = 'No se ha podido verificar. Inténtalo de nuevo.';
-    // Ahora sí se enseñan: la huella automática ha fallado o se ha
-    // cancelado, hace falta darle al usuario una forma manual de seguir.
-    $('#btn-reintentar-bloqueo').classList.remove('hidden');
+    // Sin mensaje de error a propósito: el dibujo de huella ya está ahí
+    // esperando, no hace falta más aviso. "Usar PIN" sí se revela ahora,
+    // como alternativa manual tras el fallo/cancelación.
     $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
   }
 }
