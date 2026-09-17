@@ -103,7 +103,7 @@
      más o menos con donde aparece el propio botón de la ventana del
      sistema, tocarlo también llegue a activar el sensor real de verdad. */
   .icono-huella-sensor{
-    position:fixed; left:50%; top:calc(62vh + 76px); transform:translate(-50%, -50%); z-index:5;
+    position:fixed; left:50%; top:calc(62vh + 95px); transform:translate(-50%, -50%); z-index:5;
     width:72px; height:72px; border-radius:50%; border:2px solid var(--stamp);
     background:var(--ink-2); color:var(--stamp);
     display:flex; align-items:center; justify-content:center; cursor:pointer;
@@ -622,9 +622,18 @@
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
   <h1>App bloqueada</h1>
-  <p class="lead" id="texto-bloqueo-lead">Verifica tu huella para ver tus documentos.</p>
+  <p class="lead" id="texto-bloqueo-lead">Toca el sensor para ver tus documentos.</p>
   <button type="button" id="btn-reintentar-bloqueo" class="icono-huella-sensor" aria-label="Desbloquear con huella">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2M3.5 12A8.5 8.5 0 0 1 8 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M12 3a7 7 0 0 0-7 7v1"/>
+      <path d="M9 20.5c-1.8-2.5-3-5.5-3-8.5v-1a6 6 0 0 1 6-6"/>
+      <path d="M12 3a7 7 0 0 1 7 7v2"/>
+      <path d="M15 20.5c1-1.4 1.8-3 2.3-4.7"/>
+      <path d="M12 6.5a4.5 4.5 0 0 0-4.5 4.5v1c0 2.5.8 5 2.2 7"/>
+      <path d="M12 6.5a4.5 4.5 0 0 1 4.5 4.5v1.2"/>
+      <path d="M12 10a1 1 0 0 0-1 1v1.5c0 2 .5 3.9 1.5 5.5"/>
+      <path d="M12 10a1 1 0 0 1 1 1v.3"/>
+    </svg>
   </button>
   <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
   <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
@@ -696,7 +705,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.4';
+const VERSION_APP = '2.1.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1083,16 +1092,15 @@ function mostrarPantallaBloqueo() {
   $('#bloqueo-estado').textContent = '';
   tecladoPinBloqueo.reset();
   if (bloqueoHuellaActivado()) {
-    $('#texto-bloqueo-lead').textContent = 'Verifica tu huella para ver tus documentos.';
-    // El dibujo de huella se enseña ya desde el principio (a diferencia
-    // de "Usar PIN", que sigue esperando a que falle el intento
-    // automático) — para el experimento de que coincida con el propio
-    // aviso de Android hace falta que esté visible mientras esa ventana
-    // sigue abierta, no solo después.
+    $('#texto-bloqueo-lead').textContent = 'Toca el sensor para ver tus documentos.';
+    // Ya no se llama a intentarDesbloquear() automáticamente: el propio
+    // dibujo de huella coincide con el sensor real (comprobado por el
+    // usuario), así que tocarlo ya activa la lectura de huella de
+    // verdad — abrir la ventana del sistema antes de que toque nada no
+    // hace falta, y así tampoco aparece de primeras sin que se pida.
     $('#btn-reintentar-bloqueo').classList.remove('hidden');
-    $('#btn-usar-pin').classList.add('hidden');
+    $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
     $('#zona-pin-bloqueo').classList.add('hidden');
-    intentarDesbloquear();
   } else {
     // Solo hay PIN (sin huella activa): se pide directamente, sin pasar
     // por la huella ni por el enlace "Usar PIN".
@@ -1181,14 +1189,9 @@ document.addEventListener('visibilitychange', () => {
     return;
   }
 
-  // No llegó a desbloquearse (p. ej. se canceló la ventana de la huella
-  // con el botón atrás y se salió de la app sin poner el PIN): seguía en
-  // la pantalla de bloqueo, así que al volver se reintenta la huella de
-  // nuevo — aquí no aplica el margen de un minuto, nunca hubo nada que
-  // "seguir" desbloqueado.
-  if (!bloqueoYaDesbloqueado && bloqueoHuellaActivado() && !$('#vista-bloqueo').classList.contains('hidden')) {
-    intentarDesbloquear();
-  }
+  // No llegó a desbloquearse y sigue en la pantalla de bloqueo: no hay
+  // nada más que hacer aquí — ya no se relanza sola, el propio dibujo de
+  // huella sigue ahí esperando a que se vuelva a tocar.
 });
 
 // pointerdown en vez de click: se activa al tocar, sin esperar a que se
