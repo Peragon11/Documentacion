@@ -103,7 +103,7 @@
      más o menos con donde aparece el propio botón de la ventana del
      sistema, tocarlo también llegue a activar el sensor real de verdad. */
   .icono-huella-sensor{
-    position:fixed; left:50%; top:62vh; transform:translate(-50%, -50%); z-index:5;
+    position:fixed; left:50%; top:calc(62vh + 76px); transform:translate(-50%, -50%); z-index:5;
     width:72px; height:72px; border-radius:50%; border:2px solid var(--stamp);
     background:var(--ink-2); color:var(--stamp);
     display:flex; align-items:center; justify-content:center; cursor:pointer;
@@ -696,7 +696,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.3';
+const VERSION_APP = '2.1.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1191,7 +1191,9 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-$('#btn-reintentar-bloqueo').addEventListener('click', intentarDesbloquear);
+// pointerdown en vez de click: se activa al tocar, sin esperar a que se
+// levante el dedo — como un sensor de huella real.
+$('#btn-reintentar-bloqueo').addEventListener('pointerdown', intentarDesbloquear);
 $('#btn-usar-pin').addEventListener('click', () => {
   $('#zona-pin-bloqueo').classList.remove('hidden');
   $('#btn-usar-pin').classList.add('hidden');
