@@ -103,7 +103,7 @@
      más o menos con donde aparece el propio botón de la ventana del
      sistema, tocarlo también llegue a activar el sensor real de verdad. */
   .icono-huella-sensor{
-    position:fixed; left:50%; top:calc(62vh + 133px); transform:translate(-50%, -50%); z-index:5;
+    position:fixed; left:50%; top:calc(62vh + 141px); transform:translate(-50%, -50%); z-index:5;
     width:72px; height:72px; border-radius:50%; border:none;
     background:#fff; color:#111;
     display:flex; align-items:center; justify-content:center; cursor:pointer;
@@ -138,11 +138,13 @@
   }
   .login-nota{ margin-top:20px; max-width:300px; font-size:.78rem; color:var(--text-dim); line-height:1.5; }
   .login-nota strong{ color:var(--seal); font-weight:600; }
-  .link-discreto{
-    background:none; border:none; color:var(--text-dim); font-size:.85rem;
-    text-decoration:underline; cursor:pointer; margin-top:20px; padding:6px;
-  }
   #zona-pin-bloqueo{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:10px; width:100%; }
+  /* Cuando el teclado del PIN sale junto con el dibujo de huella (más
+     abajo, en position:fixed), hace falta más compacto para no invadir
+     ese hueco — mismo tamaño reducido que ya se usaba en apaisado. */
+  #zona-pin-bloqueo.pin-compacto .puntos-pin{ margin:4px 0 10px; }
+  #zona-pin-bloqueo.pin-compacto .teclas-pin{ grid-template-columns:repeat(3, 50px); gap:8px; }
+  #zona-pin-bloqueo.pin-compacto .tecla-pin{ width:50px; height:50px; font-size:1.15rem; }
   .puntos-pin{ display:flex; gap:16px; justify-content:center; margin:6px 0 22px; }
   .punto-pin{ width:15px; height:15px; border-radius:50%; border:2px solid var(--borde); flex:none; }
   .punto-pin.lleno{ background:var(--stamp); border-color:var(--stamp); }
@@ -629,7 +631,6 @@
     </svg>
   </button>
   <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
-  <button type="button" id="btn-usar-pin" class="link-discreto">Usar PIN en su lugar</button>
   <div id="zona-pin-bloqueo" class="hidden"></div>
 </div>
 
@@ -698,7 +699,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.8';
+const VERSION_APP = '2.1.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1085,29 +1086,33 @@ function mostrarPantallaBloqueo() {
   $('#bloqueo-estado').textContent = '';
   tecladoPinBloqueo.reset();
   if (bloqueoHuellaActivado()) {
-    $('#texto-bloqueo-lead').textContent = 'Toca el sensor para ver tus documentos.';
+    // La huella siempre exige tener un PIN configurado de antemano (ver
+    // el checkbox de Ajustes), así que aquí pinConfigurado() es siempre
+    // cierto — el teclado sale directamente, sin ningún enlace "Usar
+    // PIN" de por medio, igual que en la pantalla de bloqueo del propio
+    // móvil (el PIN arriba, la huella debajo).
+    $('#texto-bloqueo-lead').textContent = 'Toca el sensor o introduce tu PIN.';
     // Ya no se llama a intentarDesbloquear() automáticamente: el propio
     // dibujo de huella coincide con el sensor real (comprobado por el
     // usuario), así que tocarlo ya activa la lectura de huella de
     // verdad — abrir la ventana del sistema antes de que toque nada no
     // hace falta, y así tampoco aparece de primeras sin que se pida.
     $('#btn-reintentar-bloqueo').classList.remove('hidden');
-    $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
-    $('#zona-pin-bloqueo').classList.add('hidden');
+    $('#zona-pin-bloqueo').classList.remove('hidden');
+    $('#zona-pin-bloqueo').classList.remove('pin-directo');
+    $('#zona-pin-bloqueo').classList.add('pin-compacto');
   } else {
     // Solo hay PIN (sin huella activa): se pide directamente, sin pasar
-    // por la huella ni por el enlace "Usar PIN".
+    // por la huella.
     $('#texto-bloqueo-lead').textContent = 'Introduce tu PIN para ver tus documentos.';
     $('#btn-reintentar-bloqueo').classList.add('hidden');
-    $('#btn-usar-pin').classList.add('hidden');
     $('#zona-pin-bloqueo').classList.remove('hidden');
+    $('#zona-pin-bloqueo').classList.remove('pin-compacto');
     // Aquí el teclado es lo primero que se ve (no hay botón de huella
     // delante que ya lo separe de por sí), así que necesita su propio
     // empujón hacia abajo para quedar bajo la ventana del sistema.
     $('#zona-pin-bloqueo').classList.add('pin-directo');
-    return;
   }
-  $('#zona-pin-bloqueo').classList.remove('pin-directo');
 }
 
 async function intentarDesbloquear() {
@@ -1129,9 +1134,8 @@ async function intentarDesbloquear() {
     desbloquearApp();
   } catch (e) {
     // Sin mensaje de error a propósito: el dibujo de huella ya está ahí
-    // esperando, no hace falta más aviso. "Usar PIN" sí se revela ahora,
-    // como alternativa manual tras el fallo/cancelación.
-    $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
+    // esperando, y el teclado del PIN ya está visible de por sí — no
+    // hace falta ningún aviso ni revelar nada más tras un fallo.
   }
 }
 
@@ -1157,14 +1161,30 @@ function desbloquearApp() {
 const MARGEN_REBLOQUEO_MS = 60000;
 let momentoOcultacion = null;
 let bloqueoTemporalPorFondo = false;
+
+// Tapa el contenido si toca — idempotente, se puede llamar más de una vez
+// sin problema. Se engancha a varios eventos a la vez (más abajo) porque
+// visibilitychange por sí solo no siempre basta: el navegador puede
+// retrasar o saltarse eventos de una pestaña en segundo plano, y basta
+// con que se demore un instante para que Android ya haya visto el
+// contenido real (para su selector de apps recientes, o al volver antes
+// de que a nuestro JS le dé tiempo a reaccionar). pagehide/freeze son
+// redes de seguridad adicionales, pensadas justo para el momento en que
+// el navegador va a dejar de ejecutar JS de la página.
+function taparPorSegundoPlano() {
+  momentoOcultacion = Date.now();
+  if (bloqueoActivado() && bloqueoYaDesbloqueado && !$('#vista-app').classList.contains('hidden')) {
+    bloqueoTemporalPorFondo = true;
+    $('#vista-app').classList.add('hidden');
+    $('#vista-bloqueo').classList.remove('hidden');
+  }
+}
+window.addEventListener('pagehide', taparPorSegundoPlano);
+document.addEventListener('freeze', taparPorSegundoPlano);
+
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    momentoOcultacion = Date.now();
-    if (bloqueoActivado() && bloqueoYaDesbloqueado && !$('#vista-app').classList.contains('hidden')) {
-      bloqueoTemporalPorFondo = true;
-      $('#vista-app').classList.add('hidden');
-      $('#vista-bloqueo').classList.remove('hidden');
-    }
+    taparPorSegundoPlano();
     return;
   }
 
@@ -1190,10 +1210,6 @@ document.addEventListener('visibilitychange', () => {
 // pointerdown en vez de click: se activa al tocar, sin esperar a que se
 // levante el dedo — como un sensor de huella real.
 $('#btn-reintentar-bloqueo').addEventListener('pointerdown', intentarDesbloquear);
-$('#btn-usar-pin').addEventListener('click', () => {
-  $('#zona-pin-bloqueo').classList.remove('hidden');
-  $('#btn-usar-pin').classList.add('hidden');
-});
 $('#zona-pin-bloqueo').innerHTML = htmlTecladoPin();
 const tecladoPinBloqueo = cablearTecladoPin($('#zona-pin-bloqueo'), async (valor) => {
   const ok = await verificarPin(valor);
