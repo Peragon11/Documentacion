@@ -95,8 +95,24 @@
      botón/teclado de más abajo, en cambio, se separan aposta (ver
      #btn-reintentar-bloqueo y el margen que pone mostrarPantallaBloqueo()
      en #zona-pin-bloqueo) para que queden tapados sin problema. */
-  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 76px); }
+  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 76px); overflow-y:auto; }
   #btn-reintentar-bloqueo{ margin-top:calc(12vh - 19px); }
+  #zona-pin-bloqueo.pin-directo{ margin-top:calc(12vh - 19px); }
+  /* En apaisado hay mucha menos altura de sobra: los mismos huecos en
+     vh + px fijos (pensados para vertical) no caben y cortan contenido.
+     Aquí se reducen todos a la vez — icono, título, separaciones y el
+     propio teclado del PIN, más pequeño — y además queda con scroll por
+     si aun así algo no cupiera en pantallas muy bajas. */
+  @media (orientation:landscape){
+    #vista-bloqueo{ padding-top:calc(2vh + var(--safe-t)); padding-bottom:16px; }
+    #vista-bloqueo .login-sello{ width:40px; height:40px; margin-bottom:10px; }
+    #vista-bloqueo h1{ font-size:1.5rem; margin-bottom:4px; }
+    #vista-bloqueo p.lead{ margin-bottom:14px; }
+    #btn-reintentar-bloqueo, #zona-pin-bloqueo.pin-directo{ margin-top:2vh; }
+    #vista-bloqueo .teclas-pin{ grid-template-columns:repeat(3, 50px); gap:8px; }
+    #vista-bloqueo .tecla-pin{ width:50px; height:50px; font-size:1.15rem; }
+    #vista-bloqueo .puntos-pin{ margin:4px 0 12px; }
+  }
   .login-sello{
     width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
     display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
@@ -666,7 +682,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.1';
+const VERSION_APP = '2.1.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1054,9 +1070,13 @@ function mostrarPantallaBloqueo() {
   tecladoPinBloqueo.reset();
   if (bloqueoHuellaActivado()) {
     $('#texto-bloqueo-lead').textContent = 'Verifica tu huella para ver tus documentos.';
-    $('#btn-reintentar-bloqueo').classList.remove('hidden');
+    // El botón y "Usar PIN" empiezan ocultos: solo se enseñan si el
+    // intento automático de huella falla o se cancela (ver el catch de
+    // intentarDesbloquear) — mientras se enseñaban siempre, se veían de
+    // primeras sin necesidad, delante de la propia ventana del sistema.
+    $('#btn-reintentar-bloqueo').classList.add('hidden');
+    $('#btn-usar-pin').classList.add('hidden');
     $('#zona-pin-bloqueo').classList.add('hidden');
-    $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
     intentarDesbloquear();
   } else {
     // Solo hay PIN (sin huella activa): se pide directamente, sin pasar
@@ -1068,10 +1088,10 @@ function mostrarPantallaBloqueo() {
     // Aquí el teclado es lo primero que se ve (no hay botón de huella
     // delante que ya lo separe de por sí), así que necesita su propio
     // empujón hacia abajo para quedar bajo la ventana del sistema.
-    $('#zona-pin-bloqueo').style.marginTop = 'calc(12vh - 19px)';
+    $('#zona-pin-bloqueo').classList.add('pin-directo');
     return;
   }
-  $('#zona-pin-bloqueo').style.marginTop = '';
+  $('#zona-pin-bloqueo').classList.remove('pin-directo');
 }
 
 async function intentarDesbloquear() {
@@ -1093,6 +1113,10 @@ async function intentarDesbloquear() {
     desbloquearApp();
   } catch (e) {
     estado.textContent = 'No se ha podido verificar. Inténtalo de nuevo.';
+    // Ahora sí se enseñan: la huella automática ha fallado o se ha
+    // cancelado, hace falta darle al usuario una forma manual de seguir.
+    $('#btn-reintentar-bloqueo').classList.remove('hidden');
+    $('#btn-usar-pin').classList.toggle('hidden', !pinConfigurado());
   }
 }
 
@@ -1104,28 +1128,51 @@ function desbloquearApp() {
 
 // Vuelve a pedir la huella/PIN si la app estaba desbloqueada y pasa a
 // segundo plano (pantalla apagada, cambio a otra app...) y luego vuelve
-// a primer plano, pero solo si ha pasado al menos un minuto en segundo
-// plano — un cambio de app breve no lo vuelve a pedir.
+// a primer plano, pero solo exige verificar de nuevo si ha pasado al
+// menos un minuto en segundo plano — un cambio de app breve no lo pide.
+//
+// Importante: el contenido se tapa YA en el momento de ir a segundo
+// plano, no al volver. Si se esperara a volver para taparlo, Android ya
+// habría tenido ocasión de hacer una captura de la app tal cual estaba
+// (para el selector de apps recientes, o la propia animación de cambio
+// de app) con los documentos a la vista — de ahí el "se ve lo de detrás
+// un instante" que notó el usuario. bloqueoTemporalPorFondo distingue
+// ese tapado preventivo (que no exige verificar nada si se vuelve
+// rápido) de un bloqueo de verdad (pasado el minuto).
 const MARGEN_REBLOQUEO_MS = 60000;
 let momentoOcultacion = null;
+let bloqueoTemporalPorFondo = false;
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { momentoOcultacion = Date.now(); return; }
-  if (!bloqueoActivado()) return;
-  if (bloqueoYaDesbloqueado) {
-    // Ya estaba desbloqueada: se vuelve a bloquear solo si ha pasado el
-    // margen mínimo en segundo plano.
-    if (momentoOcultacion !== null && Date.now() - momentoOcultacion < MARGEN_REBLOQUEO_MS) return;
+  if (document.hidden) {
+    momentoOcultacion = Date.now();
+    if (bloqueoActivado() && bloqueoYaDesbloqueado && !$('#vista-app').classList.contains('hidden')) {
+      bloqueoTemporalPorFondo = true;
+      $('#vista-app').classList.add('hidden');
+      $('#vista-bloqueo').classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (bloqueoTemporalPorFondo) {
+    bloqueoTemporalPorFondo = false;
+    const pasadoMargen = momentoOcultacion !== null && Date.now() - momentoOcultacion >= MARGEN_REBLOQUEO_MS;
+    if (!pasadoMargen) {
+      // Cambio breve: solo era el tapado preventivo, se descubre sin pedir nada.
+      $('#vista-bloqueo').classList.add('hidden');
+      $('#vista-app').classList.remove('hidden');
+      return;
+    }
     bloqueoYaDesbloqueado = false;
-    $('#vista-app').classList.add('hidden');
     mostrarPantallaBloqueo();
     return;
   }
+
   // No llegó a desbloquearse (p. ej. se canceló la ventana de la huella
   // con el botón atrás y se salió de la app sin poner el PIN): seguía en
   // la pantalla de bloqueo, así que al volver se reintenta la huella de
   // nuevo — aquí no aplica el margen de un minuto, nunca hubo nada que
   // "seguir" desbloqueado.
-  if (bloqueoHuellaActivado() && !$('#vista-bloqueo').classList.contains('hidden')) {
+  if (!bloqueoYaDesbloqueado && bloqueoHuellaActivado() && !$('#vista-bloqueo').classList.contains('hidden')) {
     intentarDesbloquear();
   }
 });
