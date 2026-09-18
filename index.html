@@ -97,13 +97,18 @@
      sin problema. */
   #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 76px); overflow-y:auto; }
   #zona-pin-bloqueo.pin-directo{ margin-top:calc(12vh - 19px); }
+  /* El teclado sube pegado al texto de arriba (menos hueco antes de él),
+     para dejar sitio de sobra antes de llegar al dibujo de huella, que
+     está en position:fixed más abajo y no se entera de este flujo. */
+  #vista-bloqueo p.lead{ margin-bottom:10px; }
+  #zona-pin-bloqueo.pin-compacto{ margin-top:0; }
   /* Experimento: en vez de un botón normal, un dibujo de huella colocado
      a la altura habitual del sensor de huella bajo pantalla en Android,
      fuera del flujo normal (position:fixed) — la idea es que, si coincide
      más o menos con donde aparece el propio botón de la ventana del
      sistema, tocarlo también llegue a activar el sensor real de verdad. */
   .icono-huella-sensor{
-    position:fixed; left:50%; top:calc(62vh + 141px); transform:translate(-50%, -50%); z-index:5;
+    position:fixed; left:50%; top:calc(62vh + 152px); transform:translate(-50%, -50%); z-index:5;
     width:72px; height:72px; border-radius:50%; border:none;
     background:#fff; color:#111;
     display:flex; align-items:center; justify-content:center; cursor:pointer;
@@ -699,7 +704,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.1.9';
+const VERSION_APP = '2.2.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
