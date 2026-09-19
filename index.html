@@ -102,6 +102,11 @@
      está en position:fixed más abajo y no se entera de este flujo. */
   #vista-bloqueo p.lead{ margin-bottom:10px; }
   #zona-pin-bloqueo.pin-compacto{ margin-top:0; }
+  /* El aviso va debajo del teclado y no ocupa nada mientras está vacío
+     (antes reservaba ~40px entre el texto y el teclado aunque no dijera
+     nada). Al aparecer un aviso, empuja hacia abajo, no el teclado. */
+  #bloqueo-estado{ margin:10px 0 0; font-size:.85rem; color:#E0897A; }
+  #bloqueo-estado:empty{ display:none; }
   /* Experimento: en vez de un botón normal, un dibujo de huella colocado
      a la altura habitual del sensor de huella bajo pantalla en Android,
      fuera del flujo normal (position:fixed) — la idea es que, si coincide
@@ -121,6 +126,10 @@
      propio teclado del PIN, más pequeño — y además queda con scroll por
      si aun así algo no cupiera en pantallas muy bajas. */
   @media (orientation:landscape){
+    /* El sensor físico no está en este lado al girar el móvil, así que ya
+       no tiene sentido "coincidir" con él: el botón se coloca a la derecha,
+       centrado en vertical, siempre dentro de la pantalla. */
+    .icono-huella-sensor{ top:50%; left:auto; right:8vw; transform:translateY(-50%); }
     #vista-bloqueo{ padding-top:calc(2vh + var(--safe-t)); padding-bottom:16px; }
     #vista-bloqueo .login-sello{ width:40px; height:40px; margin-bottom:10px; }
     #vista-bloqueo h1{ font-size:1.5rem; margin-bottom:4px; }
@@ -626,7 +635,7 @@
 
 <div id="vista-bloqueo" class="hidden">
   <div class="login-sello" aria-hidden="true">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 11a2.5 2.5 0 0 1 2.5 2.5V17M9.5 13.5V17M6 10.5a6 6 0 0 1 12 0v1.5M12 4a8 8 0 0 0-8 8v2M20 12v2a8 8 0 0 1-1.2 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><path d="M12 15v2"/></svg>
   </div>
   <h1>App bloqueada</h1>
   <p class="lead" id="texto-bloqueo-lead">Toca el sensor para ver tus documentos.</p>
@@ -635,8 +644,8 @@
       <path d="M8.81 3.76 L11.02 3.43 L13.2 3.64 L15.22 4.36 L16.97 5.51 L18.37 7.03 L19.33 8.8 L19.83 10.7 L19.85 12.63 L19.41 14.46 L18.57 16.1 L17.38 17.44 L15.94 18.44 L14.34 19.04 L12.68 19.23 L11.08 19.02 L9.61 18.44 L8.36 17.54 L7.4 16.41 L6.76 15.11 L6.46 13.73 L6.51 12.37 L6.87 11.11 L7.52 10.01 L8.38 9.13 L9.39 8.51 L10.48 8.17 L11.58 8.11 L12.62 8.32 L13.54 8.76 L14.28 9.38 L14.82 10.14 L15.14 10.96 L15.24 11.8 L15.14 12.59 L14.85 13.29 L14.42 13.86 L13.89 14.28 L13.31 14.53 L12.72 14.61 L12.18 14.54 L11.71 14.35 L11.35 14.06 L11.1 13.71 L10.98 13.34 L10.97 13 L11.06 12.7 L11.22 12.47 L11.42 12.34"/>
     </svg>
   </button>
-  <p id="bloqueo-estado" style="min-height:1.2em;margin-top:16px;font-size:.85rem;color:#E0897A;"></p>
   <div id="zona-pin-bloqueo" class="hidden"></div>
+  <p id="bloqueo-estado" role="status" aria-live="polite"></p>
 </div>
 
 <div id="vista-app" class="hidden">
@@ -704,7 +713,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.0';
+const VERSION_APP = '2.2.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
