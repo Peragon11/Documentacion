@@ -157,8 +157,29 @@
      abajo, en position:fixed), hace falta más compacto para no invadir
      ese hueco — mismo tamaño reducido que ya se usaba en apaisado. */
   #zona-pin-bloqueo.pin-compacto .puntos-pin{ margin:4px 0 10px; }
-  #zona-pin-bloqueo.pin-compacto .teclas-pin{ grid-template-columns:repeat(3, 50px); gap:8px; }
-  #zona-pin-bloqueo.pin-compacto .tecla-pin{ width:50px; height:50px; font-size:1.15rem; }
+  /* Teclado de la pantalla de bloqueo como el del móvil: números grandes,
+     botones redondos bien definidos (fondo y contorno) y separados. Con
+     la huella delante ("pin-compacto") las teclas son algo menores para
+     que quepan sin tocar el dibujo de huella de más abajo. */
+  #zona-pin-bloqueo .teclas-pin{ grid-template-columns:repeat(3, 68px); column-gap:24px; row-gap:12px; }
+  #zona-pin-bloqueo .tecla-pin{ width:68px; height:68px; font-size:2.1rem; font-weight:500; border:1px solid var(--borde-fuerte); }
+  #zona-pin-bloqueo .tecla-borrar, .modal .tecla-borrar{ border:none; }
+  #zona-pin-bloqueo .tecla-borrar svg{ width:26px; height:26px; }
+  #zona-pin-bloqueo.pin-compacto .teclas-pin{ grid-template-columns:repeat(3, 60px); column-gap:24px; row-gap:8px; }
+  #zona-pin-bloqueo.pin-compacto .tecla-pin{ width:60px; height:60px; font-size:2rem; }
+  /* Mismo estilo en el teclado de crear/quitar el PIN (dentro de una
+     ventana de Ajustes). Tamaño como el "compacto": la ventana ya lleva
+     título, texto y botón de cancelar, y no puede crecer sin límite. */
+  .modal .teclas-pin{ grid-template-columns:repeat(3, 60px); column-gap:24px; row-gap:8px; }
+  .modal .tecla-pin{ width:60px; height:60px; font-size:2rem; font-weight:500; border:1px solid var(--borde-fuerte); }
+  .modal .tecla-borrar{ border:none; }
+  .modal .tecla-borrar svg{ width:26px; height:26px; }
+  @media (orientation:landscape){
+    #zona-pin-bloqueo .teclas-pin, #zona-pin-bloqueo.pin-compacto .teclas-pin,
+    .modal .teclas-pin{ grid-template-columns:repeat(3, 50px); column-gap:16px; row-gap:6px; }
+    #zona-pin-bloqueo .tecla-pin, #zona-pin-bloqueo.pin-compacto .tecla-pin,
+    .modal .tecla-pin{ width:50px; height:50px; font-size:1.5rem; }
+  }
   .puntos-pin{ display:flex; gap:16px; justify-content:center; margin:6px 0 22px; }
   .punto-pin{ width:15px; height:15px; border-radius:50%; border:2px solid var(--borde); flex:none; }
   .punto-pin.lleno{ background:var(--stamp); border-color:var(--stamp); }
@@ -713,7 +734,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.1';
+const VERSION_APP = '2.2.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1159,66 +1180,67 @@ function desbloquearApp() {
   $('#vista-app').classList.remove('hidden');
 }
 
-// Vuelve a pedir la huella/PIN si la app estaba desbloqueada y pasa a
-// segundo plano (pantalla apagada, cambio a otra app...) y luego vuelve
-// a primer plano, pero solo exige verificar de nuevo si ha pasado al
-// menos un minuto en segundo plano — un cambio de app breve no lo pide.
+// Bloquea de verdad la app en cuanto sale de primer plano — pantalla
+// apagada, botón de inicio, cambio de app, botón atrás que sale de la
+// app — sin ningún margen de tiempo: al volver siempre pide desbloquear.
+// (Antes se tapaba pero se destapaba solo si se volvía en menos de un
+// minuto, por eso el botón de inicio "no bloqueaba" si volvías pronto.)
 //
-// Importante: el contenido se tapa YA en el momento de ir a segundo
-// plano, no al volver. Si se esperara a volver para taparlo, Android ya
-// habría tenido ocasión de hacer una captura de la app tal cual estaba
-// (para el selector de apps recientes, o la propia animación de cambio
-// de app) con los documentos a la vista — de ahí el "se ve lo de detrás
-// un instante" que notó el usuario. bloqueoTemporalPorFondo distingue
-// ese tapado preventivo (que no exige verificar nada si se vuelve
-// rápido) de un bloqueo de verdad (pasado el minuto).
-const MARGEN_REBLOQUEO_MS = 60000;
-let momentoOcultacion = null;
-let bloqueoTemporalPorFondo = false;
-
-// Tapa el contenido si toca — idempotente, se puede llamar más de una vez
-// sin problema. Se engancha a varios eventos a la vez (más abajo) porque
-// visibilitychange por sí solo no siempre basta: el navegador puede
-// retrasar o saltarse eventos de una pestaña en segundo plano, y basta
-// con que se demore un instante para que Android ya haya visto el
-// contenido real (para su selector de apps recientes, o al volver antes
-// de que a nuestro JS le dé tiempo a reaccionar). pagehide/freeze son
-// redes de seguridad adicionales, pensadas justo para el momento en que
-// el navegador va a dejar de ejecutar JS de la página.
-function taparPorSegundoPlano() {
-  momentoOcultacion = Date.now();
-  if (bloqueoActivado() && bloqueoYaDesbloqueado && !$('#vista-app').classList.contains('hidden')) {
-    bloqueoTemporalPorFondo = true;
-    $('#vista-app').classList.add('hidden');
-    $('#vista-bloqueo').classList.remove('hidden');
-  }
+// Se hace en el momento de irse, no al volver: si se esperara a volver,
+// Android ya habría podido hacer una captura con los documentos a la
+// vista (selector de apps recientes, animación de cambio de app).
+//
+// Es idempotente (tras la primera llamada bloqueoYaDesbloqueado ya es
+// false y el resto no hacen nada) y se engancha a varios eventos porque
+// visibilitychange por sí solo no siempre llega a tiempo: pagehide y
+// freeze son redes de seguridad para cuando el navegador va a dejar de
+// ejecutar JS de la página.
+//
+// Excepción: las salidas que provoca la propia app (elegir un archivo o
+// sacar una foto, compartir, abrir un enlace externo) no bloquean — se
+// marcan justo antes de lanzarlas (marcarSalidaPropia) y la ocultación
+// que sigue en los siguientes segundos se ignora. Para que esa excepción
+// no sirva de puerta trasera (p. ej. abrir el selector de archivos y
+// dejar la app fuera un buen rato), si la app estuvo fuera más de
+// MAX_FUERA_SALIDA_PROPIA_MS, al volver se bloquea igualmente.
+const VENTANA_SALIDA_PROPIA_MS = 15000;
+const MAX_FUERA_SALIDA_PROPIA_MS = 180000;
+let salidaPropiaHasta = 0;
+let ocultoPorSalidaPropiaDesde = null;
+function marcarSalidaPropia() { salidaPropiaHasta = Date.now() + VENTANA_SALIDA_PROPIA_MS; }
+// Selector de archivos/cámara: cualquier clic en un <input type=file>,
+// incluidos los .click() hechos por código y los que llegan desde una
+// etiqueta <label> (en fase de captura, antes que cualquier otra cosa).
+document.addEventListener('click', (e) => {
+  if (e.target instanceof HTMLInputElement && e.target.type === 'file') marcarSalidaPropia();
+}, true);
+if (navigator.share) {
+  const compartirOriginal = navigator.share.bind(navigator);
+  navigator.share = (...args) => { marcarSalidaPropia(); return compartirOriginal(...args); };
 }
-window.addEventListener('pagehide', taparPorSegundoPlano);
-document.addEventListener('freeze', taparPorSegundoPlano);
+const abrirVentanaOriginal = window.open.bind(window);
+window.open = (...args) => { marcarSalidaPropia(); return abrirVentanaOriginal(...args); };
 
+function bloquearPorSegundoPlano() {
+  if (!bloqueoActivado() || !bloqueoYaDesbloqueado) return;
+  if (Date.now() < salidaPropiaHasta) {
+    if (ocultoPorSalidaPropiaDesde === null) ocultoPorSalidaPropiaDesde = Date.now();
+    return;
+  }
+  bloqueoYaDesbloqueado = false;
+  $('#vista-app').classList.add('hidden');
+  mostrarPantallaBloqueo();
+}
+window.addEventListener('pagehide', bloquearPorSegundoPlano);
+document.addEventListener('freeze', bloquearPorSegundoPlano);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    taparPorSegundoPlano();
-    return;
+  if (document.hidden) { bloquearPorSegundoPlano(); return; }
+  if (ocultoPorSalidaPropiaDesde !== null) {
+    const fuera = Date.now() - ocultoPorSalidaPropiaDesde;
+    ocultoPorSalidaPropiaDesde = null;
+    salidaPropiaHasta = 0;
+    if (fuera > MAX_FUERA_SALIDA_PROPIA_MS) bloquearPorSegundoPlano();
   }
-
-  if (bloqueoTemporalPorFondo) {
-    bloqueoTemporalPorFondo = false;
-    const pasadoMargen = momentoOcultacion !== null && Date.now() - momentoOcultacion >= MARGEN_REBLOQUEO_MS;
-    if (!pasadoMargen) {
-      // Cambio breve: solo era el tapado preventivo, se descubre sin pedir nada.
-      $('#vista-bloqueo').classList.add('hidden');
-      $('#vista-app').classList.remove('hidden');
-      return;
-    }
-    bloqueoYaDesbloqueado = false;
-    mostrarPantallaBloqueo();
-    return;
-  }
-
-  // No llegó a desbloquearse y sigue en la pantalla de bloqueo: no hay
-  // nada más que hacer aquí — ya no se relanza sola, el propio dibujo de
-  // huella sigue ahí esperando a que se vuelva a tocar.
 });
 
 // pointerdown en vez de click: se activa al tocar, sin esperar a que se
