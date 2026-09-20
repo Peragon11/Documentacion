@@ -108,10 +108,11 @@
      está en position:fixed más abajo y no se entera de este flujo. */
   #vista-bloqueo p.lead{ margin-bottom:10px; }
   #zona-pin-bloqueo.pin-compacto{ margin-top:0; }
-  /* El aviso va debajo del teclado y no ocupa nada mientras está vacío
-     (antes reservaba ~40px entre el texto y el teclado aunque no dijera
-     nada). Al aparecer un aviso, empuja hacia abajo, no el teclado. */
-  #bloqueo-estado{ margin:10px 0 0; font-size:.85rem; color:#E0897A; }
+  /* El aviso ("PIN incorrecto.") va justo encima de los puntos del PIN y
+     no ocupa nada mientras está vacío. Al aparecer, baja el teclado una
+     sola vez y se queda ahí (no se borra hasta desbloquear), para que las
+     teclas no se muevan mientras se vuelve a intentar. */
+  #bloqueo-estado{ margin:0 0 4px; font-size:.85rem; color:#E0897A; text-align:center; }
   #bloqueo-estado:empty{ display:none; }
   /* Experimento: en vez de un botón normal, un dibujo de huella colocado
      a la altura habitual del sensor de huella bajo pantalla en Android,
@@ -674,7 +675,6 @@
     </svg>
   </button>
   <div id="zona-pin-bloqueo" class="hidden"></div>
-  <p id="bloqueo-estado" role="status" aria-live="polite"></p>
 </div>
 
 <div id="vista-app" class="hidden">
@@ -742,7 +742,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.6';
+const VERSION_APP = '2.2.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1271,7 +1271,10 @@ document.addEventListener('visibilitychange', () => {
 // pointerdown en vez de click: se activa al tocar, sin esperar a que se
 // levante el dedo — como un sensor de huella real.
 $('#btn-reintentar-bloqueo').addEventListener('pointerdown', intentarDesbloquear);
-$('#zona-pin-bloqueo').innerHTML = htmlTecladoPin();
+// El aviso ("PIN incorrecto.") va dentro de la zona del PIN, justo encima
+// de los puntos, para que esté pegado a ellos tanto con la huella delante
+// como con solo PIN (donde la zona lleva un margen grande por arriba).
+$('#zona-pin-bloqueo').innerHTML = '<p id="bloqueo-estado" role="status" aria-live="polite"></p>' + htmlTecladoPin();
 const tecladoPinBloqueo = cablearTecladoPin($('#zona-pin-bloqueo'), async (valor) => {
   const ok = await verificarPin(valor);
   if (ok) { desbloquearApp(); return; }
