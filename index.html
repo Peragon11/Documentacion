@@ -113,6 +113,7 @@
   .info-prov strong{ color:var(--text-light); font-size:.9rem; }
   .info-prov span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .estado-prov.aviso{ color:#E0897A; }
+  .enlace-prov{ background:none; border:none; padding:2px 0 0; margin:0; color:var(--text-dim); font-size:.78rem; text-decoration:underline; cursor:pointer; text-align:left; align-self:flex-start; }
   .fila-prov .btn-prov{ flex:none; width:auto; padding:8px 14px; font-size:.82rem; }
   .info-prov{ flex:1; }
 
@@ -658,8 +659,9 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 // Clave de la app de Dropbox (App Console de Dropbox). Vacía = Dropbox no
 // aparece en la app. No es secreta.
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
+const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.1';
+const VERSION_APP = '2.3.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1434,6 +1436,7 @@ const PROVEEDORES = {
       return accessToken;
     },
     async preparar() { await asegurarCarpeta(); },
+    urlCarpeta() { return carpetaId ? `https://drive.google.com/drive/folders/${carpetaId}` : null; },
     async subir(ctx, blob, nombreArchivo) {
       const carpeta = await carpetaDestinoDocumento(ctx.persona, ctx.categoria);
       return subirArchivoADrive(blob, nombreArchivo, carpeta);
@@ -1512,6 +1515,8 @@ const PROVEEDORES = {
       return renovarConRefresco('dropbox', 'https://api.dropboxapi.com/oauth2/token', { client_id: DROPBOX_APP_KEY });
     },
     async preparar() { /* Dropbox crea las carpetas al subir */ },
+    // La carpeta de aplicación de Dropbox se llama como la app en su consola.
+    urlCarpeta() { return 'https://www.dropbox.com/home/Apps/' + encodeURIComponent(NOMBRE_APP_DROPBOX); },
     async subirRuta(ruta, blob, modo) {
       const res = await fetchNube('dropbox', 'https://content.dropboxapi.com/2/files/upload', {
         method: 'POST',
@@ -1570,6 +1575,16 @@ function programarRespaldo(espera = 2000) {
 window.addEventListener('online', () => programarRespaldo(1000));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) programarRespaldo(1500); });
 
+// Una pasada por todas las nubes indicadas; devuelve si alguna aportó datos
+// nuevos al móvil. Con forzar, cada nube se consulta aunque no haya nada que subir.
+async function pasadaDeRespaldo(activos, forzar) {
+  let huboAdopcion = false;
+  await Promise.all(activos.map((id) => respaldarEn(id, forzar)
+    .then((adoptado) => { if (adoptado) huboAdopcion = true; })
+    .catch((e) => { console.error(e); estadoProv[id] = 'error'; })));
+  return huboAdopcion;
+}
+
 async function ejecutarRespaldo() {
   if (respaldoEnCurso) { respaldoPendiente = true; return; }
   if (!navigator.onLine || document.hidden) return;
@@ -1578,9 +1593,7 @@ async function ejecutarRespaldo() {
   respaldoEnCurso = true;
   let huboAdopcion = false;
   try {
-    await Promise.all(activos.map((id) => respaldarEn(id)
-      .then((adoptado) => { if (adoptado) huboAdopcion = true; })
-      .catch((e) => { console.error(e); estadoProv[id] = 'error'; })));
+    huboAdopcion = await pasadaDeRespaldo(activos, false);
   } finally { respaldoEnCurso = false; }
   refrescarEstadoAjustes();
   // Si una nube ha aportado datos nuevos al móvil, las demás también tienen
@@ -1588,6 +1601,32 @@ async function ejecutarRespaldo() {
   if (huboAdopcion) respaldoPendiente = true;
   if (respaldoPendiente) { respaldoPendiente = false; descargarFaltantes(); programarRespaldo(500); }
   else descargarFaltantes();
+}
+
+const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Antes de exportar: consulta TODAS las nubes conectadas (aunque no haya nada
+// nuevo que subir), suma lo suyo al móvil y lo del móvil a cada una, y baja los
+// archivos que solo estén en la nube. Se repite mientras alguna nube siga
+// aportando algo, para que todas terminen iguales. Devuelve las nubes que no
+// se pudieron sincronizar.
+async function sincronizarAntesDeExportar() {
+  clearTimeout(temporizadorRespaldo);
+  while (respaldoEnCurso) await pausa(200);
+  const activos = Object.keys(PROVEEDORES).filter((id) => PROVEEDORES[id].conectado());
+  if (!activos.length) return { fallos: [] };
+  respaldoEnCurso = true;
+  try {
+    let forzar = true;
+    for (let vuelta = 0; vuelta < 3; vuelta++) {
+      const huboAdopcion = await pasadaDeRespaldo(activos, forzar);
+      forzar = false;
+      await descargarFaltantes();
+      if (!huboAdopcion) break;
+    }
+  } finally { respaldoEnCurso = false; }
+  refrescarEstadoAjustes();
+  return { fallos: activos.filter((id) => estadoProv[id] !== 'ok').map((id) => PROVEEDORES[id].nombre) };
 }
 
 function paginaSigueExistiendo(pagina) {
@@ -1692,10 +1731,10 @@ function fusionarConNube(id, remoto) {
   return { adoptado, propioExtra };
 }
 
-async function respaldarEn(id) {
+async function respaldarEn(id, forzar = false) {
   const prov = PROVEEDORES[id];
   let adoptado = false; // ¿esta nube ha aportado datos nuevos al móvil?
-  if (!(await hayTrabajo(id))) { estadoProv[id] = 'ok'; return false; }
+  if (!forzar && !(await hayTrabajo(id))) { estadoProv[id] = 'ok'; return false; }
   estadoProv[id] = 'copiando';
   refrescarEstadoAjustes();
   try {
@@ -1801,8 +1840,8 @@ async function procesarBorradosPendientes(id) {
 
 // ---- Archivos: primero en el móvil, las nubes son copia ----
 
-async function guardarArchivoLocal(blob) {
-  const id = (crypto.randomUUID && crypto.randomUUID()) || idUnico('arc');
+async function guardarArchivoLocal(blob, idFijo = null) {
+  const id = idFijo || (crypto.randomUUID && crypto.randomUUID()) || idUnico('arc');
   const db = await abrirCache();
   await new Promise((resolve, reject) => {
     const tx = db.transaction(DB_TIENDA, 'readwrite');
@@ -1903,7 +1942,7 @@ function htmlFilasProveedores() {
     const accion = !con ? 'conectar' : est === 'reconectar' ? 'reconectar' : 'desconectar';
     const etiqueta = { conectar: 'Conectar', reconectar: 'Reconectar', desconectar: 'Desconectar' }[accion];
     return `<div class="fila-prov">
-      <div class="info-prov"><strong>${p.nombre}</strong>${con && p.correo() ? `<span>${escapeHtml(p.correo())}</span>` : ''}<span class="estado-prov${aviso ? ' aviso' : ''}">${con ? textoEstadoProv(p.id) : 'Sin conectar'}</span></div>
+      <div class="info-prov"><strong>${p.nombre}</strong>${con && p.correo() ? `<span>${escapeHtml(p.correo())}</span>` : ''}<span class="estado-prov${aviso ? ' aviso' : ''}">${con ? textoEstadoProv(p.id) : 'Sin conectar'}</span>${con ? `<button type="button" class="enlace-prov" data-prov="${p.id}" data-accion="ver">Ver carpeta en ${p.nombre}</button>` : ''}</div>
       <button type="button" class="btn-secundario btn-prov" data-prov="${p.id}" data-accion="${accion}">${etiqueta}</button>
     </div>`;
   }).join('');
@@ -4412,10 +4451,6 @@ $('#btn-ajustes').addEventListener('click', () => {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4h7l2 2h7v12H4V4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
         Administrar categorías
       </button>
-      ${PROVEEDORES.google.conectado() ? `<button class="opcion-menu" id="op-ver-drive">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 3h7v7M21 3l-9 9M5 5h6v2H7v10h10v-4h2v6H5V5z" stroke="currentColor" stroke-width="1.6"/></svg>
-        Ver carpeta en Drive
-      </button>` : ''}
       <button class="opcion-menu" id="op-exportar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Exportar copia
@@ -4465,20 +4500,21 @@ $('#btn-ajustes').addEventListener('click', () => {
     });
   });
   $('#lista-proveedores').addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-prov');
+    const btn = e.target.closest('[data-accion]');
     if (!btn) return;
     const id = btn.dataset.prov;
-    if (btn.dataset.accion === 'conectar' || btn.dataset.accion === 'reconectar') PROVEEDORES[id].conectar();
+    if (btn.dataset.accion === 'ver') {
+      const direccion = PROVEEDORES[id].urlCarpeta();
+      if (direccion) window.open(direccion, '_blank');
+      else mostrarToast('Todavía no hay carpeta: haz antes una copia.', true);
+    }
+    else if (btn.dataset.accion === 'conectar' || btn.dataset.accion === 'reconectar') PROVEEDORES[id].conectar();
     else if (btn.dataset.accion === 'desconectar') desconectarProveedor(id);
   });
   $('#btn-copiar-ahora').addEventListener('click', () => {
     if (!hayProveedores()) { mostrarToast('Conecta antes alguna nube.', true); return; }
     mostrarToast('Copiando…');
     programarRespaldo(0);
-  });
-  const btnVerDrive = $('#op-ver-drive');
-  if (btnVerDrive) btnVerDrive.addEventListener('click', () => {
-    if (carpetaId) window.open(`https://drive.google.com/drive/folders/${carpetaId}`, '_blank');
   });
   $('#op-exportar').addEventListener('click', () => abrirModalExportar());
   $('#op-importar').addEventListener('click', abrirModalImportar);
@@ -4535,15 +4571,16 @@ async function generarArchivoExportacion(personaId = null) {
   }));
 
   let indiceParte = 0;
+  // Los ids van dentro del archivo para que, al importarlo, lo que ya esté no se duplique.
   const documentosCabecera = documentosAExportar.map((doc) => ({
-    personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
+    id: doc.id, personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
     fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida,
     paginas: doc.paginas.map((pagina) => ({
-      nombre: pagina.nombre, mimeType: pagina.mimeType, tamano: partesArchivos[indiceParte++].length,
+      archivoId: pagina.archivoId, nombre: pagina.nombre, mimeType: pagina.mimeType, tamano: partesArchivos[indiceParte++].length,
     })),
   }));
 
-  const cabecera = { version: 2, personas: personasAExportar, categorias: categoriasAExportar, documentos: documentosCabecera };
+  const cabecera = { version: 3, personas: personasAExportar, categorias: categoriasAExportar, documentos: documentosCabecera };
   const jsonBytes = new TextEncoder().encode(JSON.stringify(cabecera));
   const totalArchivos = partesArchivos.reduce((s, p) => s + p.length, 0);
 
@@ -4590,14 +4627,9 @@ function abrirModalExportar(persona = null) {
   abrirModal(`
     <h3>${titulo}</h3>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">${patronNombre}</strong>, ${introQuien}, listo para pasarlo a otro dispositivo.</p>
-    <p style="color:var(--stamp);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong>Importante: esto es una copia puntual, no una sincronización.</strong> Se clona todo tal cual está ahora mismo, pero a partir de ahí cada dispositivo tendrá su propia copia totalmente independiente: lo que se añada, cambie o borre después en uno no afectará para nada al otro.</p>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 4px;">Antes de nada, el otro dispositivo necesita:</p>
-    <ol style="color:var(--text-dim);font-size:.85rem;line-height:1.6;margin:0 0 14px;padding-left:20px;">
-      <li>Tener esta misma app instalada.</li>
-      <li>Tener una sesión iniciada con <strong style="color:var(--text-light)">otra</strong> cuenta de Google Drive, distinta de la tuya (los documentos se guardarán ahí; si usara la misma cuenta, no tendría sentido importar nada, ya vería tus documentos con solo iniciar sesión).</li>
-    </ol>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Al abrir el archivo en el otro dispositivo, todo lo que trae se añadirá a lo que ya hubiera guardado, sin tocar ni borrar nada de lo que ya tuviera.</p>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 18px;">Una vez se genere el archivo, lo envías al otro dispositivo por el medio que prefieras. Desde allí, solo hay que ir a Ajustes → <strong style="color:var(--text-light)">"Importar copia"</strong> y seleccionar ese archivo de entre sus documentos del móvil.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong style="color:var(--text-light)">Antes de generarlo, la app se sincroniza</strong> con las nubes que tengas conectadas: suma lo que haya en cada una y en este móvil, para que el archivo lo lleve todo.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">El otro dispositivo solo necesita tener esta misma app instalada. Al abrir el archivo allí, todo lo que trae se sumará a lo que ya hubiera guardado, sin duplicar lo que ya esté y sin borrar nada.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 18px;">Una vez se genere, lo envías al otro dispositivo por el medio que prefieras. Desde allí, solo hay que ir a Ajustes → <strong style="color:var(--text-light)">"Importar copia"</strong> (o pulsar "Importar archivo" en la pantalla inicial) y seleccionar ese archivo.</p>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
       <button class="btn-primario" id="btn-generar-exportacion" type="button">Generar archivo</button>
@@ -4621,12 +4653,19 @@ function abrirModalExportar(persona = null) {
       mostrarToast(persona ? `${persona.nombre} todavía no tiene documentos guardados.` : 'No hay nada que exportar todavía.', true);
       return;
     }
-    $('.modal').innerHTML = `
-      <h3>${titulo}</h3>
-      <div class="estado-carga"><div class="spinner"></div><span>Generando el archivo, un momento…</span></div>
-    `;
-
     try {
+      if (hayProveedores()) {
+        $('.modal').innerHTML = `
+          <h3>${titulo}</h3>
+          <div class="estado-carga"><div class="spinner"></div><span>Sincronizando con tus nubes…</span></div>
+        `;
+        const sincronizacion = await sincronizarAntesDeExportar();
+        if (sincronizacion.fallos.length && !(await preguntarExportarSinSincronizar(titulo, sincronizacion.fallos))) { volverAtras(); return; }
+      }
+      $('.modal').innerHTML = `
+        <h3>${titulo}</h3>
+        <div class="estado-carga"><div class="spinner"></div><span>Generando el archivo, un momento…</span></div>
+      `;
       const bytes = await generarArchivoExportacion(persona ? persona.id : null);
       const nombre = nombreArchivoExportacion(persona ? persona.nombre : null);
       // Chrome solo permite compartir archivos de ciertos tipos por
@@ -4645,6 +4684,23 @@ function abrirModalExportar(persona = null) {
       mostrarToast('No se pudo generar el archivo: ' + (e.message || e.name || e), true);
       volverAtras();
     }
+  });
+}
+
+// Si alguna nube no se pudo sincronizar (sin conexión, sesión caducada...), se
+// avisa antes de exportar: el archivo saldría sin lo que solo esa nube tenga.
+function preguntarExportarSinSincronizar(titulo, fallos) {
+  return new Promise((resolver) => {
+    $('.modal').innerHTML = `
+      <h3>${titulo}</h3>
+      <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 16px;">No se ha podido sincronizar con <strong style="color:var(--text-light)">${escapeHtml(fallos.join(' y '))}</strong>. Si sigues, el archivo llevará lo que hay en este móvil y en las demás nubes, pero puede faltarle algo que solo esté en esa.</p>
+      <div class="modal-acciones">
+        <button class="btn-secundario" id="exp-cancelar">Cancelar</button>
+        <button class="btn-primario" id="exp-seguir">Exportar igualmente</button>
+      </div>
+    `;
+    $('#exp-cancelar').addEventListener('click', () => resolver(false));
+    $('#exp-seguir').addEventListener('click', () => resolver(true));
   });
 }
 
@@ -4691,7 +4747,7 @@ function mostrarPantallaArchivoListo(archivo, sePuedeCompartir = true) {
 function abrirModalImportar() {
   abrirModal(`
     <h3>Importar copia</h3>
-    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Elige el archivo <strong style="color:var(--text-light)">copia_...txt</strong> que te hayan pasado. Todo lo que traiga se añadirá a lo que ya tienes guardado, sin tocar ni borrar nada.</p>
+    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 18px;">Elige el archivo <strong style="color:var(--text-light)">copia_...txt</strong> que te hayan pasado. Todo lo que traiga se sumará a lo que ya tienes guardado, sin duplicar lo que ya esté y sin borrar nada.</p>
     <input type="file" id="input-importar" accept=".txt" class="visually-hidden">
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -4709,78 +4765,68 @@ function abrirModalImportar() {
   });
 }
 
+const pluralizar = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
+// Importar SUMA: lo que ya esté (mismo id) se da por bueno y solo se añade lo
+// que falta, como al sincronizar con las nubes. En copias antiguas, que no
+// llevan ids de documento, un documento con la misma persona, categoría y
+// nombre se da por ya presente.
 async function procesarImportacion(file, desdeBienvenida = false) {
   $('.modal').innerHTML = `
     <h3>Importando…</h3>
     <div class="estado-carga"><div class="spinner"></div><span id="texto-progreso-importar">Leyendo archivo…</span></div>
   `;
-  let nuevasPersonas = [];
-  let hechos = 0;
+  const sumado = { personas: 0, documentos: 0, paginas: 0 };
   try {
     const buffer = await file.arrayBuffer();
     const paquete = leerPaqueteExportacion(buffer);
     if (!paquete.personas.length && !paquete.documentos.length) throw new Error('paquete vacío');
 
-    const mapaPersonas = {};
-    nuevasPersonas = paquete.personas.map((p) => {
-      const nuevoId = idUnico('p');
-      mapaPersonas[p.id] = nuevoId;
-      return Object.assign({}, p, { id: nuevoId });
+    paquete.personas.forEach((p) => {
+      if (!datos.personas.some((x) => x.id === p.id)) { datos.personas.push(Object.assign({}, p)); sumado.personas++; }
     });
-
-    const idsDefecto = new Set(CATEGORIAS_INICIALES.map((c) => c.id));
-    const mapaCategorias = {};
-    const nuevasCategorias = [];
+    // Una categoría de fábrica que se hubiera borrado se recupera tal cual venía en la copia.
     paquete.categorias.forEach((c) => {
-      if (idsDefecto.has(c.id)) {
-        mapaCategorias[c.id] = c.id;
-        // Si ya la había borrado antes de importar, se recupera tal cual
-        // venía en la copia, en vez de asumir que sigue existiendo.
-        const yaExiste = datos.categorias.some((existente) => existente.id === c.id);
-        if (!yaExiste) nuevasCategorias.push(Object.assign({}, c));
-      } else {
-        const nuevoId = idUnico('cat');
-        mapaCategorias[c.id] = nuevoId;
-        nuevasCategorias.push(Object.assign({}, c, { id: nuevoId }));
-      }
+      if (!datos.categorias.some((x) => x.id === c.id)) datos.categorias.push(Object.assign({}, c));
     });
-
-    datos.personas.push(...nuevasPersonas);
-    datos.categorias.push(...nuevasCategorias);
 
     for (let i = 0; i < paquete.documentos.length; i++) {
       const meta = paquete.documentos[i];
       const bytesPorPagina = paquete.archivos[i];
       const spanProgreso = $('#texto-progreso-importar');
-      if (spanProgreso) spanProgreso.textContent = `Subiendo documento ${i + 1} de ${paquete.documentos.length}…`;
+      if (spanProgreso) spanProgreso.textContent = `Revisando documento ${i + 1} de ${paquete.documentos.length}…`;
 
-      const personaId = mapaPersonas[meta.personaId];
-      const persona = datos.personas.find((p) => p.id === personaId);
-      if (!persona) continue;
-      const categoriaId = mapaCategorias[meta.categoria] || CATEGORIA_SIN_ASIGNAR.id;
-      const categoriaObj = datos.categorias.find((c) => c.id === categoriaId) || CATEGORIA_SIN_ASIGNAR;
-      const paginasNuevas = [];
-      for (let j = 0; j < meta.paginas.length; j++) {
-        const metaPagina = meta.paginas[j];
-        const bytes = bytesPorPagina[j];
-        const blobArchivo = new Blob([bytes], { type: metaPagina.mimeType || 'application/octet-stream' });
-        const archivoId = await guardarArchivoLocal(blobArchivo);
-        paginasNuevas.push({ archivoId, mimeType: metaPagina.mimeType, nombre: metaPagina.nombre, remotos: {} });
-      }
+      if (!datos.personas.some((p) => p.id === meta.personaId)) continue;
+      const categoriaId = datos.categorias.some((c) => c.id === meta.categoria) ? meta.categoria : CATEGORIA_SIN_ASIGNAR.id;
+      const nombreDoc = (meta.nombre || '').trim().toLowerCase();
+      const existente = meta.id
+        ? datos.documentos.find((d) => d.id === meta.id)
+        : datos.documentos.find((d) => d.personaId === meta.personaId && d.categoria === categoriaId && d.nombre.trim().toLowerCase() === nombreDoc);
+      if (existente && !meta.id) continue; // copia antigua: se da por ya presente
 
-      datos.documentos.push({
-        id: idUnico('doc'), personaId,
+      const destino = existente || {
+        id: meta.id || idUnico('doc'), personaId: meta.personaId,
         nombre: meta.nombre, categoria: categoriaId,
         fechaCaducidad: meta.fechaCaducidad || null, fechaSubida: meta.fechaSubida || new Date().toISOString().slice(0, 10),
-        paginas: paginasNuevas,
-      });
-      hechos++;
+        paginas: [],
+      };
+      for (let j = 0; j < meta.paginas.length; j++) {
+        const metaPagina = meta.paginas[j];
+        if (metaPagina.archivoId && destino.paginas.some((p) => p.archivoId === metaPagina.archivoId)) continue;
+        const blobArchivo = new Blob([bytesPorPagina[j]], { type: metaPagina.mimeType || 'application/octet-stream' });
+        const archivoId = await guardarArchivoLocal(blobArchivo, metaPagina.archivoId || null);
+        destino.paginas.push({ archivoId, mimeType: metaPagina.mimeType, nombre: metaPagina.nombre, remotos: {} });
+        sumado.paginas++;
+      }
+      if (!existente) { datos.documentos.push(destino); sumado.documentos++; }
     }
 
     await guardarMetadatos();
     cerrarCapas(2); // cierra este modal y el de Ajustes
     renderizarPantallaInicio();
-    mostrarToast(`Importadas ${nuevasPersonas.length} persona${nuevasPersonas.length === 1 ? '' : 's'} y ${hechos} documento${hechos === 1 ? '' : 's'}`);
+    mostrarToast(sumado.personas + sumado.documentos + sumado.paginas === 0
+      ? 'No había nada nuevo: ya lo tenías todo'
+      : `Sumado: ${pluralizar(sumado.personas, 'persona', 'personas')}, ${pluralizar(sumado.documentos, 'documento', 'documentos')} y ${pluralizar(sumado.paginas, 'página', 'páginas')}`);
     setTimeout(avisarSiSinNube, 900);
   } catch (e) {
     console.error(e);
