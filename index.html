@@ -95,7 +95,11 @@
      teclado del PIN, más abajo, se separa aposta (ver el margen que pone
      mostrarPantallaBloqueo() en #zona-pin-bloqueo) para que quede tapado
      sin problema. */
-  #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 19px); overflow-y:auto; }
+  /* position:fixed y z-index alto: la pantalla de bloqueo tiene que quedar
+     POR ENCIMA de cualquier ventana abierta (ajustes, visor de documentos,
+     menús...), que son capas fijas propias — sin esto, esas ventanas se
+     quedaban a la vista delante del bloqueo. */
+  #vista-bloqueo{ position:fixed; inset:0; z-index:200; justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 19px); overflow-y:auto; }
   /* Pantalla lisa del color del tema que tapa todo al pasar a segundo plano. */
   #cortina-fondo{ position:fixed; inset:0; background:var(--ink); z-index:300; }
   #zona-pin-bloqueo.pin-directo{ margin-top:calc(12vh - 19px); }
@@ -738,7 +742,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.5';
+const VERSION_APP = '2.2.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
