@@ -96,6 +96,8 @@
      mostrarPantallaBloqueo() en #zona-pin-bloqueo) para que quede tapado
      sin problema. */
   #vista-bloqueo{ justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 19px); overflow-y:auto; }
+  /* Pantalla lisa del color del tema que tapa todo al pasar a segundo plano. */
+  #cortina-fondo{ position:fixed; inset:0; background:var(--ink); z-index:300; }
   #zona-pin-bloqueo.pin-directo{ margin-top:calc(12vh - 19px); }
   /* El teclado sube pegado al texto de arriba (menos hueco antes de él),
      para dejar sitio de sobra antes de llegar al dibujo de huella, que
@@ -654,6 +656,8 @@
   <p id="version-debug-login" style="margin-top:14px;font-size:.7rem;color:var(--text-dim);"></p>
 </div>
 
+<div id="cortina-fondo" class="hidden" aria-hidden="true"></div>
+
 <div id="vista-bloqueo" class="hidden">
   <div class="login-sello" aria-hidden="true">
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/><path d="M12 15v2"/></svg>
@@ -734,7 +738,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.4';
+const VERSION_APP = '2.2.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1230,6 +1234,10 @@ function bloquearPorSegundoPlano() {
   bloqueoYaDesbloqueado = false;
   $('#vista-app').classList.add('hidden');
   mostrarPantallaBloqueo();
+  // Lo último que se ve al irse es una pantalla lisa del color del tema
+  // (claro u oscuro), no la pantalla de bloqueo con su candado y su texto;
+  // se retira al volver (volverAPrimerPlano) y queda ya la de bloqueo.
+  $('#cortina-fondo').classList.remove('hidden');
 }
 window.addEventListener('pagehide', bloquearPorSegundoPlano);
 document.addEventListener('freeze', bloquearPorSegundoPlano);
@@ -1243,6 +1251,7 @@ document.addEventListener('freeze', bloquearPorSegundoPlano);
 window.addEventListener('blur', (e) => { if (e.target === window) bloquearPorSegundoPlano(); });
 
 function volverAPrimerPlano() {
+  $('#cortina-fondo').classList.add('hidden');
   if (ocultoPorSalidaPropiaDesde === null) return;
   const fuera = Date.now() - ocultoPorSalidaPropiaDesde;
   ocultoPorSalidaPropiaDesde = null;
