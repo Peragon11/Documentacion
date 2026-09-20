@@ -734,7 +734,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.3';
+const VERSION_APP = '2.2.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
@@ -1233,14 +1233,26 @@ function bloquearPorSegundoPlano() {
 }
 window.addEventListener('pagehide', bloquearPorSegundoPlano);
 document.addEventListener('freeze', bloquearPorSegundoPlano);
+// La ventana pierde el foco un instante ANTES de pasar a segundo plano
+// (botón de inicio, cambio de app), cuando la página todavía se está
+// pintando — es la única señal a tiempo para que el bloqueo llegue a
+// pintarse antes de que Android guarde la última imagen de la app. Una vez
+// oculta, el navegador deja de pintar y el bloqueo solo se vería al volver,
+// tras un instante de la información desbloqueada. (e.target === window
+// descarta los blur de campos de texto, que no cuentan.)
+window.addEventListener('blur', (e) => { if (e.target === window) bloquearPorSegundoPlano(); });
+
+function volverAPrimerPlano() {
+  if (ocultoPorSalidaPropiaDesde === null) return;
+  const fuera = Date.now() - ocultoPorSalidaPropiaDesde;
+  ocultoPorSalidaPropiaDesde = null;
+  salidaPropiaHasta = 0;
+  if (fuera > MAX_FUERA_SALIDA_PROPIA_MS) bloquearPorSegundoPlano();
+}
+window.addEventListener('focus', volverAPrimerPlano);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { bloquearPorSegundoPlano(); return; }
-  if (ocultoPorSalidaPropiaDesde !== null) {
-    const fuera = Date.now() - ocultoPorSalidaPropiaDesde;
-    ocultoPorSalidaPropiaDesde = null;
-    salidaPropiaHasta = 0;
-    if (fuera > MAX_FUERA_SALIDA_PROPIA_MS) bloquearPorSegundoPlano();
-  }
+  volverAPrimerPlano();
 });
 
 // pointerdown en vez de click: se activa al tocar, sin esperar a que se
