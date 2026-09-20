@@ -99,7 +99,7 @@
      POR ENCIMA de cualquier ventana abierta (ajustes, visor de documentos,
      menús...), que son capas fijas propias — sin esto, esas ventanas se
      quedaban a la vista delante del bloqueo. */
-  #vista-bloqueo{ position:fixed; inset:0; z-index:200; justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) + 19px); overflow-y:auto; }
+  #vista-bloqueo{ position:fixed; inset:0; z-index:200; justify-content:flex-start; padding-top:calc(5vh + var(--safe-t) - 1px); overflow-y:auto; }
   /* Pantalla lisa del color del tema que tapa todo al pasar a segundo plano. */
   #cortina-fondo{ position:fixed; inset:0; background:var(--ink); z-index:300; }
   #zona-pin-bloqueo.pin-directo{ margin-top:calc(12vh - 19px); }
@@ -109,11 +109,11 @@
   #vista-bloqueo p.lead{ margin-bottom:10px; }
   #zona-pin-bloqueo.pin-compacto{ margin-top:0; }
   /* El aviso ("PIN incorrecto.") va justo encima de los puntos del PIN y
-     no ocupa nada mientras está vacío. Al aparecer, baja el teclado una
-     sola vez y se queda ahí (no se borra hasta desbloquear), para que las
-     teclas no se muevan mientras se vuelve a intentar. */
-  #bloqueo-estado{ margin:0 0 4px; font-size:.85rem; color:#E0897A; text-align:center; }
-  #bloqueo-estado:empty{ display:none; }
+     tiene su hueco reservado SIEMPRE (20px), aunque esté vacío: así al
+     aparecer no mueve nada, el teclado queda fijo. Ese hueco se le quita
+     al padding de arriba de #vista-bloqueo (19px → -1px) para que el
+     teclado siga exactamente donde estaba; quien se mueve es el texto. */
+  #bloqueo-estado{ height:16px; line-height:16px; margin:0 0 4px; font-size:.85rem; color:#E0897A; text-align:center; }
   /* Experimento: en vez de un botón normal, un dibujo de huella colocado
      a la altura habitual del sensor de huella bajo pantalla en Android,
      fuera del flujo normal (position:fixed) — la idea es que, si coincide
@@ -140,7 +140,8 @@
     #vista-bloqueo{ padding-top:calc(2vh + var(--safe-t)); padding-bottom:16px; }
     #vista-bloqueo .login-sello{ width:40px; height:40px; margin-bottom:10px; }
     #vista-bloqueo h1{ font-size:1.5rem; margin-bottom:4px; }
-    #vista-bloqueo p.lead{ margin-bottom:14px; }
+    #vista-bloqueo p.lead{ margin-bottom:0; }
+    #bloqueo-estado{ height:14px; line-height:14px; margin-bottom:0; }
     #zona-pin-bloqueo.pin-directo{ margin-top:2vh; }
     #vista-bloqueo .teclas-pin{ grid-template-columns:repeat(3, 50px); gap:8px; }
     #vista-bloqueo .tecla-pin{ width:50px; height:50px; font-size:1.15rem; }
@@ -742,7 +743,7 @@
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
-const VERSION_APP = '2.2.7';
+const VERSION_APP = '2.2.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'Documentación';
