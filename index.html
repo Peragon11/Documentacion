@@ -661,7 +661,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.2';
+const VERSION_APP = '2.3.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1505,7 +1505,7 @@ const PROVEEDORES = {
       try {
         const res = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/users/get_current_account', { method: 'POST' });
         const info = await res.json();
-        const s = leerProv('dropbox'); s.email = info.email || ''; guardarProv('dropbox', s);
+        const s = leerProv('dropbox'); s.email = info.email || ''; s.idioma = info.locale || ''; guardarProv('dropbox', s);
       } catch (e) { /* el correo es solo informativo */ }
     },
     async token() {
@@ -1515,8 +1515,14 @@ const PROVEEDORES = {
       return renovarConRefresco('dropbox', 'https://api.dropboxapi.com/oauth2/token', { client_id: DROPBOX_APP_KEY });
     },
     async preparar() { /* Dropbox crea las carpetas al subir */ },
-    // La carpeta de aplicación de Dropbox se llama como la app en su consola.
-    urlCarpeta() { return 'https://www.dropbox.com/home/Apps/' + encodeURIComponent(NOMBRE_APP_DROPBOX); },
+    // La carpeta de aplicación de Dropbox se llama como la app en su consola. En
+    // la dirección web, la carpeta "Apps" aparece traducida al idioma de la
+    // cuenta (en español, "Aplicaciones"); el idioma se guarda al conectar.
+    urlCarpeta() {
+      const idioma = ((leerProv('dropbox') || {}).idioma || navigator.language || '').toLowerCase();
+      const carpetaApps = idioma.startsWith('es') ? 'Aplicaciones' : 'Apps';
+      return 'https://www.dropbox.com/home/' + carpetaApps + '/' + encodeURIComponent(NOMBRE_APP_DROPBOX);
+    },
     async subirRuta(ruta, blob, modo) {
       const res = await fetchNube('dropbox', 'https://content.dropboxapi.com/2/files/upload', {
         method: 'POST',
@@ -1610,7 +1616,7 @@ const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 // archivos que solo estén en la nube. Se repite mientras alguna nube siga
 // aportando algo, para que todas terminen iguales. Devuelve las nubes que no
 // se pudieron sincronizar.
-async function sincronizarAntesDeExportar() {
+async function sincronizarTodo() {
   clearTimeout(temporizadorRespaldo);
   while (respaldoEnCurso) await pausa(200);
   const activos = Object.keys(PROVEEDORES).filter((id) => PROVEEDORES[id].conectado());
@@ -4511,10 +4517,16 @@ $('#btn-ajustes').addEventListener('click', () => {
     else if (btn.dataset.accion === 'conectar' || btn.dataset.accion === 'reconectar') PROVEEDORES[id].conectar();
     else if (btn.dataset.accion === 'desconectar') desconectarProveedor(id);
   });
-  $('#btn-copiar-ahora').addEventListener('click', () => {
+  // "Copiar ahora" fuerza una sincronización completa (consulta cada nube aunque
+  // no haya nada nuevo que subir): suma en los dos sentidos y, de paso, deja
+  // la carpeta de Drive con su nombre actual.
+  $('#btn-copiar-ahora').addEventListener('click', async () => {
     if (!hayProveedores()) { mostrarToast('Conecta antes alguna nube.', true); return; }
-    mostrarToast('Copiando…');
-    programarRespaldo(0);
+    const boton = $('#btn-copiar-ahora');
+    boton.disabled = true; boton.textContent = 'Sincronizando…';
+    const resultado = await sincronizarTodo();
+    boton.disabled = false; boton.textContent = 'Copiar ahora';
+    mostrarToast(resultado.fallos.length ? `No se pudo sincronizar con ${resultado.fallos.join(' y ')}` : 'Todo sincronizado', resultado.fallos.length > 0);
   });
   $('#op-exportar').addEventListener('click', () => abrirModalExportar());
   $('#op-importar').addEventListener('click', abrirModalImportar);
@@ -4659,7 +4671,7 @@ function abrirModalExportar(persona = null) {
           <h3>${titulo}</h3>
           <div class="estado-carga"><div class="spinner"></div><span>Sincronizando con tus nubes…</span></div>
         `;
-        const sincronizacion = await sincronizarAntesDeExportar();
+        const sincronizacion = await sincronizarTodo();
         if (sincronizacion.fallos.length && !(await preguntarExportarSinSincronizar(titulo, sincronizacion.fallos))) { volverAtras(); return; }
       }
       $('.modal').innerHTML = `
