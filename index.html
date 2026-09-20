@@ -89,10 +89,7 @@
       radial-gradient(600px 500px at 110% 10%, rgba(193,80,46,.14), transparent 55%),
       var(--ink);
   }
-  .login-sello{
-    width:60px; height:60px; border-radius:50%; border:2px solid var(--stamp);
-    display:flex; align-items:center; justify-content:center; margin-bottom:26px; color:var(--stamp);
-  }
+  .icono-login{ width:96px; height:96px; border-radius:26px; margin-bottom:22px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
   #vista-login h1{ font-size:2.1rem; margin:0 0 10px; letter-spacing:-.01em; font-weight:600; }
   #vista-login p.lead{ max-width:320px; color:var(--text-dim); line-height:1.55; margin:0 0 30px; font-size:.95rem; }
   .btn-google{
@@ -567,9 +564,7 @@
 <body>
 
 <div id="vista-login">
-  <div class="login-sello" aria-hidden="true">
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  </div>
+  <img class="icono-login" src="icono.png" alt="">
   <h1>Documentación</h1>
   <p class="lead">El DNI, carnet de conducir, tarjeta de discapacidad y demás papeles de tu gente, siempre a mano. Tus documentos se guardan en este móvil.</p>
   <div id="login-inicio" class="login-bloque">
@@ -664,10 +659,11 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 // aparece en la app. No es secreta.
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 
-const VERSION_APP = '2.3.0';
+const VERSION_APP = '2.3.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-const NOMBRE_CARPETA = 'Documentación';
+const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
+const NOMBRE_CARPETA_ANTIGUA = 'Documentación'; // nombre de versiones anteriores: si existe, se reutiliza y se renombra
 const NOMBRE_METADATOS = 'documentacion-datos.json';
 
 const MAPA_EXTENSIONES_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
@@ -1097,11 +1093,16 @@ function escaparComillas(str) {
   return str.replace(/'/g, "\\'");
 }
 
-async function buscarOCrearCarpeta(nombre, padreId) {
+async function buscarCarpeta(nombre, padreId) {
   const q = encodeURIComponent(`name='${escaparComillas(nombre)}' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${padreId}' in parents`);
   const busq = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`);
   const resultado = await busq.json();
-  if (resultado.files && resultado.files.length > 0) return resultado.files[0].id;
+  return resultado.files && resultado.files.length > 0 ? resultado.files[0].id : null;
+}
+
+async function buscarOCrearCarpeta(nombre, padreId) {
+  const existente = await buscarCarpeta(nombre, padreId);
+  if (existente) return existente;
   const crear = await llamarGoogle('https://www.googleapis.com/drive/v3/files', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: nombre, mimeType: 'application/vnd.google-apps.folder', parents: [padreId] }),
@@ -1168,7 +1169,19 @@ async function asegurarCarpeta() {
       }
     }
   }
-  carpetaId = await buscarOCrearCarpeta(NOMBRE_CARPETA, 'root');
+  let encontrada = await buscarCarpeta(NOMBRE_CARPETA, 'root');
+  if (!encontrada) {
+    // Versiones anteriores la llamaban "Documentación": se reutiliza (con todo
+    // lo que tiene dentro) y se renombra, en vez de crear otra vacía.
+    encontrada = await buscarCarpeta(NOMBRE_CARPETA_ANTIGUA, 'root');
+    if (encontrada) {
+      llamarGoogle(`https://www.googleapis.com/drive/v3/files/${encontrada}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: NOMBRE_CARPETA }),
+      }).catch(() => {});
+    }
+  }
+  carpetaId = encontrada || await buscarOCrearCarpeta(NOMBRE_CARPETA, 'root');
   localStorage.setItem('documentacion_carpeta_id', carpetaId);
 }
 
@@ -1544,9 +1557,8 @@ const PROVEEDORES = {
 
 // ---- Copia en segundo plano ----
 
-const estadoProv = {}; // id → 'ok' | 'copiando' | 'reconectar' | 'error' | 'conflicto'
+const estadoProv = {}; // id → 'ok' | 'copiando' | 'reconectar' | 'error'
 const avisadoReconectar = {};
-const conflictoMostrado = {};
 let respaldoEnCurso = false;
 let respaldoPendiente = false;
 let temporizadorRespaldo = null;
@@ -1564,11 +1576,17 @@ async function ejecutarRespaldo() {
   const activos = Object.keys(PROVEEDORES).filter((id) => PROVEEDORES[id].conectado());
   if (!activos.length) return;
   respaldoEnCurso = true;
+  let huboAdopcion = false;
   try {
-    await Promise.all(activos.map((id) => respaldarEn(id).catch((e) => { console.error(e); estadoProv[id] = 'error'; })));
+    await Promise.all(activos.map((id) => respaldarEn(id)
+      .then((adoptado) => { if (adoptado) huboAdopcion = true; })
+      .catch((e) => { console.error(e); estadoProv[id] = 'error'; })));
   } finally { respaldoEnCurso = false; }
   refrescarEstadoAjustes();
-  if (respaldoPendiente) { respaldoPendiente = false; programarRespaldo(500); }
+  // Si una nube ha aportado datos nuevos al móvil, las demás también tienen
+  // que adoptarlos: se baja lo que falte y se hace otra pasada.
+  if (huboAdopcion) respaldoPendiente = true;
+  if (respaldoPendiente) { respaldoPendiente = false; descargarFaltantes(); programarRespaldo(500); }
   else descargarFaltantes();
 }
 
@@ -1605,18 +1623,79 @@ function interpretarCopia(texto) {
   return null;
 }
 
-// Hay conflicto si la copia de la nube la subió OTRO dispositivo y este
-// móvil no la había visto: sobrescribirla sin preguntar perdería lo suyo.
-function hayConflicto(estado, remoto) {
-  if (remoto.legado) return false;
+// La copia de la nube es "ajena" si no la subió este móvil (o es del formato
+// antiguo) y este móvil aún no la había visto: hay que sumarla, no pisarla.
+function hayCopiaAjena(estado, remoto) {
+  if (remoto.legado) return true;
   if (remoto.dispositivo === idDispositivo()) return false;
   if (estado.actualizadoEn && estado.actualizadoEn === remoto.actualizadoEn) return false;
   return true;
 }
 
+// Suma lo de este móvil y lo de una nube SIN quitar nada de ninguno de los
+// dos lados: lo que solo estaba en la nube pasa al móvil (los archivos se
+// bajan después) y lo que solo estaba en el móvil se sube a continuación. Nada
+// se borra por el camino: en una nube solo se borra lo que se elimina a mano
+// en la app (encolarBorrado). Contrapartida: un borrado hecho en otro móvil
+// no se propaga, y lo que este aún conserve volverá a subirse.
+function fusionarConNube(id, remoto) {
+  const ajeno = {
+    personas: remoto.datos.personas || [],
+    categorias: remoto.datos.categorias || [],
+    documentos: remoto.datos.documentos || [],
+  };
+  normalizarDocumentosPaginas(ajeno.documentos);
+
+  const paginasAjenas = new Map(); // id de documento → archivoId de sus páginas en la nube
+  const refsNube = new Map();      // archivoId → dónde dice la nube que está en ESTA nube
+  ajeno.documentos.forEach((d) => {
+    paginasAjenas.set(d.id, new Set(d.paginas.map((p) => p.archivoId)));
+    d.paginas.forEach((p) => { if (p.remotos && p.remotos[id]) refsNube.set(p.archivoId, p.remotos[id]); });
+  });
+  const idsPersonas = new Set(ajeno.personas.map((p) => p.id));
+  const idsCategorias = new Set(ajeno.categorias.map((c) => c.id));
+  const propioExtra = datos.personas.some((p) => !idsPersonas.has(p.id))
+    || datos.categorias.some((c) => !idsCategorias.has(c.id))
+    || datos.documentos.some((d) => { const s = paginasAjenas.get(d.id); return !s || d.paginas.some((p) => !s.has(p.archivoId)); });
+
+  let adoptado = false;
+  const unir = (propios, ajenos) => {
+    const ids = new Set(propios.map((x) => x.id));
+    const nuevos = ajenos.filter((x) => !ids.has(x.id));
+    if (nuevos.length) adoptado = true;
+    return propios.concat(nuevos);
+  };
+  datos.personas = unir(datos.personas, ajeno.personas);
+  datos.categorias = unir(datos.categorias, ajeno.categorias);
+  const propios = new Map(datos.documentos.map((d) => [d.id, d]));
+  ajeno.documentos.forEach((d) => {
+    const propio = propios.get(d.id);
+    if (!propio) { datos.documentos.push(d); adoptado = true; return; }
+    d.paginas.forEach((p) => {
+      const mia = propio.paginas.find((x) => x.archivoId === p.archivoId);
+      if (!mia) { propio.paginas.push(p); adoptado = true; return; }
+      if (!mia.remotos) mia.remotos = {};
+      Object.keys(p.remotos || {}).forEach((k) => { if (!mia.remotos[k]) { mia.remotos[k] = p.remotos[k]; adoptado = true; } });
+    });
+  });
+  // Lo que la propia nube lista manda sobre lo que este móvil creía: si el
+  // móvil daba por subida una página que la nube no tiene, se vuelve a subir.
+  datos.documentos.forEach((d) => d.paginas.forEach((p) => {
+    if (!p.remotos) p.remotos = {};
+    const ref = refsNube.get(p.archivoId);
+    if (ref) { if (p.remotos[id] !== ref) { p.remotos[id] = ref; adoptado = true; } }
+    else if (p.remotos[id]) { delete p.remotos[id]; adoptado = true; }
+  }));
+
+  if (adoptado) { subirRevisionLocal(); guardarDatosEnCacheLocal(); }
+  guardarEstadoProv(id, { revSubida: propioExtra ? -1 : revisionLocal(), actualizadoEn: remoto.actualizadoEn });
+  return { adoptado, propioExtra };
+}
+
 async function respaldarEn(id) {
   const prov = PROVEEDORES[id];
-  if (!(await hayTrabajo(id))) { if (estadoProv[id] !== 'conflicto') estadoProv[id] = 'ok'; return; }
+  let adoptado = false; // ¿esta nube ha aportado datos nuevos al móvil?
+  if (!(await hayTrabajo(id))) { estadoProv[id] = 'ok'; return false; }
   estadoProv[id] = 'copiando';
   refrescarEstadoAjustes();
   try {
@@ -1624,13 +1703,18 @@ async function respaldarEn(id) {
     await prov.preparar();
     await procesarBorradosPendientes(id);
 
-    const estado = leerEstadoProv(id);
+    let estado = leerEstadoProv(id);
     const crudo = await prov.leerDatos();
     const remoto = crudo ? interpretarCopia(crudo) : null;
-    if (remoto && hayConflicto(estado, remoto)) {
-      estadoProv[id] = 'conflicto';
-      if (!conflictoMostrado[id]) { conflictoMostrado[id] = true; preguntarConflicto(id, remoto); }
-      return;
+    if (crudo && !remoto) throw new Error('copia-ilegible'); // lo que hay en la nube no se pisa sin entenderlo
+    if (remoto && hayCopiaAjena(estado, remoto)) {
+      const fusion = fusionarConNube(id, remoto);
+      estado = leerEstadoProv(id);
+      if (fusion.adoptado) {
+        adoptado = true;
+        try { refrescarPantallaActual(); } catch (e) { /* ignorar */ }
+        mostrarToast(`Se han sumado a este móvil los documentos que había en ${prov.nombre}`);
+      }
     }
 
     let subioAlgo = false;
@@ -1667,39 +1751,10 @@ async function respaldarEn(id) {
       estadoProv[id] = 'error';
     }
   }
+  return adoptado;
 }
 
-function preguntarConflicto(id, remoto) {
-  if ($('#conf-restaurar')) return;
-  const nombre = PROVEEDORES[id].nombre;
-  const cuando = remoto.actualizadoEn ? new Date(remoto.actualizadoEn).toLocaleString('es-ES') : 'fecha desconocida';
-  abrirModal(`
-    <h3>Copia distinta en ${nombre}</h3>
-    <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 16px;">En ${nombre} hay una copia hecha desde otro dispositivo (${escapeHtml(cuando)}) que no coincide con lo de este móvil. Elige cuál se conserva.</p>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="btn-primario" id="conf-restaurar">Usar la de ${nombre} (se pierde lo de este móvil)</button>
-      <button class="btn-secundario" id="conf-mantener">Mantener este móvil (sustituye la de ${nombre})</button>
-      <button class="btn-secundario" id="conf-luego">Decidir más tarde</button>
-    </div>
-  `);
-  $('#conf-luego').addEventListener('click', volverAtras);
-  $('#conf-mantener').addEventListener('click', () => {
-    cerrarTodasLasCapas();
-    conflictoMostrado[id] = false;
-    guardarEstadoProv(id, { revSubida: -1, actualizadoEn: remoto.actualizadoEn });
-    estadoProv[id] = 'ok';
-    programarRespaldo(200);
-  });
-  $('#conf-restaurar').addEventListener('click', () => {
-    cerrarTodasLasCapas();
-    conflictoMostrado[id] = false;
-    restaurarCopia(id, remoto);
-    mostrarToast(`Copia de ${nombre} recuperada`);
-    programarRespaldo(500);
-  });
-}
-
-// Sustituye lo de este móvil por la copia de una nube. Los archivos se van
+// Sustituye lo de este móvil (que estaba vacío) por la copia de una nube. Los archivos se van
 // bajando después (descargarFaltantes) y mientras tanto se piden a la nube
 // al abrirlos.
 function restaurarCopia(id, remoto) {
@@ -1835,7 +1890,6 @@ function textoEstadoProv(id) {
   const est = estadoProv[id];
   if (est === 'copiando') return 'Copiando…';
   if (est === 'reconectar') return 'Hay que volver a conectar';
-  if (est === 'conflicto') return 'Hay una copia distinta: toca Decidir';
   if (est === 'error') return 'No se pudo copiar; se reintentará';
   const n = pendientesProv(id);
   return n > 0 ? `${n} pendiente${n === 1 ? '' : 's'} de copiar` : 'Al día';
@@ -1845,9 +1899,9 @@ function htmlFilasProveedores() {
   return Object.values(PROVEEDORES).filter((p) => p.configurado()).map((p) => {
     const con = p.conectado();
     const est = estadoProv[p.id];
-    const aviso = con && (est === 'reconectar' || est === 'conflicto');
-    const accion = !con ? 'conectar' : est === 'reconectar' ? 'reconectar' : est === 'conflicto' ? 'decidir' : 'desconectar';
-    const etiqueta = { conectar: 'Conectar', reconectar: 'Reconectar', decidir: 'Decidir', desconectar: 'Desconectar' }[accion];
+    const aviso = con && est === 'reconectar';
+    const accion = !con ? 'conectar' : est === 'reconectar' ? 'reconectar' : 'desconectar';
+    const etiqueta = { conectar: 'Conectar', reconectar: 'Reconectar', desconectar: 'Desconectar' }[accion];
     return `<div class="fila-prov">
       <div class="info-prov"><strong>${p.nombre}</strong>${con && p.correo() ? `<span>${escapeHtml(p.correo())}</span>` : ''}<span class="estado-prov${aviso ? ' aviso' : ''}">${con ? textoEstadoProv(p.id) : 'Sin conectar'}</span></div>
       <button type="button" class="btn-secundario btn-prov" data-prov="${p.id}" data-accion="${accion}">${etiqueta}</button>
@@ -1874,6 +1928,67 @@ async function desconectarProveedor(id) {
 
 function totalPendientes() {
   return Object.keys(PROVEEDORES).filter((id) => PROVEEDORES[id].conectado()).reduce((s, id) => s + pendientesProv(id), 0);
+}
+
+// Cerrar sesión cuando lo del móvil no está a salvo en ninguna nube: tres
+// avisos seguidos, y el último exige escribir BORRAR. Ninguno se puede
+// pasar por accidente con un toque suelto.
+function abrirCierreSesionTriple(sinNube, pendientes) {
+  const personas = datos.personas.length;
+  const docs = datos.documentos.length;
+  const paginas = datos.documentos.reduce((n, d) => n + d.paginas.length, 0);
+  const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+  const resumen = `${plural(personas, 'persona', 'personas')}, ${plural(docs, 'documento', 'documentos')} y ${plural(paginas, 'página', 'páginas')}`;
+  const motivo = sinNube
+    ? 'No hay ninguna nube conectada: no existe ninguna copia de seguridad.'
+    : `Hay ${plural(pendientes, 'cosa', 'cosas')} que todavía no se han copiado a la nube.`;
+  const rojo = 'color:var(--stamp);font-size:.92rem;line-height:1.55;margin:0 0 12px;';
+  const normal = 'color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 14px;';
+  const columna = 'display:flex;flex-direction:column;gap:10px;';
+
+  function aviso1() {
+    abrirModal(`
+      <h3 style="color:var(--stamp);">Aviso 1 de 3</h3>
+      <p style="${rojo}"><strong>${motivo}</strong></p>
+      <p style="${normal}">Si cierras la sesión se borrarán de este móvil todos los documentos y sus archivos. No se podrán recuperar.</p>
+      <div style="${columna}">
+        <button class="btn-primario" id="triple-atras">Cancelar</button>
+        <button class="btn-secundario" id="triple-exportar">Guardar antes una copia en un archivo</button>
+        <button class="btn-secundario" id="triple-seguir">Entiendo el riesgo, continuar</button>
+      </div>`);
+    $('#triple-atras').addEventListener('click', volverAtras);
+    $('#triple-exportar').addEventListener('click', () => abrirModalExportar());
+    $('#triple-seguir').addEventListener('click', aviso2);
+  }
+  function aviso2() {
+    abrirModal(`
+      <h3 style="color:var(--stamp);">Aviso 2 de 3</h3>
+      <p style="${rojo}"><strong>Se va a borrar todo esto: ${resumen}.</strong></p>
+      <p style="${normal}">Esta es la única copia que existe. Si tienes un solo momento de duda, cancela y conecta una nube en Ajustes → Copias de seguridad.</p>
+      <div style="${columna}">
+        <button class="btn-primario" id="triple-atras">No, cancelar</button>
+        <button class="btn-secundario" id="triple-seguir">Sí, quiero continuar</button>
+      </div>`);
+    $('#triple-atras').addEventListener('click', volverAtras);
+    $('#triple-seguir').addEventListener('click', aviso3);
+  }
+  function aviso3() {
+    abrirModal(`
+      <h3 style="color:var(--stamp);">Aviso 3 de 3: último</h3>
+      <p style="${rojo}"><strong>Esto no se puede deshacer.</strong></p>
+      <p style="${normal}">Para confirmar, escribe <strong style="color:var(--text-light)">BORRAR</strong> en el recuadro.</p>
+      <div class="campo"><input type="text" id="triple-texto" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BORRAR"></div>
+      <div style="${columna}">
+        <button class="btn-primario" id="triple-atras">Cancelar</button>
+        <button class="btn-secundario" id="triple-final" disabled>Borrar todo y cerrar sesión</button>
+      </div>`);
+    const texto = $('#triple-texto');
+    const final = $('#triple-final');
+    texto.addEventListener('input', () => { final.disabled = texto.value.trim().toUpperCase() !== 'BORRAR'; });
+    $('#triple-atras').addEventListener('click', volverAtras);
+    final.addEventListener('click', () => { if (texto.value.trim().toUpperCase() === 'BORRAR') cerrarSesionCompleta(); });
+  }
+  aviso1();
 }
 
 // Cierra todas las nubes y borra lo guardado en este móvil. Lo que ya estaba
@@ -4354,7 +4469,6 @@ $('#btn-ajustes').addEventListener('click', () => {
     if (!btn) return;
     const id = btn.dataset.prov;
     if (btn.dataset.accion === 'conectar' || btn.dataset.accion === 'reconectar') PROVEEDORES[id].conectar();
-    else if (btn.dataset.accion === 'decidir') { conflictoMostrado[id] = false; cerrarTodasLasCapas(); programarRespaldo(0); }
     else if (btn.dataset.accion === 'desconectar') desconectarProveedor(id);
   });
   $('#btn-copiar-ahora').addEventListener('click', () => {
@@ -4371,11 +4485,10 @@ $('#btn-ajustes').addEventListener('click', () => {
   $('#op-cerrar-sesion').addEventListener('click', () => {
     const pendientes = totalPendientes();
     const sinNube = !hayProveedores() && !datosVacios();
+    if (sinNube || pendientes) { abrirCierreSesionTriple(sinNube, pendientes); return; }
     abrirModal(`
       <h3>¿Cerrar sesión?</h3>
       <p style="color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 12px;">Se desconectan todas las nubes y se borran los documentos y datos guardados en este móvil. En tus nubes se queda la última copia hecha.</p>
-      ${sinNube ? '<p style="color:var(--stamp);font-size:.88rem;line-height:1.5;margin:0 0 12px;"><strong>No hay ninguna nube conectada: todo lo de este móvil se perdería del todo.</strong></p>' : ''}
-      ${pendientes ? `<p style="color:var(--stamp);font-size:.88rem;line-height:1.5;margin:0 0 12px;"><strong>Hay ${pendientes} cosa${pendientes === 1 ? '' : 's'} sin copiar a la nube: si sigues, se pierden.</strong></p>` : ''}
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
         <button class="btn-primario" id="modal-salir">Cerrar sesión</button>
