@@ -18,7 +18,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  if (url.hostname.includes('google')) return;
+  // Solo se cachea lo propio de la app: las peticiones a Google, Dropbox o
+  // OneDrive (datos y documentos del usuario) pasan siempre directas.
+  if (url.origin !== self.location.origin) return;
 
   if (event.request.method !== 'GET') return;
 
