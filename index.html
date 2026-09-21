@@ -661,7 +661,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.5';
+const VERSION_APP = '2.3.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1132,6 +1132,7 @@ async function carpetaDestinoDocumento(persona, categoria) {
 async function borrarCarpetaSiVacia(idCarpeta) {
   const q = encodeURIComponent(`'${idCarpeta}' in parents and trashed=false`);
   const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&pageSize=1`);
+  if (!res.ok) return false; // no se pudo mirar (error temporal): nunca se da por vacía
   const info = await res.json();
   if (info.files && info.files.length > 0) return false;
   await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${idCarpeta}`, { method: 'DELETE' });
@@ -1473,6 +1474,23 @@ const PROVEEDORES = {
       if (!res.ok) throw new Error('mover');
       return ref;
     },
+    // Recorre las carpetas de personas y categorías que existen ahora y borra las
+    // que estén vacías (solo las vacías: borrarCarpetaSiVacia comprueba que no
+    // tengan nada dentro). Nunca toca la carpeta raíz ni el archivo de datos.
+    async barrerCarpetasVacias() {
+      const carpetasDe = async (idPadre) => {
+        const q = encodeURIComponent(`'${idPadre}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+        const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=200`);
+        return res.ok ? ((await res.json()).files || []) : [];
+      };
+      let borradas = 0;
+      for (const persona of await carpetasDe(carpetaId)) {
+        for (const categoria of await carpetasDe(persona.id)) { if (await borrarCarpetaSiVacia(categoria.id)) borradas++; }
+        if (await borrarCarpetaSiVacia(persona.id)) borradas++;
+      }
+      // las carpetas guardadas en memoria pueden ser ya inexistentes
+      if (borradas) Object.keys(cacheCarpetas).forEach((k) => delete cacheCarpetas[k]);
+    },
     // Tras mover archivos, borra las carpetas antiguas (persona/categoría por su
     // nombre) que se hayan quedado vacías. Solo borra las que no tengan nada.
     async limpiarCarpetasVaciasDe(ref, clave) {
@@ -1620,6 +1638,28 @@ const PROVEEDORES = {
         const contenido = await lista.json();
         if (contenido.entries.length > 0) return;
         await this.borrar(carpeta);
+      }
+    },
+    // Recorre las carpetas de personas y categorías que existen ahora y borra las
+    // vacías. Los archivos sueltos de la raíz (el de datos) no se tocan.
+    async barrerCarpetasVacias() {
+      const listar = async (ruta) => {
+        const res = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/list_folder', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: ruta, limit: 200 }),
+        });
+        return res.ok ? ((await res.json()).entries || []) : null; // null = no se pudo mirar: nunca se da por vacía
+      };
+      const borrarSiVacia = async (ruta) => {
+        const contenido = await listar(ruta);
+        if (!contenido || contenido.length > 0) return false;
+        await this.borrar(ruta);
+        return true;
+      };
+      const raiz = await listar('');
+      for (const persona of (raiz || []).filter((e) => e['.tag'] === 'folder')) {
+        const hijas = await listar(persona.path_display);
+        for (const categoria of (hijas || []).filter((e) => e['.tag'] === 'folder')) await borrarSiVacia(categoria.path_display);
+        await borrarSiVacia(persona.path_display);
       }
     },
     async descargar(ruta) {
@@ -1968,7 +2008,7 @@ async function respaldarEn(id, forzar = false) {
   try {
     await prov.token();
     await prov.preparar();
-    await procesarBorradosPendientes(id);
+    const borrados = await procesarBorradosPendientes(id);
 
     let estado = leerEstadoProv(id);
     const crudo = await prov.leerDatos();
@@ -1984,7 +2024,8 @@ async function respaldarEn(id, forzar = false) {
       }
     }
 
-    let subioAlgo = await reubicarEnNube(id, prov);
+    const movidos = await reubicarEnNube(id, prov);
+    let subioAlgo = movidos;
     for (const doc of datos.documentos.slice()) {
       const persona = datos.personas.find((p) => p.id === doc.personaId) || { id: '-', nombre: 'Sin persona' };
       const categoria = datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR;
@@ -2008,6 +2049,13 @@ async function respaldarEn(id, forzar = false) {
       const actualizadoEn = new Date().toISOString();
       await prov.escribirDatos(JSON.stringify({ formato: 2, dispositivo: idDispositivo(), actualizadoEn, datos }));
       guardarEstadoProv(id, { revSubida: rev, actualizadoEn });
+    }
+    // Carpetas que hayan quedado vacías (por mover o borrar archivos). El
+    // borrado inmediato no siempre las ve vacías (la nube tarda unos segundos en
+    // actualizar sus listados), así que aquí se revisan las que hay de verdad.
+    if ((movidos || borrados || forzar) && prov.barrerCarpetasVacias) {
+      if (movidos) await pausa(2000);
+      try { await prov.barrerCarpetasVacias(); } catch (e) { console.error(e); }
     }
     estadoProv[id] = 'ok';
     avisadoReconectar[id] = false;
@@ -2059,18 +2107,21 @@ function encolarBorrado(pagina, persona, categoria) {
 }
 
 async function procesarBorradosPendientes(id) {
+  let borrados = 0;
   const propios = leerJsonLocal(CLAVE_BORRADOS, []).filter((b) => b.prov === id);
   const carpetasTocadas = new Map();
   const rutasParaLimpiar = new Map(); // carpeta que contenía el archivo → una ruta suya
   for (const item of propios) {
     try { await PROVEEDORES[id].borrar(item.ref); } catch (e) { continue; } // se reintenta en la siguiente pasada
     guardarJsonLocal(CLAVE_BORRADOS, leerJsonLocal(CLAVE_BORRADOS, []).filter((b) => !(b.prov === item.prov && b.ref === item.ref)));
+    borrados++;
     if (id === 'google' && item.persona && item.categoria) carpetasTocadas.set(`${item.persona.id}:${item.categoria.id}`, item);
     if (PROVEEDORES[id].limpiarCarpetasVaciasDe) rutasParaLimpiar.set(String(item.ref).replace(/[/][^/]*$/, ''), item.ref);
   }
   // Las carpetas que se queden vacías se borran (mejor esfuerzo: si falla, no pasa nada).
   for (const item of carpetasTocadas.values()) await limpiarCarpetasVaciasTrasBorrar(item.persona, item.categoria);
   for (const ref of rutasParaLimpiar.values()) { try { await PROVEEDORES[id].limpiarCarpetasVaciasDe(ref); } catch (e) { /* ignorar */ } }
+  return borrados;
 }
 
 // ---- Archivos: primero en el móvil, las nubes son copia ----
