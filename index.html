@@ -651,6 +651,22 @@
     animation:girar-recorte .8s linear infinite;
   }
   @keyframes girar-recorte{ to{ transform:rotate(360deg); } }
+  .esquinas-marco{
+    position:relative; margin:0 auto 14px; border-radius:10px; overflow:hidden; background:#000;
+    touch-action:none; -webkit-user-select:none; user-select:none;
+  }
+  .esquinas-marco img{ display:block; width:100%; height:100%; pointer-events:none; -webkit-user-drag:none; }
+  .esquinas-svg{ position:absolute; inset:0; touch-action:none; }
+  .esquinas-borde{ fill:none; stroke:#fff; stroke-width:5; stroke-linejoin:round; }
+  .esquinas-poligono{ fill:rgba(255,255,255,.10); stroke:var(--stamp); stroke-width:2.5; stroke-linejoin:round; }
+  .esquinas-punto{ fill:var(--stamp); stroke:#fff; stroke-width:2.5; cursor:grab; }
+  .esquinas-lupa{
+    position:absolute; top:8px; width:104px; height:104px; border-radius:50%; display:none; pointer-events:none;
+    border:3px solid #fff; background-repeat:no-repeat; box-shadow:0 4px 14px rgba(0,0,0,.55);
+  }
+  .esquinas-lupa::before, .esquinas-lupa::after{ content:''; position:absolute; background:var(--stamp); }
+  .esquinas-lupa::before{ left:50%; top:calc(50% - 9px); width:2px; height:18px; margin-left:-1px; }
+  .esquinas-lupa::after{ top:50%; left:calc(50% - 9px); height:2px; width:18px; margin-top:-1px; }
   @media (prefers-reduced-motion:reduce){ .recorte-auto-punto{ animation:none; } }
 
   .modal-acciones{ display:flex; gap:10px; margin-top:20px; }
@@ -781,7 +797,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.4.2';
+const VERSION_APP = '2.4.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1722,6 +1738,29 @@ const PROVEEDORES = {
         if (!res.ok) throw new Error('escribir');
       }
     },
+    // De estas referencias (ids de archivo), devuelve las que YA NO están en Drive: borradas
+    // (incluso a la papelera) fuera de la app. Se mira el listado de archivos de la app y,
+    // de los que no salen, se confirma uno a uno por su id (el listado puede ir con retraso,
+    // el acceso por id no). Si algo falla, no se da nada por perdido.
+    async archivosPerdidos(refs) {
+      const presentes = new Set();
+      let pagina = '';
+      do {
+        const q = encodeURIComponent("trashed=false and mimeType!='application/vnd.google-apps.folder'");
+        const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=nextPageToken,files(id)&pageSize=1000${pagina ? '&pageToken=' + encodeURIComponent(pagina) : ''}`, {}, 30000);
+        if (!res.ok) return [];
+        const json = await res.json();
+        (json.files || []).forEach((f) => presentes.add(f.id));
+        pagina = json.nextPageToken || '';
+      } while (pagina);
+      const perdidos = [];
+      for (const ref of refs.filter((r) => !presentes.has(r))) {
+        const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${ref}?fields=id,trashed`);
+        if (res.status === 404) perdidos.push(ref);
+        else if (res.ok && (await res.json()).trashed) perdidos.push(ref);
+      }
+      return perdidos;
+    },
     async desconectar() {
       if (accessToken) { try { google.accounts.oauth2.revoke(accessToken, () => {}); } catch (e) { /* ignorar */ } }
       accessToken = null; tokenExpiry = 0;
@@ -1867,6 +1906,35 @@ const PROVEEDORES = {
     },
     async escribirDatos(texto) {
       await this.subirRuta('/' + NOMBRE_METADATOS, new Blob([texto], { type: 'application/json' }), 'overwrite');
+    },
+    // De estas referencias (rutas), devuelve las que YA NO están en Dropbox: borradas fuera de
+    // la app. Se mira el listado completo de la carpeta de la app y, de las que no salen,
+    // se confirma una a una que Dropbox dice "no existe". Si algo falla, no se da nada por perdido.
+    async archivosPerdidos(refs) {
+      const presentes = new Set();
+      let res = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/list_folder', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: '', recursive: true, limit: 2000 }),
+      }, 60000);
+      for (;;) {
+        if (!res.ok) return [];
+        const json = await res.json();
+        (json.entries || []).forEach((e) => { if (e['.tag'] === 'file') presentes.add(String(e.path_lower)); });
+        if (!json.has_more) break;
+        res = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/list_folder/continue', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cursor: json.cursor }),
+        }, 60000);
+      }
+      const perdidos = [];
+      for (const ref of refs.filter((r) => !presentes.has(String(r).toLowerCase()))) {
+        const res2 = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/get_metadata', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: ref }),
+        });
+        if (res2.status === 409) {
+          const cuerpo = await res2.json().catch(() => ({}));
+          if (String(cuerpo.error_summary || '').startsWith('path/not_found')) perdidos.push(ref);
+        }
+      }
+      return perdidos;
     },
     async desconectar() {
       try { await fetchNube('dropbox', 'https://api.dropboxapi.com/2/auth/token/revoke', { method: 'POST' }); } catch (e) { /* ignorar */ }
@@ -2211,8 +2279,27 @@ async function respaldarEn(id, forzar = false) {
       }
     }
 
+    // Archivos que esta nube ha perdido (borrados a mano fuera de la app): se olvida su
+    // referencia y más abajo se vuelven a subir desde el móvil, para que la copia
+    // quede siempre completa. Solo en las consultas completas (no en cada copia).
+    let recuperados = 0;
+    if (forzar && prov.archivosPerdidos) {
+      const conRef = [];
+      datos.documentos.forEach((d) => d.paginas.forEach((p) => { if (p.remotos && p.remotos[id]) conRef.push(p); }));
+      if (conRef.length) {
+        const perdidos = new Set(await prov.archivosPerdidos(conRef.map((p) => p.remotos[id])));
+        conRef.forEach((p) => {
+          if (!perdidos.has(p.remotos[id])) return;
+          delete p.remotos[id];
+          if (p.rutas) delete p.rutas[id];
+          recuperados++;
+        });
+        if (recuperados) guardarDatosEnCacheLocal();
+      }
+    }
+
     const movidos = await reubicarEnNube(id, prov);
-    let subioAlgo = movidos;
+    let subioAlgo = movidos || recuperados > 0;
     for (const doc of datos.documentos.slice()) {
       const persona = datos.personas.find((p) => p.id === doc.personaId) || { id: '-', nombre: 'Sin persona' };
       const categoria = datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR;
@@ -2230,6 +2317,8 @@ async function respaldarEn(id, forzar = false) {
         guardarDatosEnCacheLocal();
       }
     }
+
+    if (recuperados) mostrarToast(`${prov.nombre} había perdido ${recuperados === 1 ? 'un archivo' : recuperados + ' archivos'}: se ${recuperados === 1 ? 'ha' : 'han'} vuelto a subir`);
 
     const rev = revisionLocal();
     if (subioAlgo || estado.revSubida !== rev || !remoto) {
@@ -3701,15 +3790,21 @@ function cargarOpenCv() {
   return promesaOpenCv;
 }
 
-// Ordena 4 puntos como [arriba-izq, arriba-der, abajo-der, abajo-izq].
+// Ordena 4 puntos en sentido horario como [arriba-izq, arriba-der, abajo-der, abajo-izq]
+// respecto a la foto: se empieza por la esquina cuyo primer lado queda lo más horizontal
+// posible, para que un documento enderezado no salga girado sin necesidad. (Ordenar por
+// suma/diferencia de coordenadas falla con giros de ~45° o más: repite esquinas.)
 function ordenarEsquinas(pts) {
-  const suma = pts.map((p) => p.x + p.y);
-  const dif = pts.map((p) => p.y - p.x);
-  const tl = pts[suma.indexOf(Math.min(...suma))];
-  const br = pts[suma.indexOf(Math.max(...suma))];
-  const tr = pts[dif.indexOf(Math.min(...dif))];
-  const bl = pts[dif.indexOf(Math.max(...dif))];
-  return [tl, tr, br, bl];
+  const cx = pts.reduce((s, q) => s + q.x, 0) / 4, cy = pts.reduce((s, q) => s + q.y, 0) / 4;
+  const ord = pts.slice().sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+  let mejor = 0, mejorCos = -2;
+  for (let i = 0; i < 4; i++) {
+    const a = ord[i], b = ord[(i + 1) % 4];
+    const largo = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    const c = (b.x - a.x) / largo; // 1 = el lado apunta justo hacia la derecha
+    if (c > mejorCos + 1e-9) { mejorCos = c; mejor = i; }
+  }
+  return [ord[mejor], ord[(mejor + 1) % 4], ord[(mejor + 2) % 4], ord[(mejor + 3) % 4]];
 }
 
 // ¿Es un cuadrilátero razonable para un documento? Ángulos cerca de 90° (con margen
@@ -3736,80 +3831,224 @@ function areaPoligono(p) {
   return Math.abs(a) / 2;
 }
 
-// Mejor cuadrilátero entre los contornos de una imagen binaria de bordes o de manchas.
-function mejorCuadrilatero(cv, binaria, areaTotal, ancho, alto) {
-  // Si una esquina cae pegada al borde de la foto, el documento sale cortado: no se
-  // recorta (saldría con la forma equivocada) y se deja la foto tal cual.
-  const margen = Math.max(ancho, alto) * 0.012;
-  const cortada = (pts) => pts.some((q) => q.x < margen || q.y < margen || q.x > ancho - margen || q.y > alto - margen);
-  const contornos = new cv.MatVector();
-  const jerarquia = new cv.Mat();
-  let mejor = null;
+// ── Detector por rectas: busca las rectas dominantes de la foto (transformada de Hough),
+// prueba combinaciones de 4 que formen un cuadrilátero y se queda con el mayor que tenga
+// borde coherente en sus 4 lados. Después afina cada lado con los píxeles de borde
+// cercanos, así las esquinas salen exactas aunque la tarjeta tenga las esquinas redondeadas.
+// Los bordes se miran en los tres canales de color (R, G, B), no solo en gris: así se ve
+// el límite entre, por ejemplo, una tarjeta verde y una mesa marrón de brillo parecido.
+
+// Recta x·cosθ + y·senθ = ρ, guardada como { r, c, s }.
+function interseccionRectas(a, b) {
+  const det = a.c * b.s - a.s * b.c;
+  if (Math.abs(det) < 0.15) return null; // casi paralelas
+  return { x: (a.r * b.s - b.r * a.s) / det, y: (a.c * b.r - b.c * a.r) / det };
+}
+
+// Rectas más votadas de un mapa de bordes, sin repetidas (mismo ángulo y posición).
+function rectasDominantes(cv, bordes, ancho, alto, maximo) {
+  const lineas = new cv.Mat();
+  const res = [];
   try {
-    cv.findContours(binaria, contornos, jerarquia, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-    for (let i = 0; i < contornos.size(); i++) {
-      const c = contornos.get(i);
-      const hull = new cv.Mat();
-      try {
-        if (cv.contourArea(c) < areaTotal * 0.10) continue;
-        cv.convexHull(c, hull, false, true);
-        const peri = cv.arcLength(hull, true);
-        for (const e of [0.02, 0.03, 0.045, 0.06]) {
-          const ap = new cv.Mat();
-          cv.approxPolyDP(hull, ap, e * peri, true);
-          let pts = null;
-          if (ap.rows === 4) pts = [0, 1, 2, 3].map((k) => ({ x: ap.data32S[k * 2], y: ap.data32S[k * 2 + 1] }));
-          ap.delete();
-          if (!pts) continue;
-          pts = ordenarEsquinas(pts);
-          const area = areaPoligono(pts);
-          if (area < areaTotal * 0.10 || area > areaTotal * 0.985) break;
-          if (!cuadrilateroValido(pts) || cortada(pts)) break;
-          if (!mejor || area > mejor.area) mejor = { pts, area };
-          break;
-        }
-      } finally { hull.delete(); c.delete(); }
+    cv.HoughLines(bordes, lineas, 1, Math.PI / 360, Math.round(0.15 * Math.min(ancho, alto)));
+    const total = Math.min(lineas.rows, 120);
+    for (let i = 0; i < total && res.length < maximo; i++) {
+      const r = lineas.data32F[i * 2], th = lineas.data32F[i * 2 + 1];
+      const l = { r, c: Math.cos(th), s: Math.sin(th) };
+      if (!res.some((k) => rectasParecidas(k, l))) res.push(l);
     }
-  } finally { contornos.delete(); jerarquia.delete(); }
+  } finally { lineas.delete(); }
+  return res;
+}
+
+function rectasParecidas(k, l) {
+  const punto = k.c * l.c + k.s * l.s;
+  return (punto > 0.9945 && Math.abs(k.r - l.r) < 14) || (punto < -0.9945 && Math.abs(k.r + l.r) < 14);
+}
+
+// Apoyo de un lado p→q según el gradiente de color de la imagen. En cada punto del lado se
+// mira, a ±2 px en la dirección perpendicular, si hay un cambio fuerte en algún canal; solo
+// cuenta la componente del gradiente perpendicular al lado, así los bordes que van en otra
+// dirección (texturas, texto) no suman. Devuelve { apoyo, coherencia }: qué fracción del
+// lado tiene borde y si ese borde siempre tiene el mismo signo (interior más claro que el
+// exterior en todo el lado; una cuadrícula o una textura lo alternan, un borde de tarjeta no).
+function apoyoDeLado(gxs, gys, ancho, alto, p, q, centro) {
+  const largo = Math.hypot(q.x - p.x, q.y - p.y);
+  let nx = -(q.y - p.y) / largo, ny = (q.x - p.x) / largo;
+  if ((centro.x - p.x) * nx + (centro.y - p.y) * ny < 0) { nx = -nx; ny = -ny; } // hacia dentro
+  const n = Math.max(8, Math.ceil(largo / 2));
+  let bien = 0, positivos = 0, negativos = 0;
+  for (let i = 0; i < n; i++) {
+    const t = 0.04 + 0.92 * (i / (n - 1));
+    const x0 = p.x + (q.x - p.x) * t, y0 = p.y + (q.y - p.y) * t;
+    let mejor = 0;
+    for (let k = -2; k <= 2; k++) {
+      const x = Math.round(x0 + nx * k), y = Math.round(y0 + ny * k);
+      if (x < 0 || y < 0 || x >= ancho || y >= alto) continue;
+      const pos = y * ancho + x;
+      for (let ch = 0; ch < gxs.length; ch++) {
+        const proy = gxs[ch][pos] * nx + gys[ch][pos] * ny;
+        if (Math.abs(proy) > Math.abs(mejor)) mejor = proy;
+      }
+    }
+    if (Math.abs(mejor) >= 22) { bien++; if (mejor > 0) positivos++; else negativos++; }
+  }
+  return { apoyo: bien / n, coherencia: bien ? Math.abs(positivos - negativos) / bien : 0 };
+}
+
+// Brillo mediano del interior junto a un lado (a 8 px hacia dentro). Sirve para descartar
+// cuadriláteros cuyo interior mezcla materiales distintos (p. ej. madera y papel).
+function brilloInteriorDeLado(gris, ancho, alto, p, q, centro) {
+  const largo = Math.hypot(q.x - p.x, q.y - p.y);
+  let nx = -(q.y - p.y) / largo, ny = (q.x - p.x) / largo;
+  if ((centro.x - p.x) * nx + (centro.y - p.y) * ny < 0) { nx = -nx; ny = -ny; }
+  const valores = [];
+  const n = Math.max(6, Math.ceil(largo / 6));
+  for (let i = 0; i < n; i++) {
+    const t = 0.15 + 0.7 * (i / (n - 1));
+    const x = Math.round(p.x + (q.x - p.x) * t + nx * 8), y = Math.round(p.y + (q.y - p.y) * t + ny * 8);
+    if (x >= 0 && y >= 0 && x < ancho && y < alto) valores.push(gris[y * ancho + x]);
+  }
+  if (!valores.length) return 0;
+  valores.sort((a, b) => a - b);
+  return valores[valores.length >> 1];
+}
+
+// Mejor cuadrilátero formado por 4 de las rectas: dos parejas casi paralelas cruzadas.
+// Entre los válidos (los 4 lados con borde coherente) se elige el de mayor área: así, si
+// la tarjeta tiene una franja o un recuadro interior, gana el borde exterior.
+function mejorCuadrilateroDeRectas(rectas, gxs, gys, gris, ancho, alto, minLado, minMedia) {
+  const areaTotal = ancho * alto;
+  const margen = Math.max(ancho, alto) * 0.03;
+  const pares = [];
+  for (let i = 0; i < rectas.length; i++) {
+    for (let j = i + 1; j < rectas.length; j++) {
+      const a = rectas[i], b = rectas[j];
+      const punto = a.c * b.c + a.s * b.s;
+      if (Math.abs(punto) < 0.8192) continue; // más de 35° entre ellas: no son "opuestas"
+      const rb = punto < 0 ? -b.r : b.r;
+      if (Math.abs(a.r - rb) < 0.12 * Math.min(ancho, alto)) continue; // demasiado juntas
+      pares.push([a, b]);
+    }
+  }
+  let mejor = null;
+  for (let i = 0; i < pares.length; i++) {
+    for (let j = i + 1; j < pares.length; j++) {
+      const [a0, a1] = pares[i], [b0, b1] = pares[j];
+      if (a0 === b0 || a0 === b1 || a1 === b0 || a1 === b1) continue;
+      if (Math.abs(a0.c * b0.c + a0.s * b0.s) > 0.62) continue; // las parejas deben cruzarse casi en ángulo recto (≥ 52°)
+      const p00 = interseccionRectas(a0, b0), p01 = interseccionRectas(a0, b1);
+      const p11 = interseccionRectas(a1, b1), p10 = interseccionRectas(a1, b0);
+      if (!p00 || !p01 || !p11 || !p10) continue;
+      const ciclo = [p00, p01, p11, p10];
+      if (ciclo.some((q) => q.x < -margen || q.y < -margen || q.x > ancho + margen || q.y > alto + margen)) continue;
+      const pts = ordenarEsquinas(ciclo);
+      const area = areaPoligono(pts);
+      if (area < areaTotal * 0.10 || area > areaTotal * 0.92 || !cuadrilateroValido(pts)) continue;
+      if (mejor && area < mejor.area * 0.92) continue; // ya hay uno claramente mayor: no hace falta medir este
+      const centro = { x: (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4, y: (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4 };
+      const lados = [0, 1, 2, 3].map((k) => apoyoDeLado(gxs, gys, ancho, alto, pts[k], pts[(k + 1) % 4], centro));
+      if (lados.some((l) => l.apoyo < minLado || l.coherencia < 0.6)) continue;
+      const media = lados.reduce((s, l) => s + l.apoyo, 0) / 4;
+      if (media < minMedia) continue;
+      const brillos = [0, 1, 2, 3].map((k) => brilloInteriorDeLado(gris, ancho, alto, pts[k], pts[(k + 1) % 4], centro));
+      if (Math.max(...brillos) - Math.min(...brillos) > 110) continue; // el interior mezcla materiales distintos
+      // Entre áreas parecidas (±8 %) se prefiere el de más borde; si no, el mayor.
+      if (!mejor || area > mejor.area * 1.08 || (area > mejor.area * 0.92 && media > mejor.media)) mejor = { pts, area, media };
+    }
+  }
   return mejor;
 }
 
-// Busca los 4 vértices del documento en la copia pequeña (píxeles de esa copia) o null.
+// Ajusta cada lado a los píxeles de borde cercanos (ajuste por mínimos cuadrados total,
+// dos pasadas cada vez más estrictas) y recalcula las esquinas.
+function afinarEsquinas(pts, puntos, ancho, alto) {
+  let cur = pts.map((q) => ({ x: q.x, y: q.y }));
+  for (const tol of [5, 2.5]) {
+    const rectas = [];
+    for (let k = 0; k < 4; k++) {
+      const p = cur[k], q = cur[(k + 1) % 4];
+      const largo = Math.hypot(q.x - p.x, q.y - p.y);
+      const dx = (q.x - p.x) / largo, dy = (q.y - p.y) / largo;
+      const nx = -dy, ny = dx;
+      let n = 0, sx = 0, sy = 0; const sel = [];
+      for (let i = 0; i < puntos.length; i += 2) {
+        const x = puntos[i], y = puntos[i + 1];
+        const t = (x - p.x) * dx + (y - p.y) * dy;
+        if (t < largo * 0.05 || t > largo * 0.95) continue;
+        if (Math.abs((x - p.x) * nx + (y - p.y) * ny) > tol) continue;
+        sel.push(x, y); n++; sx += x; sy += y;
+      }
+      if (n < 15) return pts; // muy pocos puntos: no se fía del ajuste
+      const mx = sx / n, my = sy / n;
+      let sxx = 0, sxy = 0, syy = 0;
+      for (let i = 0; i < sel.length; i += 2) { const ex = sel[i] - mx, ey = sel[i + 1] - my; sxx += ex * ex; sxy += ex * ey; syy += ey * ey; }
+      const ang = 0.5 * Math.atan2(2 * sxy, sxx - syy); // dirección principal
+      const ux = Math.cos(ang), uy = Math.sin(ang);
+      const c = -uy, s = ux;                            // normal
+      rectas.push({ r: mx * c + my * s, c, s });
+    }
+    const nuevas = [];
+    for (let k = 0; k < 4; k++) {
+      const q = interseccionRectas(rectas[(k + 3) % 4], rectas[k]); // esquina k = lado (k-1) con lado k
+      if (!q) return pts;
+      nuevas.push(q);
+    }
+    // no debe alejarse demasiado de la propuesta inicial
+    if (nuevas.some((q, k) => Math.hypot(q.x - pts[k].x, q.y - pts[k].y) > 0.05 * Math.hypot(ancho, alto))) return pts;
+    cur = nuevas;
+  }
+  return cur;
+}
+
+// Devuelve las 4 esquinas [arriba-izq, arriba-der, abajo-der, abajo-izq] en píxeles de
+// la copia pequeña, o null si no hay un documento claro.
 function buscarEsquinasDocumento(cv, canvasPeq) {
   const src = cv.imread(canvasPeq);
-  const gris = new cv.Mat();
-  const suave = new cv.Mat();
+  const gris = new cv.Mat(), suave = new cv.Mat();
+  const planos = new cv.MatVector();
   const trabajo = [];
   const nuevo = () => { const m = new cv.Mat(); trabajo.push(m); return m; };
-  const areaTotal = src.rows * src.cols;
+  const ancho = src.cols, alto = src.rows;
   try {
     cv.cvtColor(src, gris, cv.COLOR_RGBA2GRAY);
     cv.GaussianBlur(gris, suave, new cv.Size(5, 5), 0);
-    const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
-    trabajo.push(kernel);
-    const candidatos = [];
+    cv.split(src, planos);
+    const gxs = [], gys = [];
+    const suaves = [];
+    for (let ch = 0; ch < 3; ch++) {
+      const plano = planos.get(ch); trabajo.push(plano);
+      const s = nuevo(); cv.GaussianBlur(plano, s, new cv.Size(5, 5), 0); suaves.push(s);
+      const gx = nuevo(), gy = nuevo();
+      cv.Sobel(s, gx, cv.CV_32F, 1, 0, 3); cv.Sobel(s, gy, cv.CV_32F, 0, 1, 3);
+      gxs.push(gx.data32F); gys.push(gy.data32F);
+    }
 
-    // Se prueban varios métodos, del más fiable al más permisivo, y se queda el primero
-    // que da un cuadrilátero válido.
-    // 1) Bordes de contraste (Canny): normal y para poco contraste (papel blanco en mesa clara).
-    for (const [bajo, alto] of [[50, 150], [20, 60]]) {
-      const bordes = nuevo();
-      cv.Canny(suave, bordes, bajo, alto);
-      cv.dilate(bordes, bordes, kernel, new cv.Point(-1, -1), 2);
-      candidatos.push(mejorCuadrilatero(cv, bordes, areaTotal, src.cols, src.rows));
+    // Rectas candidatas: de un mapa de bordes estricto y de uno permisivo (bordes débiles),
+    // cada uno unión de los bordes de los tres canales de color.
+    const rectas = [];
+    let bordesFinos = null;
+    for (const [bajo, altoUmbral] of [[50, 130], [15, 45]]) {
+      const union = nuevo();
+      suaves.forEach((s, ch) => {
+        const b = nuevo(); cv.Canny(s, b, bajo, altoUmbral);
+        if (ch === 0) b.copyTo(union); else cv.bitwise_or(union, b, union);
+      });
+      for (const l of rectasDominantes(cv, union, ancho, alto, 30)) {
+        if (!rectas.some((k) => rectasParecidas(k, l))) rectas.push(l);
+      }
+      bordesFinos = union; // el último (permisivo) sirve para afinar
     }
-    // 2) Mancha clara u oscura frente al fondo (umbral automático de Otsu).
-    for (const tipo of [cv.THRESH_BINARY, cv.THRESH_BINARY_INV]) {
-      const bin = nuevo();
-      cv.threshold(suave, bin, 0, 255, tipo | cv.THRESH_OTSU);
-      cv.morphologyEx(bin, bin, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 3);
-      cv.morphologyEx(bin, bin, cv.MORPH_OPEN, kernel, new cv.Point(-1, -1), 2);
-      candidatos.push(mejorCuadrilatero(cv, bin, areaTotal, src.cols, src.rows));
-    }
-    const primero = candidatos.find(Boolean);
-    return primero ? primero.pts : null;
+    if (rectas.length < 4) return null;
+
+    const mejor = mejorCuadrilateroDeRectas(rectas, gxs, gys, suave.data, ancho, alto, 0.8, 0.88);
+    if (!mejor) return null;
+    const puntos = [];
+    const px = bordesFinos.data;
+    for (let i = 0; i < px.length; i++) if (px[i]) puntos.push(i % ancho, (i / ancho) | 0);
+    return afinarEsquinas(mejor.pts, puntos, ancho, alto);
   } finally {
-    src.delete(); gris.delete(); suave.delete(); trabajo.forEach((m) => m.delete());
+    src.delete(); gris.delete(); suave.delete(); planos.delete(); trabajo.forEach((m) => m.delete());
   }
 }
 
@@ -3823,30 +4062,39 @@ function cargarImagenDeArchivo(file) {
   });
 }
 
-// Detecta el documento en la foto y lo devuelve recortado y enderezado (como si se
-// hubiera hecho de frente). Devuelve { file, ancho, alto } o null si no encuentra bordes.
-async function enderezarDocumento(file) {
+// Busca las esquinas del documento en la foto. Devuelve { esquinas } en píxeles de la foto
+// original ([arriba-izq, arriba-der, abajo-der, abajo-izq]) o null si no encuentra un
+// documento claro. `img` es opcional (si ya está cargada, se reutiliza).
+async function detectarEsquinasEnFoto(file, img) {
   const { cv } = await cargarOpenCv();
-  const img = await cargarImagenDeArchivo(file);
-  const anchoReal = img.naturalWidth, altoReal = img.naturalHeight;
-
-  const kPeq = Math.min(1, ESCANER_LADO_DETECCION / Math.max(anchoReal, altoReal));
+  img = img || await cargarImagenDeArchivo(file);
+  const kPeq = Math.min(1, ESCANER_LADO_DETECCION / Math.max(img.naturalWidth, img.naturalHeight));
   const canvasPeq = document.createElement('canvas');
-  canvasPeq.width = Math.round(anchoReal * kPeq); canvasPeq.height = Math.round(altoReal * kPeq);
+  canvasPeq.width = Math.round(img.naturalWidth * kPeq); canvasPeq.height = Math.round(img.naturalHeight * kPeq);
   canvasPeq.getContext('2d').drawImage(img, 0, 0, canvasPeq.width, canvasPeq.height);
-  const esquinasBrutas = buscarEsquinasDocumento(cv, canvasPeq);
-  if (!esquinasBrutas) return null;
-  // Un pelo hacia dentro (1,5 %) para no dejar el borde de la sombra ni del fondo.
-  const centro = { x: esquinasBrutas.reduce((s, q) => s + q.x, 0) / 4, y: esquinasBrutas.reduce((s, q) => s + q.y, 0) / 4 };
-  const esquinasPeq = esquinasBrutas.map((q) => ({ x: centro.x + (q.x - centro.x) * 0.985, y: centro.y + (q.y - centro.y) * 0.985 }));
+  const brutas = buscarEsquinasDocumento(cv, canvasPeq);
+  if (!brutas) return null;
+  // Un pelo hacia dentro (0,7 %) para no dejar el borde de la sombra ni del fondo.
+  const centro = { x: brutas.reduce((s, q) => s + q.x, 0) / 4, y: brutas.reduce((s, q) => s + q.y, 0) / 4 };
+  const esquinas = brutas.map((q) => ({
+    x: (centro.x + (q.x - centro.x) * 0.993) * (img.naturalWidth / canvasPeq.width),
+    y: (centro.y + (q.y - centro.y) * 0.993) * (img.naturalHeight / canvasPeq.height),
+  }));
+  return { esquinas };
+}
 
-  // La foto grande (con tope) es de donde sale el resultado, para no perder nitidez.
-  const kGrande = Math.min(1, ESCANER_LADO_MAX_SALIDA / Math.max(anchoReal, altoReal));
+// Recorta y endereza la foto por las 4 esquinas dadas (píxeles de la foto original), como
+// si el documento se hubiera fotografiado de frente. Devuelve { file, ancho, alto }.
+async function enderezarConEsquinas(file, esquinas, img) {
+  const { cv } = await cargarOpenCv();
+  img = img || await cargarImagenDeArchivo(file);
+  const ordenadas = ordenarEsquinas(esquinas);
+  // La foto grande (con tope de tamaño) es de donde sale el resultado, para no perder nitidez.
+  const k = Math.min(1, ESCANER_LADO_MAX_SALIDA / Math.max(img.naturalWidth, img.naturalHeight));
   const canvasGrande = document.createElement('canvas');
-  canvasGrande.width = Math.round(anchoReal * kGrande); canvasGrande.height = Math.round(altoReal * kGrande);
+  canvasGrande.width = Math.round(img.naturalWidth * k); canvasGrande.height = Math.round(img.naturalHeight * k);
   canvasGrande.getContext('2d').drawImage(img, 0, 0, canvasGrande.width, canvasGrande.height);
-  const escala = canvasGrande.width / canvasPeq.width;
-  const p = esquinasPeq.map((q) => ({ x: q.x * escala, y: q.y * escala }));
+  const p = ordenadas.map((q) => ({ x: q.x * k, y: q.y * k }));
 
   const lado = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const ancho = Math.round(Math.max(lado(p[0], p[1]), lado(p[3], p[2])));
@@ -3870,44 +4118,58 @@ async function enderezarDocumento(file) {
   return { file: new File([blob], nombreBase + '.jpg', { type: 'image/jpeg' }), ancho, alto };
 }
 
+// Detecta el documento en la foto y lo devuelve recortado y enderezado, o null si no
+// encuentra bordes claros.
+async function enderezarDocumento(file, img) {
+  img = img || await cargarImagenDeArchivo(file);
+  const det = await detectarEsquinasEnFoto(file, img);
+  return det ? enderezarConEsquinas(file, det.esquinas, img) : null;
+}
+
 // Recorte para fotos de documentos: el marco se adapta a la proporción de
 // la propia foto (no fuerza un cuadrado), y el resultado se recorta a la
 // resolución nativa de la imagen (copia 1:1 de los píxeles, sin reescalar)
 // para no perder calidad — el archivo recortado es el que se sube a Drive.
 //
 // Recorte automático: nada más abrir la foto se buscan en segundo plano los bordes
-// del documento (enderezarDocumento). Si se encuentran y aún no se ha tocado el
-// recorte, la foto se sustituye por el documento ya recortado y enderezado; con un
-// botón se puede volver a la foto original y viceversa. Si algo falla, el recorte
-// manual funciona igual que siempre.
+// del documento. Si se encuentran y aún no se ha tocado el recorte, la foto se
+// sustituye por el documento ya recortado y enderezado; con un botón se puede volver
+// a la foto original y viceversa. "Ajustar esquinas" abre un editor con las 4 esquinas
+// arrastrables (empezando por las detectadas) para corregir cuando la detección falle.
+// Si algo falla, el recorte manual funciona igual que siempre.
 function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
   const ANCHO_MAX = 280, ALTO_MAX = 380;
   let estadoAuto = 'buscando';   // buscando | listo | sin-bordes | no-disponible
   let usandoAuto = false;
   let original = null;           // { file, ancho, alto }
   let automatico = null;         // { file, ancho, alto }
+  let esquinasDetectadas = null; // en píxeles de la foto original
+  let imagenOriginal = null;     // la foto ya cargada (se reutiliza para detectar y enderezar)
   let tocado = false;            // ya se movió el recorte con los dedos
   let cerrado = false;
 
   function pintarEstadoAuto() {
     const zona = contenedor.querySelector('#recorte-auto');
     if (!zona) return;
+    const botonEsquinas = estadoAuto === 'buscando' || estadoAuto === 'no-disponible' ? '' : '<button type="button" id="recorte-auto-esquinas">Ajustar esquinas</button>';
     if (estadoAuto === 'buscando') {
       zona.innerHTML = '<span class="recorte-auto-texto"><span class="recorte-auto-punto"></span>Buscando los bordes del documento…</span>';
     } else if (estadoAuto === 'listo') {
-      zona.innerHTML = usandoAuto
+      zona.innerHTML = (usandoAuto
         ? '<span class="recorte-auto-texto">Recortado automáticamente</span><button type="button" id="recorte-auto-alternar">Ver foto original</button>'
-        : '<button type="button" id="recorte-auto-alternar">Recorte automático</button>';
+        : '<button type="button" id="recorte-auto-alternar">Recorte automático</button>') + botonEsquinas;
       zona.querySelector('#recorte-auto-alternar').addEventListener('click', () => {
         usandoAuto = !usandoAuto;
         tocado = false;
         mostrar(usandoAuto ? automatico : original);
       });
     } else if (estadoAuto === 'sin-bordes') {
-      zona.innerHTML = '<span class="recorte-auto-texto">No he encontrado los bordes: recórtalo a mano</span>';
+      zona.innerHTML = '<span class="recorte-auto-texto">No he encontrado los bordes</span>' + botonEsquinas;
     } else {
       zona.innerHTML = '<span class="recorte-auto-texto">Recorte automático no disponible ahora: recórtalo a mano</span>';
     }
+    const b = zona.querySelector('#recorte-auto-esquinas');
+    if (b) b.addEventListener('click', abrirEditorEsquinas);
   }
 
   function mostrar(variante) {
@@ -3946,14 +4208,115 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
     pintarEstadoAuto();
   }
 
+  // Editor de esquinas: la foto entera con un cuadrilátero de 4 puntos arrastrables y una
+  // lupa mientras se arrastra. Al aceptar, se endereza por esas esquinas y se pasa al recorte.
+  function abrirEditorEsquinas() {
+    const w = original.ancho, h = original.alto;
+    const ANCHO_ED = 300, ALTO_ED = 400;
+    let ancho = ANCHO_ED, alto = Math.round(ANCHO_ED * h / w);
+    if (alto > ALTO_ED) { alto = ALTO_ED; ancho = Math.round(ALTO_ED * w / h); }
+    const k = ancho / w; // píxeles de pantalla por píxel de la foto
+    // Punto de partida: las esquinas detectadas o, si no las hay, un rectángulo con margen.
+    let pts = (esquinasDetectadas || [{ x: w * .1, y: h * .1 }, { x: w * .9, y: h * .1 }, { x: w * .9, y: h * .9 }, { x: w * .1, y: h * .9 }]).map((q) => ({ x: q.x, y: q.y }));
+    const urlFoto = URL.createObjectURL(file);
+    const cerrarEditor = () => URL.revokeObjectURL(urlFoto);
+
+    contenedor.innerHTML = `
+      <div class="esquinas-marco" id="esquinas-marco" style="width:${ancho}px;height:${alto}px;">
+        <img src="${urlFoto}" alt="" draggable="false">
+        <svg class="esquinas-svg" viewBox="0 0 ${ancho} ${alto}" width="${ancho}" height="${alto}">
+          <polygon class="esquinas-borde" points=""></polygon>
+          <polygon class="esquinas-poligono" points=""></polygon>
+          ${[0, 1, 2, 3].map((i) => `<circle class="esquinas-punto" data-i="${i}" r="11"></circle>`).join('')}
+        </svg>
+        <div class="esquinas-lupa" id="esquinas-lupa" style="background-image:url('${urlFoto}')"></div>
+      </div>
+      <p class="recorte-ayuda">Arrastra cada esquina hasta una esquina del documento</p>
+      <div class="modal-acciones">
+        <button class="btn-secundario" id="esquinas-cancelar" type="button">Volver</button>
+        <button class="btn-primario" id="esquinas-aceptar" type="button">Enderezar</button>
+      </div>`;
+    const marco = contenedor.querySelector('#esquinas-marco');
+    const svg = marco.querySelector('svg');
+    const lupa = marco.querySelector('#esquinas-lupa');
+    const poligonos = marco.querySelectorAll('polygon');
+    const puntos = [...marco.querySelectorAll('.esquinas-punto')];
+
+    function pintar() {
+      const lista = pts.map((q) => `${(q.x * k).toFixed(1)},${(q.y * k).toFixed(1)}`).join(' ');
+      poligonos.forEach((p) => p.setAttribute('points', lista));
+      puntos.forEach((c, i) => { c.setAttribute('cx', (pts[i].x * k).toFixed(1)); c.setAttribute('cy', (pts[i].y * k).toFixed(1)); });
+    }
+    pintar();
+
+    const ZOOM = 3, LUPA = 104;
+    function mostrarLupa(q) {
+      lupa.style.display = 'block';
+      lupa.style.backgroundSize = `${w * k * ZOOM}px ${h * k * ZOOM}px`;
+      lupa.style.backgroundPosition = `${LUPA / 2 - q.x * k * ZOOM}px ${LUPA / 2 - q.y * k * ZOOM}px`;
+      // se coloca en el lado contrario al dedo para no taparse
+      lupa.style.left = q.x * k < ancho / 2 ? `${ancho - LUPA - 8}px` : '8px';
+    }
+
+    let activo = -1, desfase = { x: 0, y: 0 };
+    const enFoto = (e) => { const r = svg.getBoundingClientRect(); return { x: (e.clientX - r.left) / k, y: (e.clientY - r.top) / k }; };
+    svg.addEventListener('pointerdown', (e) => {
+      const p = enFoto(e);
+      let mejor = -1, mejorD = 32 / k; // radio de agarre: 32 px de pantalla
+      pts.forEach((q, i) => { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < mejorD) { mejorD = d; mejor = i; } });
+      if (mejor < 0) return;
+      activo = mejor; desfase = { x: pts[mejor].x - p.x, y: pts[mejor].y - p.y };
+      svg.setPointerCapture(e.pointerId);
+      mostrarLupa(pts[activo]);
+      e.preventDefault();
+    });
+    svg.addEventListener('pointermove', (e) => {
+      if (activo < 0) return;
+      const p = enFoto(e);
+      pts[activo] = { x: Math.max(0, Math.min(w, p.x + desfase.x)), y: Math.max(0, Math.min(h, p.y + desfase.y)) };
+      pintar(); mostrarLupa(pts[activo]);
+    });
+    const soltar = () => { activo = -1; lupa.style.display = 'none'; };
+    svg.addEventListener('pointerup', soltar);
+    svg.addEventListener('pointercancel', soltar);
+
+    contenedor.querySelector('#esquinas-cancelar').addEventListener('click', () => {
+      cerrarEditor();
+      mostrar(usandoAuto ? automatico : original);
+    });
+    contenedor.querySelector('#esquinas-aceptar').addEventListener('click', async () => {
+      const boton = contenedor.querySelector('#esquinas-aceptar');
+      boton.disabled = true; boton.textContent = 'Enderezando…';
+      try {
+        const res = await enderezarConEsquinas(file, pts, imagenOriginal);
+        cerrarEditor();
+        if (cerrado || !contenedor.isConnected) return;
+        if (!res) { mostrarToast('Las esquinas están demasiado juntas.', true); mostrar(usandoAuto ? automatico : original); return; }
+        esquinasDetectadas = pts;
+        automatico = res; estadoAuto = 'listo'; usandoAuto = true; tocado = false;
+        mostrar(automatico);
+      } catch (e) {
+        console.error(e);
+        cerrarEditor();
+        mostrarToast('No se pudo enderezar la foto.', true);
+        if (!cerrado && contenedor.isConnected) mostrar(usandoAuto ? automatico : original);
+      }
+    });
+  }
+
   const urlPrevia = URL.createObjectURL(file);
   const preImg = new Image();
   preImg.onload = () => {
     URL.revokeObjectURL(urlPrevia);
+    imagenOriginal = preImg;
     original = { file, ancho: preImg.naturalWidth, alto: preImg.naturalHeight };
     mostrar(original);
 
-    enderezarDocumento(file).then((res) => {
+    detectarEsquinasEnFoto(file, preImg).then(async (det) => {
+      if (cerrado || !contenedor.isConnected) return;
+      if (!det) { estadoAuto = 'sin-bordes'; pintarEstadoAuto(); return; }
+      esquinasDetectadas = det.esquinas;
+      const res = await enderezarConEsquinas(file, det.esquinas, preImg);
       if (cerrado || !contenedor.isConnected) return;
       if (!res) { estadoAuto = 'sin-bordes'; pintarEstadoAuto(); return; }
       automatico = res;
