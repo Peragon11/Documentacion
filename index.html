@@ -243,7 +243,8 @@
   /* Nombre largo: se reparte en dos líneas (ajustarTituloTopbar) */
   .topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.1; overflow:hidden; max-height:calc(2.2em + 2px); }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:12px; flex:none; box-shadow:none; }
-  .icono-marca{ width:29px; height:29px; border-radius:8px; flex:none; display:block; }
+  .icono-marca{ width:38px; height:38px; border-radius:10px; flex:none; display:block; }
+  @media (max-width:340px){ .icono-marca{ width:32px; height:32px; border-radius:9px; } } /* pantallas muy estrechas: el título necesita el hueco */
   .btn-icono-top{
     background:var(--ink-2); border:none; color:var(--text-light); width:44px; height:44px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none; position:relative;
@@ -636,9 +637,10 @@
     max-width:none; max-height:none;
   }
   .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:0 0 18px; }
-  .recorte-giro{ display:flex; align-items:center; gap:10px; margin:0 0 10px; }
+  .recorte-controles{ margin:0 0 6px; }
+  .recorte-giro{ display:flex; align-items:center; gap:10px; margin:0 0 6px; }
   .recorte-giro button{
-    flex:none; width:42px; height:42px; border-radius:50%; border:1px solid var(--borde); background:none;
+    flex:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--borde); background:none;
     color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer;
   }
   .recorte-giro button:active{ background:var(--ink-3); }
@@ -806,7 +808,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.4.4';
+const VERSION_APP = '2.4.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1635,12 +1637,32 @@ function destinoDe(doc) {
     categoria: datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR,
   };
 }
-function claveRuta(destino, pagina) {
-  return [destino.persona.nombre, destino.categoria.nombre, nombreArchivoRemoto(pagina)].map(limpiarNombreRuta).join('/');
+function claveRuta(destino, pagina, doc) {
+  return [destino.persona.nombre, destino.categoria.nombre, nombreArchivoRemoto(pagina, doc)].map(limpiarNombreRuta).join('/');
 }
-function nombreArchivoRemoto(pagina) {
+// Nombre con el que se guarda una página en la nube. Siempre empieza por el nombre del
+// documento, porque en la nube todos los documentos de una persona y categoría comparten
+// carpeta: "DNI - Página 2", "DNI - Reverso". Si la página ya se llama como el documento
+// (la primera, normalmente) o ya empieza por su nombre, se deja tal cual.
+function nombreBaseRemoto(pagina, doc) {
+  let base = (pagina.nombre || '').trim();
+  const nombreDoc = doc && doc.nombre ? doc.nombre.trim() : '';
+  if (nombreDoc) {
+    const b = base.toLowerCase(), d = nombreDoc.toLowerCase();
+    const yaEmpieza = b.startsWith(d) && (b.length === d.length || !/[\p{L}\p{N}]/u.test(b.charAt(d.length)));
+    if (!base) base = nombreDoc;
+    else if (!yaEmpieza) base = nombreDoc + ' - ' + base;
+  }
+  return base;
+}
+function nombreArchivoRemoto(pagina, doc) {
   const ext = MAPA_EXTENSIONES_MIME[pagina.mimeType] || '';
-  return ext && !pagina.nombre.toLowerCase().endsWith(ext) ? pagina.nombre + ext : pagina.nombre;
+  const base = nombreBaseRemoto(pagina, doc);
+  return ext && !base.toLowerCase().endsWith(ext) ? base + ext : base;
+}
+// El documento al que pertenece una página (las páginas son los mismos objetos que están en datos).
+function documentoDePagina(pagina) {
+  return datos.documentos.find((d) => d.paginas.includes(pagina)) || null;
 }
 // Dropbox exige que la cabecera Dropbox-API-Arg sea ASCII: lo demás va como \uXXXX.
 function argDropbox(obj) {
@@ -2062,7 +2084,7 @@ async function hayTrabajo(id) {
       if (ref) {
         // ya está en la nube: hay trabajo si sus nombres han cambiado
         const actual = pagina.rutas && pagina.rutas[id];
-        if (actual && actual !== claveRuta(destinoDe(doc), pagina)) return true;
+        if (actual && actual !== claveRuta(destinoDe(doc), pagina, doc)) return true;
         continue;
       }
       if (await cacheObtener(pagina.archivoId)) return true;
@@ -2244,12 +2266,12 @@ async function reubicarEnNube(id, prov) {
       const ref = pagina.remotos && pagina.remotos[id];
       if (!ref) continue;
       if (!pagina.rutas) pagina.rutas = {};
-      const deseada = claveRuta(destino, pagina);
+      const deseada = claveRuta(destino, pagina, doc);
       const actual = pagina.rutas[id];
       if (!actual) { pagina.rutas[id] = deseada; continue; } // subida antes de anotar las rutas: se da por buena
       if (actual === deseada) continue;
       try {
-        pagina.remotos[id] = await prov.mover(ref, destino, nombreArchivoRemoto(pagina));
+        pagina.remotos[id] = await prov.mover(ref, destino, nombreArchivoRemoto(pagina, doc));
         pagina.rutas[id] = deseada;
         movido = true;
         guardarDatosEnCacheLocal();
@@ -2316,12 +2338,12 @@ async function respaldarEn(id, forzar = false) {
         if (pagina.remotos && pagina.remotos[id]) continue;
         const blob = await cacheObtener(pagina.archivoId);
         if (!blob) continue; // aún no está en este móvil: se copiará cuando se descargue
-        const ref = await prov.subir({ persona, categoria }, blob, nombreArchivoRemoto(pagina));
+        const ref = await prov.subir({ persona, categoria }, blob, nombreArchivoRemoto(pagina, doc));
         if (!paginaSigueExistiendo(pagina)) { try { await prov.borrar(ref); } catch (e) { /* ignorar */ } continue; }
         if (!pagina.remotos) pagina.remotos = {};
         pagina.remotos[id] = ref;
         if (!pagina.rutas) pagina.rutas = {};
-        pagina.rutas[id] = claveRuta({ persona, categoria }, pagina);
+        pagina.rutas[id] = claveRuta({ persona, categoria }, pagina, doc);
         subioAlgo = true;
         guardarDatosEnCacheLocal();
       }
@@ -3612,18 +3634,33 @@ function montarRecortador(contenedor, file, opciones) {
   contenedor.innerHTML = `
     <div class="recorte-marco" id="recorte-marco" style="width:${anchoMarco}px;height:${altoMarco}px;border-radius:${radioMarco}px;"></div>
     ${giro ? `
-    <div class="recorte-giro">
-      <button type="button" id="recorte-giro-izq" aria-label="Girar 90 grados a la izquierda">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 9V4M4 4h5M4 4l3.2 3.2A8 8 0 1 1 4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <div class="recorte-giro-barra">
-        <span class="recorte-giro-grados" id="recorte-giro-grados">0°</span>
-        <input type="range" id="recorte-giro-rango" min="-45" max="45" step="0.5" value="0" aria-label="Girar la foto">
+    <div class="recorte-controles">
+      <div class="recorte-giro">
+        <button type="button" id="recorte-giro-izq" aria-label="Girar 90 grados a la izquierda">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <div class="recorte-giro-barra">
+          <span class="recorte-giro-grados" id="recorte-giro-grados">0°</span>
+          <input type="range" id="recorte-giro-rango" min="-45" max="45" step="0.5" value="0" aria-label="Girar la foto">
+        </div>
+        <button type="button" id="recorte-giro-der" aria-label="Girar 90 grados a la derecha">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+        </button>
       </div>
-      <button type="button" id="recorte-giro-der" aria-label="Girar 90 grados a la derecha">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 9V4M20 4h-5M20 4l-3.2 3.2A8 8 0 1 0 20 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </div>` : ''}
+      <div class="recorte-giro recorte-zoom">
+        <button type="button" id="recorte-zoom-menos" aria-label="Alejar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <div class="recorte-giro-barra">
+          <span class="recorte-giro-grados" id="recorte-zoom-etiqueta">×1,0</span>
+          <input type="range" id="recorte-zoom-rango" min="0" max="1" step="0.005" value="0" aria-label="Zoom de la foto">
+        </div>
+        <button type="button" id="recorte-zoom-mas" aria-label="Acercar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
+        </button>
+      </div>
+    </div>
+` : ''}
     <p class="recorte-ayuda">${textoAyuda}</p>
     <div class="modal-acciones">
       <button class="btn-secundario" id="recorte-cancelar" type="button">Cancelar</button>
@@ -3657,6 +3694,35 @@ function montarRecortador(contenedor, file, opciones) {
     escala = clamp(escala, escalaMinima(rot), escalaMinima(rot) * 4);
     img.style.transform = `translate(${cx - img.naturalWidth / 2}px, ${cy - img.naturalHeight / 2}px) rotate(${rot}rad) scale(${escala})`;
     sincronizarGiro();
+    sincronizarZoom();
+  }
+
+  // ---- Barra de zoom fino
+  // El zoom va de ×1 (la foto justo cubre el marco) a ×4, con escala logarítmica para que la
+  // barra se note igual de fina al principio y al final. Acerca y aleja desde el centro del marco.
+  const ZOOM_MAX = 4;
+  const rangoZoom = contenedor.querySelector('#recorte-zoom-rango');
+  const etiquetaZoom = contenedor.querySelector('#recorte-zoom-etiqueta');
+  function sincronizarZoom() {
+    if (!rangoZoom) return;
+    const factor = Math.max(1, escala / escalaMinima(rot));
+    rangoZoom.value = String(Math.min(1, Math.log(factor) / Math.log(ZOOM_MAX)));
+    etiquetaZoom.textContent = '×' + factor.toFixed(1).replace('.', ',');
+  }
+  function zoomHasta(factor) {
+    const centro = { x: anchoMarco / 2, y: altoMarco / 2 };
+    const ancla = puntoImagenBajo(centro); // el punto de la foto que está en el centro del marco se queda ahí
+    escala = escalaMinima(rot) * clamp(factor, 1, ZOOM_MAX);
+    const c = Math.cos(rot), s = Math.sin(rot);
+    cx = centro.x - (ancla.x * c - ancla.y * s) * escala;
+    cy = centro.y - (ancla.x * s + ancla.y * c) * escala;
+    aplicarTransform();
+  }
+  if (rangoZoom) {
+    rangoZoom.addEventListener('input', () => zoomHasta(Math.pow(ZOOM_MAX, parseFloat(rangoZoom.value))));
+    const paso = (delta) => zoomHasta(Math.pow(ZOOM_MAX, clamp(parseFloat(rangoZoom.value) + delta, 0, 1)));
+    contenedor.querySelector('#recorte-zoom-menos').addEventListener('click', () => paso(-0.1));
+    contenedor.querySelector('#recorte-zoom-mas').addEventListener('click', () => paso(0.1));
   }
 
   // ---- Barra de giro fino y botones de 90°
@@ -4274,7 +4340,7 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
 
     contenedor.querySelector('.modal-acciones').insertAdjacentHTML('beforebegin', '<div class="recorte-auto" id="recorte-auto"></div>');
     contenedor.querySelector('#recorte-marco').addEventListener('pointerdown', () => { tocado = true; });
-    contenedor.querySelector('.recorte-giro').addEventListener('pointerdown', () => { tocado = true; });
+    contenedor.querySelector('.recorte-controles').addEventListener('pointerdown', () => { tocado = true; });
     pintarEstadoAuto();
   }
 
@@ -4688,12 +4754,9 @@ $('#btn-compartir-seleccion').addEventListener('click', async () => {
   volverAtras();
 });
 
-function extensionPorMime(mime) {
-  return MAPA_EXTENSIONES_MIME[mime] || '';
-}
+// Al compartir (WhatsApp, correo…) el archivo lleva EXACTAMENTE el mismo nombre que tiene en la nube.
 function nombreArchivoParaCompartir(pagina) {
-  const ext = extensionPorMime(pagina.mimeType);
-  return ext && pagina.nombre.toLowerCase().endsWith(ext) ? pagina.nombre : pagina.nombre + ext;
+  return nombreArchivoRemoto(pagina, documentoDePagina(pagina));
 }
 
 // Comparte una o varias páginas sueltas (de uno o varios documentos).
@@ -4815,7 +4878,7 @@ async function compartirPaginaComoPdf(pagina) {
     const { ancho, alto } = await medirImagenBlob(blob);
     const bytesJpeg = new Uint8Array(await blob.arrayBuffer());
     const bytesPdf = construirPdfDesdeImagenes([{ bytesJpeg, anchoPx: ancho, altoPx: alto }]);
-    const archivo = new File([bytesPdf], (pagina.nombre || 'documento') + '.pdf', { type: 'application/pdf' });
+    const archivo = new File([bytesPdf], (nombreBaseRemoto(pagina, documentoDePagina(pagina)) || 'documento') + '.pdf', { type: 'application/pdf' });
     if (navigator.canShare && !navigator.canShare({ files: [archivo] })) {
       mostrarToast('Este archivo no se puede compartir desde aquí.', true);
       return;
@@ -5282,6 +5345,10 @@ function abrirMenuGaleria(doc) {
   $('#op-compartir-pdf-todas').addEventListener('click', () => { volverAtras(); compartirDocumentoComoPdf(doc); });
   $('#op-renombrar-doc-galeria').addEventListener('click', () => {
     abrirModalRenombrar('Cambiar nombre', doc.nombre, (nuevo) => {
+      // la primera página se llama como el documento (es el nombre que se ve en la nube):
+      // si aún lo lleva, se renombra con él
+      const primera = doc.paginas[0];
+      if (primera && primera.nombre === doc.nombre) primera.nombre = nuevo;
       doc.nombre = nuevo;
       guardarMetadatos().then(() => {
         volverAtras();
@@ -5488,7 +5555,11 @@ function abrirModalSubida() {
         </div>`;
     }).join('');
     $$('.input-nombre-pagina-subida').forEach((input) => {
-      input.addEventListener('input', () => { paginasSubidaPendientes[Number(input.dataset.indice)].nombre = input.value; });
+      input.addEventListener('input', () => {
+        const pendiente = paginasSubidaPendientes[Number(input.dataset.indice)];
+        pendiente.nombre = input.value;
+        pendiente.manual = true; // ya no sigue al nombre del documento
+      });
     });
     $$('.btn-quitar-pagina-subida').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -5536,7 +5607,18 @@ function abrirModalSubida() {
     });
   });
 
-  $('#input-nombre').addEventListener('input', actualizarBotonGuardar);
+  // La primera página se guarda (también en la nube) con el nombre del documento, mientras
+  // no se le haya puesto otro a mano: así lo que se escribe aquí es lo que se ve en Drive.
+  $('#input-nombre').addEventListener('input', () => {
+    const primera = paginasSubidaPendientes[0];
+    const nombreDoc = $('#input-nombre').value.trim();
+    if (primera && !primera.manual && nombreDoc) {
+      primera.nombre = nombreDoc;
+      const campo = listaPaginas.querySelector('.input-nombre-pagina-subida[data-indice="0"]');
+      if (campo) campo.value = nombreDoc;
+    }
+    actualizarBotonGuardar();
+  });
   evitarBarraAutorrelleno($('#input-nombre'));
   $('#modal-cancelar').addEventListener('click', volverAtras);
   $('#modal-guardar').addEventListener('click', guardarDocumentoNuevo);
@@ -5560,8 +5642,8 @@ async function guardarDocumentoNuevo() {
 
   try {
     const paginas = [];
-    for (const pendiente of paginasSubidaPendientes) {
-      const nombrePagina = pendiente.nombre.trim() || nombre;
+    for (const [indice, pendiente] of paginasSubidaPendientes.entries()) {
+      const nombrePagina = indice === 0 && !pendiente.manual ? nombre : (pendiente.nombre.trim() || nombre);
       const archivoId = await guardarArchivoLocal(pendiente.archivo);
       paginas.push({ archivoId, mimeType: pendiente.archivo.type, nombre: nombrePagina, remotos: {} });
     }
