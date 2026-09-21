@@ -661,7 +661,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.4';
+const VERSION_APP = '2.3.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1114,8 +1114,11 @@ async function buscarOCrearCarpeta(nombre, padreId) {
 }
 
 const cacheCarpetas = {};
+// La clave incluye los nombres: si se renombra una persona o categoría, no debe
+// reutilizarse la carpeta antigua.
+const claveCarpeta = (persona, categoria) => `${persona.id}:${categoria.id}:${persona.nombre}:${categoria.nombre}`;
 async function carpetaDestinoDocumento(persona, categoria) {
-  const clave = `${persona.id}:${categoria.id}`;
+  const clave = claveCarpeta(persona, categoria);
   if (cacheCarpetas[clave]) return cacheCarpetas[clave];
   const carpetaPersonaId = await buscarOCrearCarpeta(persona.nombre, carpetaId);
   const carpetaCategoriaId = await buscarOCrearCarpeta(categoria.nombre, carpetaPersonaId);
@@ -1144,7 +1147,7 @@ async function limpiarCarpetasVaciasTrasBorrar(persona, categoriaObj) {
     const idCarpetaCategoria = await carpetaDestinoDocumento(persona, categoriaObj);
     const categoriaQuedoVacia = await borrarCarpetaSiVacia(idCarpetaCategoria);
     if (!categoriaQuedoVacia) return;
-    delete cacheCarpetas[`${persona.id}:${categoriaObj.id}`];
+    delete cacheCarpetas[claveCarpeta(persona, categoriaObj)];
     const idCarpetaPersona = await buscarOCrearCarpeta(persona.nombre, carpetaId);
     const personaQuedoVacia = await borrarCarpetaSiVacia(idCarpetaPersona);
     if (personaQuedoVacia) {
@@ -1210,6 +1213,7 @@ function normalizarDocumentosPaginas(documentos) {
     doc.paginas.forEach((p) => {
       if (!p.archivoId && p.driveFileId) { p.archivoId = p.driveFileId; p.remotos = { google: p.driveFileId }; delete p.driveFileId; }
       if (!p.remotos) p.remotos = {};
+      if (!p.rutas) p.rutas = {};
     });
   });
 }
@@ -1233,6 +1237,7 @@ function cargarDatosDesdeCacheLocal() {
 
 // Guarda en el móvil (lo principal) y programa la copia a las nubes.
 async function guardarMetadatos() {
+  estamparCambios();
   subirRevisionLocal();
   guardarDatosEnCacheLocal();
   programarRespaldo();
@@ -1410,6 +1415,16 @@ function limpiarNombreRuta(nombre) {
 function rutaRemota(ctx, nombreArchivo) {
   return [limpiarNombreRuta(ctx.persona.nombre), limpiarNombreRuta(ctx.categoria.nombre), limpiarNombreRuta(nombreArchivo)];
 }
+// Dónde debería estar cada archivo según los nombres de ahora.
+function destinoDe(doc) {
+  return {
+    persona: datos.personas.find((p) => p.id === doc.personaId) || { id: '-', nombre: 'Sin persona' },
+    categoria: datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR,
+  };
+}
+function claveRuta(destino, pagina) {
+  return [destino.persona.nombre, destino.categoria.nombre, nombreArchivoRemoto(pagina)].map(limpiarNombreRuta).join('/');
+}
 function nombreArchivoRemoto(pagina) {
   const ext = MAPA_EXTENSIONES_MIME[pagina.mimeType] || '';
   return ext && !pagina.nombre.toLowerCase().endsWith(ext) ? pagina.nombre + ext : pagina.nombre;
@@ -1444,6 +1459,30 @@ const PROVEEDORES = {
     async borrar(ref) {
       const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${ref}`, { method: 'DELETE' });
       if (!res.ok && res.status !== 404) throw new Error('borrar');
+    },
+    // Renombra y/o cambia de carpeta el archivo (en Drive su id no cambia).
+    async mover(ref, destino, nombreArchivo) {
+      const carpeta = await carpetaDestinoDocumento(destino.persona, destino.categoria);
+      const info = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${ref}?fields=id,parents`);
+      if (!info.ok) throw new Error('mover');
+      const anteriores = ((await info.json()).parents || []).filter((p) => p !== carpeta);
+      const parametros = `addParents=${carpeta}` + (anteriores.length ? `&removeParents=${anteriores.join(',')}` : '');
+      const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${ref}?${parametros}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: nombreArchivo }),
+      });
+      if (!res.ok) throw new Error('mover');
+      return ref;
+    },
+    // Tras mover archivos, borra las carpetas antiguas (persona/categoría por su
+    // nombre) que se hayan quedado vacías. Solo borra las que no tengan nada.
+    async limpiarCarpetasVaciasDe(ref, clave) {
+      const [persona, categoria] = String(clave).split('/');
+      if (!persona || !categoria) return;
+      const idPersona = await buscarCarpeta(persona, carpetaId);
+      if (!idPersona) return;
+      const idCategoria = await buscarCarpeta(categoria, idPersona);
+      if (idCategoria) await borrarCarpetaSiVacia(idCategoria);
+      await borrarCarpetaSiVacia(idPersona);
     },
     async bajar(ref) {
       const res = await llamarGoogle(`https://www.googleapis.com/drive/v3/files/${ref}?alt=media`, {}, 120000);
@@ -1514,7 +1553,32 @@ const PROVEEDORES = {
       if (s.acceso && s.expira > Date.now() + 60000) return s.acceso;
       return renovarConRefresco('dropbox', 'https://api.dropboxapi.com/oauth2/token', { client_id: DROPBOX_APP_KEY });
     },
-    async preparar() { /* Dropbox crea las carpetas al subir */ },
+    async preparar() { this.carpetasAseguradas = new Set(); },
+    // Dropbox crea las carpetas al subir, pero no se da por hecho que lo haga al
+    // mover: se crean antes (si ya existían, devuelve 409 y no pasa nada).
+    async asegurarCarpetaRuta(ruta) {
+      if (!this.carpetasAseguradas) this.carpetasAseguradas = new Set();
+      const clave = ruta.toLowerCase();
+      if (this.carpetasAseguradas.has(clave)) return;
+      const res = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/create_folder_v2', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: ruta, autorename: false }),
+      });
+      if (!res.ok && res.status !== 409) throw new Error('carpeta');
+      this.carpetasAseguradas.add(clave);
+    },
+    // Renombra y/o mueve el archivo; devuelve su nueva ruta (en Dropbox la ruta es la referencia).
+    async mover(ref, destino, nombreArchivo) {
+      const partes = rutaRemota(destino, nombreArchivo);
+      await this.asegurarCarpetaRuta('/' + partes[0]);
+      await this.asegurarCarpetaRuta('/' + partes[0] + '/' + partes[1]);
+      const nueva = '/' + partes.join('/');
+      if (nueva.toLowerCase() === ref.toLowerCase()) return ref;
+      const res = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/move_v2', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ from_path: ref, to_path: nueva, autorename: true }),
+      });
+      if (!res.ok) throw new Error('mover');
+      return (await res.json()).metadata.path_display;
+    },
     // La carpeta de aplicación de Dropbox se llama como la app en su consola. En
     // la dirección web, la carpeta "Apps" aparece traducida al idioma de la
     // cuenta (en español, "Aplicaciones"); el idioma se guarda al conectar.
@@ -1540,6 +1604,23 @@ const PROVEEDORES = {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: ref }),
       });
       if (!res.ok && res.status !== 409) throw new Error('borrar');
+    },
+    // Tras borrar un archivo, sube por sus carpetas (categoría y luego persona,
+    // según la ruta real del archivo) borrando las que se hayan quedado vacías.
+    // Se para en la primera que tenga algo dentro y nunca toca la raíz.
+    async limpiarCarpetasVaciasDe(ref) {
+      const partes = ref.split('/').filter(Boolean);
+      for (let n = partes.length - 1; n >= 1; n--) {
+        const carpeta = '/' + partes.slice(0, n).join('/');
+        const lista = await fetchNube('dropbox', 'https://api.dropboxapi.com/2/files/list_folder', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: carpeta, limit: 1 }),
+        });
+        if (lista.status === 409) continue; // ya no existe
+        if (!lista.ok) return;
+        const contenido = await lista.json();
+        if (contenido.entries.length > 0) return;
+        await this.borrar(carpeta);
+      }
     },
     async descargar(ruta) {
       return fetchNube('dropbox', 'https://content.dropboxapi.com/2/files/download', {
@@ -1673,7 +1754,13 @@ async function hayTrabajo(id) {
   if (leerJsonLocal(CLAVE_BORRADOS, []).some((b) => b.prov === id)) return true;
   for (const doc of datos.documentos) {
     for (const pagina of doc.paginas) {
-      if (pagina.remotos && pagina.remotos[id]) continue;
+      const ref = pagina.remotos && pagina.remotos[id];
+      if (ref) {
+        // ya está en la nube: hay trabajo si sus nombres han cambiado
+        const actual = pagina.rutas && pagina.rutas[id];
+        if (actual && actual !== claveRuta(destinoDe(doc), pagina)) return true;
+        continue;
+      }
       if (await cacheObtener(pagina.archivoId)) return true;
     }
   }
@@ -1704,12 +1791,67 @@ function hayCopiaAjena(estado, remoto) {
   return true;
 }
 
+// Cada elemento (persona, categoría, documento y página) lleva la hora de su
+// última modificación, "mod". Se pone sola al guardar (estamparCambios): se
+// compara con cómo estaba la última vez y, si ha cambiado, se marca la hora.
+// Así, al juntar dos copias, de cada elemento gana SIEMPRE la versión más
+// reciente, venga del móvil o de cualquier nube (renombrados, fechas, colores,
+// fotos...). Las firmas de la última vez se guardan aparte, para no ensuciar los datos.
+const CLAVE_FIRMAS = 'documentacion_firmas';
+function cyrb53(texto) {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+function firmaDe(obj, excluir) {
+  const copia = {};
+  Object.keys(obj).sort().forEach((k) => { if (!excluir.includes(k)) copia[k] = obj[k]; });
+  return cyrb53(JSON.stringify(copia));
+}
+function recorrerElementos(fn) {
+  datos.personas.forEach((p) => fn('p:' + p.id, p, ['mod']));
+  datos.categorias.forEach((c) => fn('c:' + c.id, c, ['mod']));
+  datos.documentos.forEach((d) => {
+    fn('d:' + d.id, d, ['mod', 'paginas']);
+    (d.paginas || []).forEach((g) => fn('g:' + g.archivoId, g, ['mod', 'remotos', 'rutas']));
+  });
+}
+function estamparCambios() {
+  const antes = leerJsonLocal(CLAVE_FIRMAS, {});
+  const ahora = {};
+  const t = Date.now();
+  recorrerElementos((clave, obj, excluir) => {
+    const firma = firmaDe(obj, excluir);
+    ahora[clave] = firma;
+    if (antes[clave] !== firma) obj.mod = t;
+  });
+  guardarJsonLocal(CLAVE_FIRMAS, ahora);
+}
+// Da por buenas las versiones actuales (tras traer datos de una nube): lo
+// adoptado no es un cambio propio y no debe llevar la hora de ahora.
+function registrarFirmas() {
+  const ahora = {};
+  recorrerElementos((clave, obj, excluir) => { ahora[clave] = firmaDe(obj, excluir); });
+  guardarJsonLocal(CLAVE_FIRMAS, ahora);
+}
+function adoptarCampos(propio, ajeno, excluir) {
+  Object.keys(ajeno).forEach((k) => { if (!excluir.includes(k)) propio[k] = ajeno[k]; });
+  Object.keys(propio).forEach((k) => { if (!excluir.includes(k) && !(k in ajeno)) delete propio[k]; });
+}
+
 // Suma lo de este móvil y lo de una nube SIN quitar nada de ninguno de los
 // dos lados: lo que solo estaba en la nube pasa al móvil (los archivos se
-// bajan después) y lo que solo estaba en el móvil se sube a continuación. Nada
-// se borra por el camino: en una nube solo se borra lo que se elimina a mano
-// en la app (encolarBorrado). Contrapartida: un borrado hecho en otro móvil
-// no se propaga, y lo que este aún conserve volverá a subirse.
+// bajan después), lo que solo estaba en el móvil se sube a continuación, y de
+// lo que está en los dos se queda la versión más reciente (mod). Nada se borra
+// por el camino: en una nube solo se borra lo que se elimina a mano en la app
+// (encolarBorrado). Contrapartida: un borrado hecho en otro móvil no se
+// propaga, y lo que este aún conserve volverá a subirse.
 function fusionarConNube(id, remoto) {
   const ajeno = {
     personas: remoto.datos.personas || [],
@@ -1720,22 +1862,32 @@ function fusionarConNube(id, remoto) {
 
   const paginasAjenas = new Map(); // id de documento → archivoId de sus páginas en la nube
   const refsNube = new Map();      // archivoId → dónde dice la nube que está en ESTA nube
+  const rutasNube = new Map();     // archivoId → con qué nombres la dejó
   ajeno.documentos.forEach((d) => {
     paginasAjenas.set(d.id, new Set(d.paginas.map((p) => p.archivoId)));
-    d.paginas.forEach((p) => { if (p.remotos && p.remotos[id]) refsNube.set(p.archivoId, p.remotos[id]); });
+    d.paginas.forEach((p) => {
+      if (p.remotos && p.remotos[id]) refsNube.set(p.archivoId, p.remotos[id]);
+      if (p.rutas && p.rutas[id]) rutasNube.set(p.archivoId, p.rutas[id]);
+    });
   });
   const idsPersonas = new Set(ajeno.personas.map((p) => p.id));
   const idsCategorias = new Set(ajeno.categorias.map((c) => c.id));
-  const propioExtra = datos.personas.some((p) => !idsPersonas.has(p.id))
+  let propioExtra = datos.personas.some((p) => !idsPersonas.has(p.id))
     || datos.categorias.some((c) => !idsCategorias.has(c.id))
     || datos.documentos.some((d) => { const s = paginasAjenas.get(d.id); return !s || d.paginas.some((p) => !s.has(p.archivoId)); });
 
   let adoptado = false;
+  // Une dos listas por id; de cada elemento repetido gana el de "mod" mayor.
   const unir = (propios, ajenos) => {
-    const ids = new Set(propios.map((x) => x.id));
-    const nuevos = ajenos.filter((x) => !ids.has(x.id));
-    if (nuevos.length) adoptado = true;
-    return propios.concat(nuevos);
+    const porId = new Map(propios.map((x) => [x.id, x]));
+    const resultado = propios.slice();
+    ajenos.forEach((a) => {
+      const mio = porId.get(a.id);
+      if (!mio) { resultado.push(a); adoptado = true; }
+      else if ((a.mod || 0) > (mio.mod || 0)) { adoptarCampos(mio, a, []); adoptado = true; }
+      else if ((mio.mod || 0) > (a.mod || 0)) propioExtra = true;
+    });
+    return resultado;
   };
   datos.personas = unir(datos.personas, ajeno.personas);
   datos.categorias = unir(datos.categorias, ajeno.categorias);
@@ -1743,25 +1895,68 @@ function fusionarConNube(id, remoto) {
   ajeno.documentos.forEach((d) => {
     const propio = propios.get(d.id);
     if (!propio) { datos.documentos.push(d); adoptado = true; return; }
+    if ((d.mod || 0) > (propio.mod || 0)) { adoptarCampos(propio, d, ['paginas']); adoptado = true; }
+    else if ((propio.mod || 0) > (d.mod || 0)) propioExtra = true;
     d.paginas.forEach((p) => {
       const mia = propio.paginas.find((x) => x.archivoId === p.archivoId);
       if (!mia) { propio.paginas.push(p); adoptado = true; return; }
       if (!mia.remotos) mia.remotos = {};
+      if ((p.mod || 0) > (mia.mod || 0)) { adoptarCampos(mia, p, ['remotos', 'archivoId', 'rutas']); adoptado = true; }
+      else if ((mia.mod || 0) > (p.mod || 0)) propioExtra = true;
       Object.keys(p.remotos || {}).forEach((k) => { if (!mia.remotos[k]) { mia.remotos[k] = p.remotos[k]; adoptado = true; } });
+      if (!mia.rutas) mia.rutas = {};
+      Object.keys(p.rutas || {}).forEach((k) => { if (!mia.rutas[k]) { mia.rutas[k] = p.rutas[k]; adoptado = true; } });
     });
   });
   // Lo que la propia nube lista manda sobre lo que este móvil creía: si el
   // móvil daba por subida una página que la nube no tiene, se vuelve a subir.
   datos.documentos.forEach((d) => d.paginas.forEach((p) => {
     if (!p.remotos) p.remotos = {};
+    if (!p.rutas) p.rutas = {};
     const ref = refsNube.get(p.archivoId);
-    if (ref) { if (p.remotos[id] !== ref) { p.remotos[id] = ref; adoptado = true; } }
-    else if (p.remotos[id]) { delete p.remotos[id]; adoptado = true; }
+    if (ref) {
+      if (p.remotos[id] !== ref) { p.remotos[id] = ref; adoptado = true; }
+      // con los nombres que la propia nube dice que tiene el archivo
+      const rutaNube = rutasNube.get(p.archivoId);
+      if (rutaNube && p.rutas[id] !== rutaNube) { p.rutas[id] = rutaNube; adoptado = true; }
+    } else if (p.remotos[id]) { delete p.remotos[id]; delete p.rutas[id]; adoptado = true; }
   }));
 
+  registrarFirmas();
   if (adoptado) { subirRevisionLocal(); guardarDatosEnCacheLocal(); }
   guardarEstadoProv(id, { revSubida: propioExtra ? -1 : revisionLocal(), actualizadoEn: remoto.actualizadoEn });
   return { adoptado, propioExtra };
+}
+
+// Si algo se ha renombrado o ha cambiado de persona o categoría, el archivo se
+// renombra o se mueve también en esta nube, para que los nombres coincidan en
+// todo (móvil y nubes). Las carpetas antiguas que se queden vacías se borran.
+async function reubicarEnNube(id, prov) {
+  let movido = false;
+  const limpiar = new Map(); // carpeta antigua → datos para limpiarla si queda vacía
+  for (const doc of datos.documentos.slice()) {
+    const destino = destinoDe(doc);
+    for (const pagina of doc.paginas.slice()) {
+      const ref = pagina.remotos && pagina.remotos[id];
+      if (!ref) continue;
+      if (!pagina.rutas) pagina.rutas = {};
+      const deseada = claveRuta(destino, pagina);
+      const actual = pagina.rutas[id];
+      if (!actual) { pagina.rutas[id] = deseada; continue; } // subida antes de anotar las rutas: se da por buena
+      if (actual === deseada) continue;
+      try {
+        pagina.remotos[id] = await prov.mover(ref, destino, nombreArchivoRemoto(pagina));
+        pagina.rutas[id] = deseada;
+        movido = true;
+        guardarDatosEnCacheLocal();
+        limpiar.set(actual.split('/').slice(0, 2).join('/'), { ref, clave: actual });
+      } catch (e) { console.error(e); /* se reintenta en la siguiente pasada */ }
+    }
+  }
+  if (prov.limpiarCarpetasVaciasDe) {
+    for (const { ref, clave } of limpiar.values()) { try { await prov.limpiarCarpetasVaciasDe(ref, clave); } catch (e) { /* ignorar */ } }
+  }
+  return movido;
 }
 
 async function respaldarEn(id, forzar = false) {
@@ -1785,11 +1980,11 @@ async function respaldarEn(id, forzar = false) {
       if (fusion.adoptado) {
         adoptado = true;
         try { refrescarPantallaActual(); } catch (e) { /* ignorar */ }
-        mostrarToast(`Se han sumado a este móvil los documentos que había en ${prov.nombre}`);
+        mostrarToast(`Se han traído a este móvil las novedades de ${prov.nombre}`);
       }
     }
 
-    let subioAlgo = false;
+    let subioAlgo = await reubicarEnNube(id, prov);
     for (const doc of datos.documentos.slice()) {
       const persona = datos.personas.find((p) => p.id === doc.personaId) || { id: '-', nombre: 'Sin persona' };
       const categoria = datos.categorias.find((c) => c.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR;
@@ -1801,6 +1996,8 @@ async function respaldarEn(id, forzar = false) {
         if (!paginaSigueExistiendo(pagina)) { try { await prov.borrar(ref); } catch (e) { /* ignorar */ } continue; }
         if (!pagina.remotos) pagina.remotos = {};
         pagina.remotos[id] = ref;
+        if (!pagina.rutas) pagina.rutas = {};
+        pagina.rutas[id] = claveRuta({ persona, categoria }, pagina);
         subioAlgo = true;
         guardarDatosEnCacheLocal();
       }
@@ -1836,6 +2033,7 @@ function restaurarCopia(id, remoto) {
     documentos: remoto.datos.documentos || [],
   };
   normalizarDocumentosPaginas(datos.documentos);
+  registrarFirmas();
   const rev = subirRevisionLocal();
   guardarEstadoProv(id, { revSubida: rev, actualizadoEn: remoto.actualizadoEn });
   guardarDatosEnCacheLocal();
@@ -1863,12 +2061,16 @@ function encolarBorrado(pagina, persona, categoria) {
 async function procesarBorradosPendientes(id) {
   const propios = leerJsonLocal(CLAVE_BORRADOS, []).filter((b) => b.prov === id);
   const carpetasTocadas = new Map();
+  const rutasParaLimpiar = new Map(); // carpeta que contenía el archivo → una ruta suya
   for (const item of propios) {
     try { await PROVEEDORES[id].borrar(item.ref); } catch (e) { continue; } // se reintenta en la siguiente pasada
     guardarJsonLocal(CLAVE_BORRADOS, leerJsonLocal(CLAVE_BORRADOS, []).filter((b) => !(b.prov === item.prov && b.ref === item.ref)));
     if (id === 'google' && item.persona && item.categoria) carpetasTocadas.set(`${item.persona.id}:${item.categoria.id}`, item);
+    if (PROVEEDORES[id].limpiarCarpetasVaciasDe) rutasParaLimpiar.set(String(item.ref).replace(/[/][^/]*$/, ''), item.ref);
   }
+  // Las carpetas que se queden vacías se borran (mejor esfuerzo: si falla, no pasa nada).
   for (const item of carpetasTocadas.values()) await limpiarCarpetasVaciasTrasBorrar(item.persona, item.categoria);
+  for (const ref of rutasParaLimpiar.values()) { try { await PROVEEDORES[id].limpiarCarpetasVaciasDe(ref); } catch (e) { /* ignorar */ } }
 }
 
 // ---- Archivos: primero en el móvil, las nubes son copia ----
@@ -4604,13 +4806,13 @@ async function generarArchivoExportacion(personaId = null) {
   // Los ids van dentro del archivo para que, al importarlo, lo que ya esté no se duplique.
   const documentosCabecera = documentosAExportar.map((doc) => ({
     id: doc.id, personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
-    fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida,
+    fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida, mod: doc.mod,
     paginas: doc.paginas.map((pagina) => ({
-      archivoId: pagina.archivoId, nombre: pagina.nombre, mimeType: pagina.mimeType, tamano: partesArchivos[indiceParte++].length,
+      archivoId: pagina.archivoId, nombre: pagina.nombre, mimeType: pagina.mimeType, mod: pagina.mod, tamano: partesArchivos[indiceParte++].length,
     })),
   }));
 
-  const cabecera = { version: 3, personas: personasAExportar, categorias: categoriasAExportar, documentos: documentosCabecera };
+  const cabecera = { version: 4, personas: personasAExportar, categorias: categoriasAExportar, documentos: documentosCabecera };
   const jsonBytes = new TextEncoder().encode(JSON.stringify(cabecera));
   const totalArchivos = partesArchivos.reduce((s, p) => s + p.length, 0);
 
@@ -4806,18 +5008,24 @@ async function procesarImportacion(file, desdeBienvenida = false) {
     <h3>Importando…</h3>
     <div class="estado-carga"><div class="spinner"></div><span id="texto-progreso-importar">Leyendo archivo…</span></div>
   `;
-  const sumado = { personas: 0, documentos: 0, paginas: 0 };
+  const sumado = { personas: 0, documentos: 0, paginas: 0, cambios: 0 };
   try {
     const buffer = await file.arrayBuffer();
     const paquete = leerPaqueteExportacion(buffer);
     if (!paquete.personas.length && !paquete.documentos.length) throw new Error('paquete vacío');
 
+    // De lo que ya está (mismo id) se queda la versión más reciente (mod), como al
+    // sincronizar con las nubes; lo que no está se añade.
     paquete.personas.forEach((p) => {
-      if (!datos.personas.some((x) => x.id === p.id)) { datos.personas.push(Object.assign({}, p)); sumado.personas++; }
+      const mia = datos.personas.find((x) => x.id === p.id);
+      if (!mia) { datos.personas.push(Object.assign({}, p)); sumado.personas++; }
+      else if ((p.mod || 0) > (mia.mod || 0)) { adoptarCampos(mia, p, []); sumado.cambios++; }
     });
     // Una categoría de fábrica que se hubiera borrado se recupera tal cual venía en la copia.
     paquete.categorias.forEach((c) => {
-      if (!datos.categorias.some((x) => x.id === c.id)) datos.categorias.push(Object.assign({}, c));
+      const mia = datos.categorias.find((x) => x.id === c.id);
+      if (!mia) datos.categorias.push(Object.assign({}, c));
+      else if ((c.mod || 0) > (mia.mod || 0)) { adoptarCampos(mia, c, []); sumado.cambios++; }
     });
 
     for (let i = 0; i < paquete.documentos.length; i++) {
@@ -4833,30 +5041,42 @@ async function procesarImportacion(file, desdeBienvenida = false) {
         ? datos.documentos.find((d) => d.id === meta.id)
         : datos.documentos.find((d) => d.personaId === meta.personaId && d.categoria === categoriaId && d.nombre.trim().toLowerCase() === nombreDoc);
       if (existente && !meta.id) continue; // copia antigua: se da por ya presente
+      if (existente && (meta.mod || 0) > (existente.mod || 0)) {
+        existente.nombre = meta.nombre; existente.categoria = categoriaId;
+        existente.fechaCaducidad = meta.fechaCaducidad || null;
+        existente.fechaSubida = meta.fechaSubida || existente.fechaSubida;
+        existente.mod = meta.mod;
+        sumado.cambios++;
+      }
 
       const destino = existente || {
-        id: meta.id || idUnico('doc'), personaId: meta.personaId,
+        id: meta.id || idUnico('doc'), personaId: meta.personaId, mod: meta.mod,
         nombre: meta.nombre, categoria: categoriaId,
         fechaCaducidad: meta.fechaCaducidad || null, fechaSubida: meta.fechaSubida || new Date().toISOString().slice(0, 10),
         paginas: [],
       };
       for (let j = 0; j < meta.paginas.length; j++) {
         const metaPagina = meta.paginas[j];
-        if (metaPagina.archivoId && destino.paginas.some((p) => p.archivoId === metaPagina.archivoId)) continue;
+        const yaEsta = metaPagina.archivoId && destino.paginas.find((p) => p.archivoId === metaPagina.archivoId);
+        if (yaEsta) {
+          if ((metaPagina.mod || 0) > (yaEsta.mod || 0)) { yaEsta.nombre = metaPagina.nombre; yaEsta.mod = metaPagina.mod; sumado.cambios++; }
+          continue;
+        }
         const blobArchivo = new Blob([bytesPorPagina[j]], { type: metaPagina.mimeType || 'application/octet-stream' });
         const archivoId = await guardarArchivoLocal(blobArchivo, metaPagina.archivoId || null);
-        destino.paginas.push({ archivoId, mimeType: metaPagina.mimeType, nombre: metaPagina.nombre, remotos: {} });
+        destino.paginas.push({ archivoId, mimeType: metaPagina.mimeType, nombre: metaPagina.nombre, mod: metaPagina.mod, remotos: {}, rutas: {} });
         sumado.paginas++;
       }
       if (!existente) { datos.documentos.push(destino); sumado.documentos++; }
     }
 
+    registrarFirmas(); // lo importado conserva su hora: no cuenta como un cambio hecho ahora
     await guardarMetadatos();
     cerrarCapas(2); // cierra este modal y el de Ajustes
     renderizarPantallaInicio();
-    mostrarToast(sumado.personas + sumado.documentos + sumado.paginas === 0
+    mostrarToast(sumado.personas + sumado.documentos + sumado.paginas + sumado.cambios === 0
       ? 'No había nada nuevo: ya lo tenías todo'
-      : `Sumado: ${pluralizar(sumado.personas, 'persona', 'personas')}, ${pluralizar(sumado.documentos, 'documento', 'documentos')} y ${pluralizar(sumado.paginas, 'página', 'páginas')}`);
+      : `Sumado: ${pluralizar(sumado.personas, 'persona', 'personas')}, ${pluralizar(sumado.documentos, 'documento', 'documentos')} y ${pluralizar(sumado.paginas, 'página', 'páginas')}` + (sumado.cambios ? `; además, ${pluralizar(sumado.cambios, 'cambio más reciente', 'cambios más recientes')}` : ''));
     setTimeout(avisarSiSinNube, 900);
   } catch (e) {
     console.error(e);
