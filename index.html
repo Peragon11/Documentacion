@@ -165,7 +165,7 @@
   html[data-tema="claro"] .btn-salir, html[data-tema="claro"] .estado-prov.aviso{ color:#B3432A; }
   .ajustes .version{ font-size:.74rem; color:var(--text-dim); }
   /* Cabecera de la hoja: el asa y el título son la zona por la que se arrastra para cerrar */
-  .ajustes .cabecera-hoja{ margin:-22px -22px -4px; padding:10px 22px 4px; touch-action:none; cursor:grab; }
+  .ajustes .cabecera-hoja{ margin:-22px -22px -4px; padding:10px 22px 4px; }
   .ajustes .cabecera-hoja .asa{ width:42px; height:5px; border-radius:3px; background:var(--borde-fuerte); margin:0 auto 12px; }
   .ajustes .fila-titulo{ display:flex; align-items:center; gap:6px; }
   .ajustes .btn-atras-ajustes{ flex:none; width:36px; height:36px; margin-left:-8px; border:none; border-radius:50%; background:none; color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer; }
@@ -232,10 +232,13 @@
        propia capa de composición evita el hueco. */
     transform:translateZ(0);
   }
+  /* La versión va abajo a la derecha de la pantalla principal, fuera de la barra de arriba */
+  #version-pie{ position:fixed; right:14px; bottom:calc(8px + var(--safe-b)); font-size:.66rem; color:var(--text-dim); opacity:.75; pointer-events:none; z-index:5; }
   .topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
   .topbar .marca span#titulo-topbar{
+    flex:1; min-width:0; line-height:1.15;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    font-family:'Poppins', var(--sans); letter-spacing:.02em;
+    font-family:'Poppins', var(--sans); letter-spacing:.01em;
   }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:12px; flex:none; box-shadow:none; }
   .icono-marca{ width:29px; height:29px; border-radius:8px; flex:none; display:block; }
@@ -698,7 +701,6 @@
       <img class="icono-marca" src="icono.png" id="topbar-punto" alt="">
       <div class="avatar-persona hidden" id="avatar-topbar"></div>
       <span id="titulo-topbar">DOCUMENTACIÓN</span>
-      <span id="version-debug-top" style="font-size:.62rem;color:var(--text-dim);font-family:var(--sans);font-weight:400;letter-spacing:0;margin-left:6px;flex:none;"></span>
     </div>
     <button class="btn-icono-top" id="btn-buscar-top" aria-label="Buscar documento">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -728,6 +730,7 @@
   <main>
     <section id="pantalla-personas">
       <div class="grid-personas" id="grid-personas"></div>
+      <span id="version-pie"></span>
     </section>
 
     <section id="pantalla-persona" class="hidden">
@@ -759,7 +762,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.8';
+const VERSION_APP = '2.3.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -883,7 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#btn-banner-cerrar')?.addEventListener('click', () => $('#banner-instalar').classList.add('hidden'));
 
   $('#version-debug-login').textContent = 'v' + VERSION_APP;
-  $('#version-debug-top').textContent = 'v' + VERSION_APP;
+  $('#version-pie').textContent = 'v' + VERSION_APP;
 
   if (appYaInstalada()) pedirPermisoNotificaciones();
   const huboCacheLocal = cargarDatosDesdeCacheLocal();
@@ -944,6 +947,42 @@ aplicarTema(obtenerTemaGuardado());
 mediaOscuro.addEventListener('change', () => {
   if (obtenerTemaGuardado() === 'auto') aplicarTema('auto');
 });
+
+// El título de la barra de arriba (el nombre de la app, o de la persona o categoría
+// abierta) ocupa TODO el hueco que hay entre el icono y los botones: se mide el
+// espacio real y se le da el mayor tamaño de letra con el que cabe entero, en
+// vertical y en horizontal. Nunca se recorta salvo un nombre larguísimo, que ya
+// estaría en el tamaño mínimo. El máximo evita que en pantallas anchas quede
+// desproporcionado respecto a la altura de la barra.
+const TITULO_TAM_MIN = 9;
+const TITULO_TAM_MAX = 38; // con line-height 1.15 la línea mide 43,7 px: no supera los botones (44 px) y la barra no crece
+function ajustarTituloTopbar() {
+  const t = $('#titulo-topbar');
+  if (!t) return;
+  const disponible = t.clientWidth; // el título rellena el hueco libre (flex:1), no depende de su tamaño de letra
+  if (!disponible) return;          // la app aún no está a la vista
+  t.style.fontSize = '100px';
+  const natural = t.scrollWidth;    // ancho que necesitaría a 100 px
+  const tam = Math.max(TITULO_TAM_MIN, Math.min(TITULO_TAM_MAX, (disponible / Math.max(natural, 1)) * 100 * 0.985));
+  t.style.fontSize = tam.toFixed(2) + 'px';
+}
+(function activarAjusteTituloTopbar() {
+  const t = $('#titulo-topbar');
+  if (!t) return;
+  let anchoAnterior = 0;
+  // cambia el hueco (giro, botones que aparecen o se ocultan, otra pantalla)
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => {
+      if (t.clientWidth !== anchoAnterior) { anchoAnterior = t.clientWidth; ajustarTituloTopbar(); }
+    }).observe(t);
+  }
+  // cambia el texto
+  new MutationObserver(() => ajustarTituloTopbar()).observe(t, { childList: true, characterData: true, subtree: true });
+  // la tipografía tarda en cargar y cambia el ancho del texto
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTituloTopbar);
+  window.addEventListener('resize', ajustarTituloTopbar);
+  window.addEventListener('orientationchange', () => setTimeout(ajustarTituloTopbar, 150));
+})();
 
 let pilaNavegacion = [];
 let ignorarProximoPopstate = false;
@@ -4862,29 +4901,45 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarGuardar(); });
 }
 
-// Cerrar la hoja arrastrándola hacia abajo desde su barra de arriba (el asa y el título).
+// Cerrar la hoja arrastrándola hacia abajo desde CUALQUIER punto de la pantalla
+// (la hoja, la cabecera o el fondo oscuro de encima). Como en las hojas de
+// cualquier móvil, solo arrastra la hoja si el contenido está arriba del todo:
+// si está desplazado, el gesto desplaza el contenido como siempre.
 // Al soltar: si se ha bajado bastante (o rápido), se desliza fuera y se cierra;
 // si no, vuelve a su sitio.
 function activarArrastreParaCerrar(zona) {
   const hoja = zona.closest('.modal');
   const fondo = zona.closest('.modal-fondo');
   if (!hoja || !fondo) return;
-  let inicioY = 0; let desplazado = 0; let arrastrando = false; let t0 = 0;
-  zona.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('button')) return; // el botón de volver sigue siendo un botón
-    arrastrando = true; inicioY = e.clientY; desplazado = 0; t0 = Date.now();
-    hoja.style.transition = 'none';
-    try { zona.setPointerCapture(e.pointerId); } catch (err) { /* ignorar */ }
-  });
-  zona.addEventListener('pointermove', (e) => {
-    if (!arrastrando) return;
-    desplazado = Math.max(0, e.clientY - inicioY);
-    hoja.style.transform = 'translateY(' + desplazado + 'px)';
-    fondo.style.background = 'rgba(10,15,20,' + (0.62 * (1 - Math.min(desplazado / 420, 1))).toFixed(3) + ')';
-  });
+  let y0 = 0; let desplazado = 0; let t0 = 0; let desdeFuera = false;
+  let estado = 'reposo'; // reposo | espera | arrastrando | desplazando
+  const aplicar = (d) => {
+    hoja.style.transform = 'translateY(' + d + 'px)';
+    fondo.style.background = 'rgba(10,15,20,' + (0.62 * (1 - Math.min(d / 420, 1))).toFixed(3) + ')';
+  };
+  fondo.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { estado = 'desplazando'; return; }
+    y0 = e.touches[0].clientY; desplazado = 0; t0 = Date.now();
+    desdeFuera = !hoja.contains(e.target);
+    estado = 'espera';
+  }, { passive: true });
+  fondo.addEventListener('touchmove', (e) => {
+    if (estado === 'desplazando' || estado === 'reposo') return;
+    const d = e.touches[0].clientY - y0;
+    if (estado === 'espera') {
+      if (Math.abs(d) < 6) return;
+      // Solo se arrastra hacia abajo y con el contenido arriba del todo (o desde el fondo oscuro)
+      if (d > 0 && (desdeFuera || hoja.scrollTop <= 0)) { estado = 'arrastrando'; hoja.style.transition = 'none'; }
+      else { estado = 'desplazando'; return; }
+    }
+    if (e.cancelable) e.preventDefault();
+    desplazado = Math.max(0, d);
+    aplicar(desplazado);
+  }, { passive: false });
   const soltar = () => {
-    if (!arrastrando) return;
-    arrastrando = false;
+    const estabaArrastrando = estado === 'arrastrando';
+    estado = 'reposo';
+    if (!estabaArrastrando) return;
     const veloz = desplazado / Math.max(Date.now() - t0, 1) > 0.6;
     hoja.style.transition = 'transform .24s ease';
     if (desplazado > 110 || (veloz && desplazado > 40)) {
@@ -4897,8 +4952,8 @@ function activarArrastreParaCerrar(zona) {
       fondo.style.background = '';
     }
   };
-  zona.addEventListener('pointerup', soltar);
-  zona.addEventListener('pointercancel', soltar);
+  fondo.addEventListener('touchend', soltar);
+  fondo.addEventListener('touchcancel', soltar);
 }
 
 const NOMBRES_TEMA = { auto: 'Automático, sigue a tu móvil', claro: 'Claro', oscuro: 'Oscuro' };
