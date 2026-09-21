@@ -240,6 +240,8 @@
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     font-family:'Poppins', var(--sans); letter-spacing:.01em;
   }
+  /* Nombre largo: se reparte en dos líneas (ajustarTituloTopbar) */
+  .topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.1; overflow:hidden; max-height:calc(2.2em + 2px); }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:12px; flex:none; box-shadow:none; }
   .icono-marca{ width:29px; height:29px; border-radius:8px; flex:none; display:block; }
   .btn-icono-top{
@@ -762,7 +764,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.9';
+const VERSION_APP = '2.4.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -949,22 +951,49 @@ mediaOscuro.addEventListener('change', () => {
 });
 
 // El título de la barra de arriba (el nombre de la app, o de la persona o categoría
-// abierta) ocupa TODO el hueco que hay entre el icono y los botones: se mide el
-// espacio real y se le da el mayor tamaño de letra con el que cabe entero, en
-// vertical y en horizontal. Nunca se recorta salvo un nombre larguísimo, que ya
-// estaría en el tamaño mínimo. El máximo evita que en pantallas anchas quede
-// desproporcionado respecto a la altura de la barra.
+// abierta) ocupa el hueco que hay entre el icono y los botones: se mide el espacio
+// real y se le da el mayor tamaño de letra con el que cabe entero, en vertical y en
+// horizontal.
+// - El nombre de la app puede llegar a 38 px (línea de 43,7 px: no supera los
+//   botones de 44 y la barra no crece). Los nombres de personas y categorías, que
+//   suelen ser cortos, se limitan a 26 px para que no resulten exagerados.
+// - Si un nombre es largo y en una línea quedaría pequeño, se reparte en DOS líneas
+//   (hasta 19,5 px, para que dos líneas tampoco hagan crecer la barra) cuando así la
+//   letra puede ser claramente mayor. Solo un nombre larguísimo llega al tamaño
+//   mínimo y se recorta.
 const TITULO_TAM_MIN = 9;
-const TITULO_TAM_MAX = 38; // con line-height 1.15 la línea mide 43,7 px: no supera los botones (44 px) y la barra no crece
+const TITULO_TAM_MAX_APP = 38;
+const TITULO_TAM_MAX_NOMBRE = 26;
+const TITULO_TAM_MAX_DOS_LINEAS = 19.5;
 function ajustarTituloTopbar() {
   const t = $('#titulo-topbar');
   if (!t) return;
   const disponible = t.clientWidth; // el título rellena el hueco libre (flex:1), no depende de su tamaño de letra
   if (!disponible) return;          // la app aún no está a la vista
+  const enNombre = !$('#btn-volver').classList.contains('hidden'); // dentro de una persona o categoría
+  const tope = enNombre ? TITULO_TAM_MAX_NOMBRE : TITULO_TAM_MAX_APP;
+
+  // Una línea: se mide a 100 px y se escala hasta llenar el hueco.
+  t.classList.remove('dos-lineas');
   t.style.fontSize = '100px';
-  const natural = t.scrollWidth;    // ancho que necesitaría a 100 px
-  const tam = Math.max(TITULO_TAM_MIN, Math.min(TITULO_TAM_MAX, (disponible / Math.max(natural, 1)) * 100 * 0.985));
-  t.style.fontSize = tam.toFixed(2) + 'px';
+  const natural = t.scrollWidth;
+  const idealUna = (disponible / Math.max(natural, 1)) * 100 * 0.985;
+
+  // Dos líneas: si en una línea la letra sería pequeña, se busca el mayor tamaño con el
+  // que el texto cabe en dos líneas sin que ninguna palabra se salga del hueco.
+  if (idealUna < TITULO_TAM_MAX_DOS_LINEAS) {
+    t.classList.add('dos-lineas');
+    const cabe = (px) => {
+      t.style.fontSize = px + 'px';
+      // dos líneas de altura 1,1 × tamaño, con unos píxeles de margen por los acentos y colas de las letras
+      return t.scrollWidth <= t.clientWidth + 0.5 && t.scrollHeight <= 2.2 * px + 4;
+    };
+    let bajo = TITULO_TAM_MIN; let alto = TITULO_TAM_MAX_DOS_LINEAS;
+    for (let i = 0; i < 9; i++) { const medio = (bajo + alto) / 2; if (cabe(medio)) bajo = medio; else alto = medio; }
+    if (bajo > idealUna * 1.12) { t.style.fontSize = bajo.toFixed(2) + 'px'; return; }
+    t.classList.remove('dos-lineas');
+  }
+  t.style.fontSize = Math.max(TITULO_TAM_MIN, Math.min(tope, idealUna)).toFixed(2) + 'px';
 }
 (function activarAjusteTituloTopbar() {
   const t = $('#titulo-topbar');
@@ -1332,6 +1361,10 @@ async function asegurarCarpeta() {
 // datos.categorias, no se puede crear/renombrar/borrar): es solo lo que
 // se muestra para un documento cuya categoría ya no existe, porque se
 // borró. Cualquier categoría, incluidas las de fábrica, se puede borrar.
+// Límite común para el nombre de una persona o de una categoría (al crear y al renombrar).
+// Sale en la barra de arriba, donde con este largo cabe entero en dos líneas.
+const LIMITE_NOMBRE = 35;
+
 const CATEGORIA_SIN_ASIGNAR = { id: null, nombre: 'Sin categoría', color: '#6B7686' };
 
 // Documentos guardados antes de que existieran las "páginas" (un
@@ -2934,7 +2967,7 @@ function abrirRenombrarPersona(persona) {
       renderizarPersonas();
       mostrarToast('Nombre actualizado');
     });
-  }, 30);
+  }, LIMITE_NOMBRE);
 }
 
 function confirmarEliminarPersona(persona) {
@@ -3057,7 +3090,7 @@ function abrirRenombrarCategoria(cat) {
       renderizarCategoriasHome();
       mostrarToast('Categoría renombrada');
     });
-  }, 30);
+  }, LIMITE_NOMBRE);
 }
 
 function abrirNuevaCategoria() {
@@ -3074,7 +3107,7 @@ function abrirNuevaCategoria() {
       renderizarCategoriasHome();
       mostrarToast('Categoría creada');
     });
-  }, 30);
+  }, LIMITE_NOMBRE);
 }
 
 function confirmarEliminarCategoria(cat) {
@@ -3377,7 +3410,7 @@ function abrirModalNuevaPersona() {
       <div id="zona-iconos-nuevo" class="hidden">${htmlGridIconosAvatar(null)}</div>
       <div class="campo">
         <label for="input-nombre-persona">Nombre</label>
-        <input type="search" id="input-nombre-persona" name="q" placeholder="Añadir nombre" maxlength="30" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
+        <input type="search" id="input-nombre-persona" name="q" placeholder="Añadir nombre" maxlength="${LIMITE_NOMBRE}" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
