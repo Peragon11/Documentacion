@@ -24,7 +24,7 @@
     nordico: 'family=Outfit:wght@400;500;600',
     contraste: 'family=Space+Grotesk:wght@500;700',
     bosque: 'family=Fraunces:wght@600;700&family=Nunito:wght@500;700',
-    pixeles: 'family=Pixelify+Sans:wght@500;700&family=Press+Start+2P',
+    pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P',
     neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700'
   };
   window.__cargarFuentesSkin = function (id) {
@@ -858,6 +858,82 @@
   .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
   .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
 
+  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
+  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
+  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
+  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
+  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
+  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
+  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
+  .mqs-cuerpo{ display:block; padding:10px; }
+  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
+  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
+  .mqs-ficha.a i{ background:var(--azul); }
+  .mqs-ficha.z i{ background:var(--amber); }
+  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
+  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
+  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
+  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
+  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
+  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
+  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
+  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
+  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
+  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
+  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
+  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
+  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
+  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+
+  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
+  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
+  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
+  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
+  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
+  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
+  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
+  .mqs-cuerpo{ display:block; padding:10px; }
+  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
+  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
+  .mqs-ficha.a i{ background:var(--azul); }
+  .mqs-ficha.z i{ background:var(--amber); }
+  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
+  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
+  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
+  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
+  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
+  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
+  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
+  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
+  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
+  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
+  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
+  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
+  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
+  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+
   /* ==================== ESTILOS (skins) ====================
      Cada estilo redefine colores (oscuro y claro), forma (radios), letra y algunos detalles.
      El atributo data-skin va en <html>; también en las maquetas de la pantalla de Estilos. */
@@ -1025,7 +1101,9 @@
   html[data-skin="pixeles"] h1, html[data-skin="pixeles"] h3{ font-weight:700; letter-spacing:0; }
   html[data-skin="pixeles"] .modal h3{ font-size:1.25rem; }
   html[data-skin="pixeles"] .doc-nombre, html[data-skin="pixeles"] .persona-tile .nombre-persona{ font-weight:700; font-size:1.05rem; }
-  html[data-skin="pixeles"] .marca-paginas, html[data-skin="pixeles"] #version-pie, html[data-skin="pixeles"] #version-debug-login{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
+  html[data-skin="pixeles"] .marca-paginas, html[data-skin="pixeles"] #version-pie, html[data-skin="pixeles"] #version-debug-login, html[data-skin="pixeles"] .version-fila{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
+  /* La letra pixelada se lee mejor en peso normal: en negrita la C se cierra y parece una O */
+  html[data-skin="pixeles"] *{ font-weight:400 !important; }
   html[data-skin="pixeles"] .modal{ border-top:4px solid var(--borde-px); }
   html[data-skin="pixeles"] .ajustes .grupo > * + *{ border-top:4px solid var(--borde-sutil); }
   html[data-skin="pixeles"] .doc-fila.aviso, html[data-skin="pixeles"] .doc-fila.caducado{ margin-bottom:4px; }
@@ -1200,7 +1278,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.5.0';
+const VERSION_APP = '2.5.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
