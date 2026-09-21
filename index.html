@@ -661,7 +661,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.3';
+const VERSION_APP = '2.3.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -936,7 +936,7 @@ async function arrancar() {
   actualizarPuntoAjustes();
   const retorno = await procesarRetornoOAuth();
   if (retorno) { await alConectarProveedor(retorno); return; }
-  if (hayProveedores()) programarRespaldo(1500);
+  if (hayProveedores()) setTimeout(sincronizarSiToca, 1500);
   else setTimeout(avisarSiSinNube, 2500);
 }
 
@@ -1579,7 +1579,7 @@ function programarRespaldo(espera = 2000) {
   temporizadorRespaldo = setTimeout(ejecutarRespaldo, espera);
 }
 window.addEventListener('online', () => programarRespaldo(1000));
-document.addEventListener('visibilitychange', () => { if (!document.hidden) programarRespaldo(1500); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(sincronizarSiToca, 1500); });
 
 // Una pasada por todas las nubes indicadas; devuelve si alguna aportó datos
 // nuevos al móvil. Con forzar, cada nube se consulta aunque no haya nada que subir.
@@ -1611,6 +1611,31 @@ async function ejecutarRespaldo() {
 
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Sincronización automática: SOLO al abrir la app o al volver a ella desde
+// segundo plano, y como mucho una vez por hora (aunque se abra y cierre varias
+// veces), se consulta cada nube y se suma en los dos sentidos (sincronizarTodo).
+// Si aún no toca, solo se hace la pasada normal, que envía lo pendiente. Los
+// cambios propios se copian a las nubes al momento, sin esperar a esta consulta.
+const CLAVE_ULTIMA_SYNC = 'documentacion_ultima_sync';
+const MINUTOS_ENTRE_SINCRONIZACIONES = 60;
+const ultimaSincronizacion = () => parseInt(localStorage.getItem(CLAVE_ULTIMA_SYNC) || '0', 10) || 0;
+function sincronizacionDebida() {
+  return Date.now() - ultimaSincronizacion() >= MINUTOS_ENTRE_SINCRONIZACIONES * 60000;
+}
+async function sincronizarSiToca() {
+  if (!hayProveedores() || !navigator.onLine || document.hidden || respaldoEnCurso) return;
+  if (!sincronizacionDebida()) { programarRespaldo(200); return; }
+  await sincronizarTodo();
+}
+function textoUltimaSync() {
+  if (!hayProveedores()) return '';
+  const ultima = ultimaSincronizacion();
+  const cuando = ultima
+    ? new Date(ultima).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : 'todavía no';
+  return `Última sincronización automática: ${cuando}`;
+}
+
 // Antes de exportar: consulta TODAS las nubes conectadas (aunque no haya nada
 // nuevo que subir), suma lo suyo al móvil y lo del móvil a cada una, y baja los
 // archivos que solo estén en la nube. Se repite mientras alguna nube siga
@@ -1631,8 +1656,10 @@ async function sincronizarTodo() {
       if (!huboAdopcion) break;
     }
   } finally { respaldoEnCurso = false; }
+  const fallos = activos.filter((id) => estadoProv[id] !== 'ok').map((id) => PROVEEDORES[id].nombre);
+  if (!fallos.length) localStorage.setItem(CLAVE_ULTIMA_SYNC, String(Date.now()));
   refrescarEstadoAjustes();
-  return { fallos: activos.filter((id) => estadoProv[id] !== 'ok').map((id) => PROVEEDORES[id].nombre) };
+  return { fallos };
 }
 
 function paginaSigueExistiendo(pagina) {
@@ -1956,6 +1983,8 @@ function htmlFilasProveedores() {
 
 function refrescarEstadoAjustes() {
   actualizarPuntoAjustes();
+  const nota = $('#texto-ultima-sync');
+  if (nota) nota.textContent = textoUltimaSync();
   const lista = $('#lista-proveedores');
   if (lista) lista.innerHTML = htmlFilasProveedores();
 }
@@ -4446,7 +4475,7 @@ $('#btn-ajustes').addEventListener('click', () => {
       <label>Copias de seguridad</label>
       ${hayProveedores() ? '' : '<p style="color:#E0897A;font-size:.8rem;line-height:1.45;margin:0 0 8px;">Sin copia de seguridad: tus documentos solo están en este móvil.</p>'}
       <div class="lista-proveedores" id="lista-proveedores">${htmlFilasProveedores()}</div>
-      <button type="button" class="btn-secundario" id="btn-copiar-ahora" style="width:100%;margin-top:8px;">Copiar ahora</button>
+      <p id="texto-ultima-sync" style="color:var(--text-dim);font-size:.76rem;line-height:1.45;margin:8px 2px 0;">${textoUltimaSync()}</p>
     </div>
     <div class="menu-opciones">
       <button class="opcion-menu" id="op-administrar-personas">
@@ -4516,17 +4545,6 @@ $('#btn-ajustes').addEventListener('click', () => {
     }
     else if (btn.dataset.accion === 'conectar' || btn.dataset.accion === 'reconectar') PROVEEDORES[id].conectar();
     else if (btn.dataset.accion === 'desconectar') desconectarProveedor(id);
-  });
-  // "Copiar ahora" fuerza una sincronización completa (consulta cada nube aunque
-  // no haya nada nuevo que subir): suma en los dos sentidos y, de paso, deja
-  // la carpeta de Drive con su nombre actual.
-  $('#btn-copiar-ahora').addEventListener('click', async () => {
-    if (!hayProveedores()) { mostrarToast('Conecta antes alguna nube.', true); return; }
-    const boton = $('#btn-copiar-ahora');
-    boton.disabled = true; boton.textContent = 'Sincronizando…';
-    const resultado = await sincronizarTodo();
-    boton.disabled = false; boton.textContent = 'Copiar ahora';
-    mostrarToast(resultado.fallos.length ? `No se pudo sincronizar con ${resultado.fallos.join(' y ')}` : 'Todo sincronizado', resultado.fallos.length > 0);
   });
   $('#op-exportar').addEventListener('click', () => abrirModalExportar());
   $('#op-importar').addEventListener('click', abrirModalImportar);
