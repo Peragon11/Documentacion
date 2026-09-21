@@ -25,7 +25,8 @@
     contraste: 'family=Space+Grotesk:wght@500;700',
     bosque: 'family=Fraunces:wght@600;700&family=Nunito:wght@500;700',
     pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P',
-    neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700'
+    neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700',
+    chicle: 'family=Fredoka:wght@500;600;700'
   };
   window.__cargarFuentesSkin = function (id) {
     var q = window.__fuentesSkin[id];
@@ -972,6 +973,98 @@
   .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
   .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
 
+  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
+  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
+  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
+  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
+  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
+  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
+  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
+  .mqs-cuerpo{ display:block; padding:10px; }
+  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
+  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
+  .mqs-ficha.a i{ background:var(--azul); }
+  .mqs-ficha.z i{ background:var(--amber); }
+  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
+  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
+  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
+  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
+  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
+  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
+  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
+  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
+  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
+  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
+  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
+  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
+  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
+  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="chicle"] .mqs-barra{ background:linear-gradient(90deg, var(--c1), var(--c5), var(--c4)); border-bottom:none; }
+  .mq-skin[data-skin="chicle"] .mqs-barra b{ color:var(--sobre-acento); font-weight:700; }
+  .mq-skin[data-skin="chicle"] :is(.mqs-logo, .mqs-btn){ background:var(--paper); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c1); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha.a i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c2); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
+  .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
+  .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
+
+  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
+  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
+  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
+  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
+  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
+  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
+  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
+  .mqs-cuerpo{ display:block; padding:10px; }
+  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
+  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
+  .mqs-ficha.a i{ background:var(--azul); }
+  .mqs-ficha.z i{ background:var(--amber); }
+  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
+  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
+  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
+  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
+  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
+  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
+  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
+  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
+  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
+  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
+  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
+  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
+  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
+  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="chicle"] .mqs-barra{ background:linear-gradient(90deg, var(--c1), var(--c5), var(--c4)); border-bottom:none; }
+  .mq-skin[data-skin="chicle"] .mqs-barra b{ color:var(--sobre-acento); font-weight:700; }
+  .mq-skin[data-skin="chicle"] :is(.mqs-logo, .mqs-btn){ background:var(--paper); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c1); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha.a i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c2); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
+  .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
+  .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
+
   /* ==================== ESTILOS (skins) ====================
      Cada estilo redefine colores (oscuro y claro), forma (radios), letra y algunos detalles.
      El atributo data-skin va en <html>; también en las maquetas de la pantalla de Estilos. */
@@ -1190,6 +1283,66 @@
   html[data-skin="neon"] .toast{ box-shadow:0 0 22px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
   html[data-skin="neon"] .icono-marca{ box-shadow:0 0 14px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
 
+  /* ---- chicle ---- */
+  [data-skin="chicle"]{ --ink:#1E0B2E; --ink-2:#2E1246; --ink-3:#421B63; --paper:#FFEFFA; --text-ink:#2A0838; --stamp:#FF6BBA; --sobre-acento:#2A0838; --text-light:#FFEFFA; --text-dim:#DDBDEB; --seal:#4DF0C8; --amber:#FFD84D; --azul:#6BC1FF; --morado:#C39BFF; --stamp-dark:#C24A98; --borde-sutil:rgba(255,239,250,.10); --borde:rgba(255,107,186,.50); --borde-fuerte:rgba(77,240,200,.65); --topbar-fondo:#FF6BBA; --c1:#FF6BBA; --c2:#4DF0C8; --c3:#FFD84D; --c4:#6BC1FF; --c5:#C39BFF;
+    --serif:'Fredoka', 'Nunito', system-ui, sans-serif;
+    --sans:'Fredoka', 'Nunito', system-ui, sans-serif;
+    --fuente-marca:'Fredoka', system-ui, sans-serif;
+    --r-pill:999px; --r-chip:999px; --r-avatar:50%; --r-avatar-mini:50%; --r-tarjeta:28px; --r-miniatura:20px;
+    --r-boton:999px; --r-campo:20px; --r-grupo:28px; --r-modal:34px; --r-caja:50%; --r-marca:14px; --r-app-login:42px; --r-redondo:50%;
+    --sombra-ficha:0 0 0 5px var(--ink-2), 0 0 0 9px var(--stamp), 0 14px 22px color-mix(in srgb, var(--stamp) 40%, transparent);
+  }
+  html[data-tema="claro"] [data-skin="chicle"], html[data-tema="claro"][data-skin="chicle"]{ --ink:#FFF0F8; --ink-2:#FFFFFF; --ink-3:#FFE0F0; --paper:#FFFFFF; --text-ink:#3B0A45; --stamp:#FF5DAF; --sobre-acento:#3B0A45; --text-light:#3B0A45; --text-dim:#7A3F78; --seal:#0E9E86; --amber:#D98200; --azul:#2F86F0; --morado:#8E52F0; --stamp-dark:#CC2E86; --borde-sutil:rgba(59,10,69,.10); --borde:rgba(255,93,175,.55); --borde-fuerte:#FF5DAF; --topbar-fondo:#FF5DAF; --c1:#FF5DAF; --c2:#19C7A0; --c3:#FFB300; --c4:#5AAEFF; --c5:#B58CFF; }
+  html[data-skin="chicle"]{ --fondo-login:var(--ink); }
+  html[data-skin="chicle"]{ --fondo-login:radial-gradient(420px 380px at 8% 0%, color-mix(in srgb, var(--c1) 50%, transparent), transparent 70%), radial-gradient(440px 400px at 100% 18%, color-mix(in srgb, var(--c4) 46%, transparent), transparent 70%), radial-gradient(520px 440px at 40% 110%, color-mix(in srgb, var(--c3) 46%, transparent), transparent 70%), var(--ink); }
+  /* Cada elemento repetido toma un caramelo distinto: rosa, menta, limón, celeste y lila */
+  html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+1){ --caramelo:var(--c1); }
+  html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+2){ --caramelo:var(--c2); }
+  html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+3){ --caramelo:var(--c3); }
+  html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+4){ --caramelo:var(--c4); }
+  html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+5){ --caramelo:var(--c5); }
+  html[data-skin="chicle"] body{ background-image:radial-gradient(circle, color-mix(in srgb, var(--c1) 30%, transparent) 4px, transparent 4.6px), radial-gradient(circle, color-mix(in srgb, var(--c4) 28%, transparent) 4px, transparent 4.6px); background-size:52px 52px; background-position:0 0, 26px 26px; }
+  html[data-skin="chicle"] .topbar{ background:linear-gradient(90deg, var(--c1), var(--c5) 55%, var(--c4)); border-bottom:4px solid var(--ink-2); box-shadow:0 6px 0 color-mix(in srgb, var(--c1) 40%, transparent); backdrop-filter:none; }
+  html[data-skin="chicle"] .topbar .marca, html[data-skin="chicle"] .btn-volver{ color:var(--sobre-acento); }
+  html[data-skin="chicle"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.01em; }
+  html[data-skin="chicle"] .btn-volver:active{ background:rgba(255,255,255,.35); }
+  html[data-skin="chicle"] .btn-icono-top{ background:var(--paper); color:var(--sobre-acento); box-shadow:0 4px 0 rgba(42,8,56,.30); }
+  html[data-skin="chicle"] .btn-icono-top:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(42,8,56,.30); }
+  html[data-skin="chicle"] .topbar .avatar-persona, html[data-skin="chicle"] .icono-marca{ box-shadow:0 0 0 3px var(--paper); }
+  html[data-skin="chicle"] h1, html[data-skin="chicle"] h3{ font-weight:700; letter-spacing:0; }
+  html[data-skin="chicle"] .persona-tile .avatar-persona{ box-shadow:0 0 0 5px var(--ink), 0 0 0 9px var(--caramelo, var(--stamp)), 0 14px 22px color-mix(in srgb, var(--caramelo, var(--stamp)) 42%, transparent); }
+  html[data-skin="chicle"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin-top:8px; padding:3px 14px; border-radius:999px; background:var(--caramelo, var(--stamp)); color:var(--sobre-acento); font-weight:600; font-size:1rem; }
+  html[data-skin="chicle"] .titulo-grupo{ display:inline-flex; width:fit-content; padding:5px 14px 5px 11px; border-radius:999px; background:var(--caramelo, var(--c1)); color:var(--sobre-acento); font-size:.82rem; font-weight:700; letter-spacing:.05em; box-shadow:0 3px 0 rgba(0,0,0,.16); }
+  html[data-skin="chicle"] .titulo-grupo .punto-grupo{ background:var(--sobre-acento); }
+  html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:var(--ink-2); }
+  html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina):active{ transform:translateY(4px); box-shadow:0 2px 0 var(--caramelo, var(--c1)); }
+  html[data-skin="chicle"] .lista-docs, html[data-skin="chicle"] .galeria-paginas{ gap:16px; }
+  html[data-skin="chicle"] .categoria-barra{ border:3px solid #fff; box-shadow:0 6px 0 rgba(0,0,0,.20); font-weight:700; }
+  html[data-skin="chicle"] .doc-nombre{ font-weight:600; font-size:1.02rem; }
+  html[data-skin="chicle"] .chips-categorias{ padding:2px 3px 9px; }
+  html[data-skin="chicle"] .chip{ border:3px solid var(--caramelo, var(--c1)); background:var(--ink-2); color:var(--text-light); font-weight:600; padding:5px 14px; }
+  html[data-skin="chicle"] .chip.activo{ background:var(--caramelo, var(--c1)); color:var(--sobre-acento); box-shadow:0 4px 0 color-mix(in srgb, var(--caramelo, var(--c1)) 55%, #000); }
+  html[data-skin="chicle"] .btn-primario{ font-weight:700; font-size:1rem; padding:14px; box-shadow:0 5px 0 var(--stamp-dark); }
+  html[data-skin="chicle"] .btn-secundario{ font-weight:600; font-size:1rem; padding:14px; border:3px solid var(--c1); background:var(--ink-2); color:var(--text-light); box-shadow:0 5px 0 color-mix(in srgb, var(--c1) 60%, transparent); }
+  html[data-skin="chicle"] .btn-primario:active, html[data-skin="chicle"] .btn-secundario:active{ transform:translateY(4px); box-shadow:0 1px 0 var(--stamp-dark); }
+  html[data-skin="chicle"] .btn-prov{ border:2px solid var(--c4); color:var(--text-light); font-weight:600; }
+  html[data-skin="chicle"] .btn-prov.primario{ border-color:var(--stamp); box-shadow:0 3px 0 var(--stamp-dark); }
+  html[data-skin="chicle"] :is(.btn-grande, .btn-google){ border:3px solid var(--c1); box-shadow:0 6px 0 var(--c1); }
+  html[data-skin="chicle"] .ajustes > .grupo{ --g:var(--c1); }
+  html[data-skin="chicle"] .ajustes > .grupo:nth-child(even){ --g:var(--c2); }
+  html[data-skin="chicle"] .ajustes > .grupo:nth-child(4n){ --g:var(--c5); }
+  html[data-skin="chicle"] .bloque-copias .grupo{ --g:var(--c4); }
+  html[data-skin="chicle"] .ajustes .grupo{ border:3px solid var(--g, var(--c1)); box-shadow:0 6px 0 var(--g, var(--c1)); background:var(--ink-2); margin-bottom:6px; }
+  html[data-skin="chicle"] .ajustes .grupo > * + *{ border-top:2px dashed color-mix(in srgb, var(--g, var(--c1)) 65%, transparent); }
+  html[data-skin="chicle"] .icono-accion{ box-shadow:0 3px 0 rgba(0,0,0,.20); }
+  html[data-skin="chicle"] .opcion-tema{ border-width:3px; }
+  html[data-skin="chicle"] .modal{ background:linear-gradient(90deg, var(--c1), var(--c3), var(--c2), var(--c4), var(--c5)) top / 100% 8px no-repeat, var(--ink-2); padding-top:30px; box-shadow:0 -10px 34px color-mix(in srgb, var(--c1) 35%, transparent); }
+  html[data-skin="chicle"] .campo input, html[data-skin="chicle"] .campo select, html[data-skin="chicle"] .input-busqueda{ border:3px solid color-mix(in srgb, var(--c1) 70%, transparent); background:var(--ink-3); padding-left:16px; }
+  html[data-skin="chicle"] .campo input:focus, html[data-skin="chicle"] .input-busqueda:focus{ outline:none; border-color:var(--c4); }
+  html[data-skin="chicle"] .toast{ background:var(--c3); color:var(--sobre-acento); border:3px solid var(--paper); box-shadow:0 5px 0 rgba(0,0,0,.20); }
+  html[data-skin="chicle"] .toast.error{ background:var(--stamp); }
+  html[data-skin="chicle"] .zona-archivo{ border-color:var(--c4); border-width:3px; }
+
   /* ---- bosque ---- */
   [data-skin="bosque"]{ --ink:#0F1E19; --ink-2:#172D26; --ink-3:#213D34; --paper:#F0EBD9; --text-ink:#10231C; --stamp:#EE9B4A; --sobre-acento:#10231C; --text-light:#F0EBD9; --text-dim:#A6BCB0; --seal:#7DB896; --amber:#E7B24B; --azul:#7EA5C8; --morado:#B399D3; --stamp-dark:#D0813A; --borde-sutil:rgba(240,235,217,.08); --borde:rgba(240,235,217,.17); --borde-fuerte:rgba(240,235,217,.28); --topbar-fondo:rgba(23,45,38,.95); 
     --serif:'Fraunces', 'Iowan Old Style', Georgia, serif;
@@ -1322,7 +1475,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.5.3';
+const VERSION_APP = '2.5.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1494,6 +1647,7 @@ const SKINS = {
   bosque:    { nombre: 'Bosque',    descripcion: 'Verde hondo y albaricoque, formas de hoja',                    color: { oscuro: '#172D26', claro: '#E4E0CB' } },
   pixeles:   { nombre: 'Píxeles',   descripcion: 'Videojuego de 8 bits: esquinas escalonadas, letra pixelada y colores retro (en claro, pantalla de Game Boy)', color: { oscuro: '#29366F', claro: '#9BBC0F' } },
   neon:      { nombre: 'Neón',      descripcion: 'Rótulos luminosos: contornos que brillan en rosa y turquesa sobre la noche', color: { oscuro: '#150D24', claro: '#E4D9FF' } },
+  chicle:    { nombre: 'Chicle',    descripcion: 'Rosa chicle, menta, limón y celeste: todo redondo, gordito y de colorines', color: { oscuro: '#FF6BBA', claro: '#FF5DAF' } },
 };
 function obtenerSkinGuardado() {
   const s = localStorage.getItem(SKIN_STORAGE_KEY);
