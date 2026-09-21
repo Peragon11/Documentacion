@@ -636,6 +636,15 @@
     max-width:none; max-height:none;
   }
   .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:0 0 18px; }
+  .recorte-giro{ display:flex; align-items:center; gap:10px; margin:0 0 10px; }
+  .recorte-giro button{
+    flex:none; width:42px; height:42px; border-radius:50%; border:1px solid var(--borde); background:none;
+    color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .recorte-giro button:active{ background:var(--ink-3); }
+  .recorte-giro-barra{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .recorte-giro-grados{ font-size:.78rem; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+  .recorte-giro-barra input[type=range]{ width:100%; margin:0; height:28px; accent-color:var(--stamp); touch-action:pan-y; }
   .recorte-auto{
     display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 12px;
     min-height:34px; margin:-8px 0 14px; font-size:.78rem; color:var(--text-dim); text-align:center;
@@ -797,7 +806,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.4.3';
+const VERSION_APP = '2.4.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -3591,14 +3600,30 @@ function abrirModalNuevaPersona() {
 
 function montarRecortador(contenedor, file, opciones) {
   const {
-    anchoMarco, altoMarco, radioMarco = 32,
+    radioMarco = 32,
     textoAyuda = 'Arrastra con un dedo para moverla, pellizca con dos para hacer zoom o girarla',
     textoConfirmar = 'Usar esta foto',
     generarSalida, onConfirmar, onCancelar,
+    giro = false,   // añade la barra de giro fino y los botones de 90°
+    marcoMax = null, // { ancho, alto }: con giro, el marco se adapta a la foto (y se intercambia al girar 90°)
   } = opciones;
+  let { anchoMarco, altoMarco } = opciones;
 
   contenedor.innerHTML = `
     <div class="recorte-marco" id="recorte-marco" style="width:${anchoMarco}px;height:${altoMarco}px;border-radius:${radioMarco}px;"></div>
+    ${giro ? `
+    <div class="recorte-giro">
+      <button type="button" id="recorte-giro-izq" aria-label="Girar 90 grados a la izquierda">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 9V4M4 4h5M4 4l3.2 3.2A8 8 0 1 1 4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="recorte-giro-barra">
+        <span class="recorte-giro-grados" id="recorte-giro-grados">0°</span>
+        <input type="range" id="recorte-giro-rango" min="-45" max="45" step="0.5" value="0" aria-label="Girar la foto">
+      </div>
+      <button type="button" id="recorte-giro-der" aria-label="Girar 90 grados a la derecha">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 9V4M20 4h-5M20 4l-3.2 3.2A8 8 0 1 0 20 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>` : ''}
     <p class="recorte-ayuda">${textoAyuda}</p>
     <div class="modal-acciones">
       <button class="btn-secundario" id="recorte-cancelar" type="button">Cancelar</button>
@@ -3629,8 +3654,50 @@ function montarRecortador(contenedor, file, opciones) {
   }
 
   function aplicarTransform() {
-    escala = clamp(escala, escalaMinima(rot), escalaMinima(0) * 4);
+    escala = clamp(escala, escalaMinima(rot), escalaMinima(rot) * 4);
     img.style.transform = `translate(${cx - img.naturalWidth / 2}px, ${cy - img.naturalHeight / 2}px) rotate(${rot}rad) scale(${escala})`;
+    sincronizarGiro();
+  }
+
+  // ---- Barra de giro fino y botones de 90°
+  // El giro total es un múltiplo de 90° más un ajuste fino de -45° a 45° (el de la barra).
+  const CUARTO = Math.PI / 2;
+  let base90 = 0;
+  const rango = contenedor.querySelector('#recorte-giro-rango');
+  const etiquetaGrados = contenedor.querySelector('#recorte-giro-grados');
+  function sincronizarGiro() {
+    if (!rango) return;
+    // el múltiplo de 90° solo cambia si el giro se sale de su rango (así la barra no salta en ±45°)
+    if (Math.abs(rot - base90) > CUARTO / 2 + 1e-6) base90 = Math.round(rot / CUARTO) * CUARTO;
+    const fino = Math.round((rot - base90) * 180 / Math.PI * 10) / 10;
+    rango.value = String(fino);
+    etiquetaGrados.textContent = (fino > 0 ? '+' : '') + String(fino).replace('.', ',') + '°';
+  }
+  // Con el giro, el marco toma la proporción de la foto (o la inversa si está girada 90° o 270°).
+  function ajustarMarcoAlGiro() {
+    if (!giro || !marcoMax) return;
+    const vertical = Math.abs(Math.round(base90 / CUARTO)) % 2 === 1;
+    const proporcion = vertical ? img.naturalHeight / img.naturalWidth : img.naturalWidth / img.naturalHeight;
+    let ancho = marcoMax.ancho, alto = Math.round(marcoMax.ancho / proporcion);
+    if (alto > marcoMax.alto) { alto = marcoMax.alto; ancho = Math.round(marcoMax.alto * proporcion); }
+    anchoMarco = ancho; altoMarco = alto;
+    marco.style.width = ancho + 'px'; marco.style.height = alto + 'px';
+  }
+  function girar90(sentido) {
+    rot += sentido * CUARTO; // se conserva el ajuste fino que hubiera
+    sincronizarGiro();
+    ajustarMarcoAlGiro();
+    cx = anchoMarco / 2; cy = altoMarco / 2;
+    escala = escalaMinima(rot);
+    aplicarTransform();
+  }
+  if (rango) {
+    rango.addEventListener('input', () => {
+      rot = base90 + parseFloat(rango.value) * Math.PI / 180;
+      aplicarTransform();
+    });
+    contenedor.querySelector('#recorte-giro-izq').addEventListener('click', () => girar90(-1));
+    contenedor.querySelector('#recorte-giro-der').addEventListener('click', () => girar90(1));
   }
 
   img.onload = () => {
@@ -3738,6 +3805,7 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   const TAMANO_SALIDA = 240;
   montarRecortador(contenedor, file, {
     anchoMarco: TAMANO_MARCO, altoMarco: TAMANO_MARCO, radioMarco: 32,
+    giro: true,
     onCancelar, onConfirmar,
     generarSalida: ({ img, cx, cy, escala, rotacion }) => {
       const factor = TAMANO_SALIDA / TAMANO_MARCO;
@@ -4178,10 +4246,11 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
 
     montarRecortador(contenedor, variante.file, {
       anchoMarco, altoMarco, radioMarco: 14,
+      giro: true, marcoMax: { ancho: ANCHO_MAX, alto: ALTO_MAX },
       textoAyuda: 'Arrastra con un dedo para encajar el documento, pellizca con dos para hacer zoom o girarlo',
       textoConfirmar: 'Usar este recorte',
       onCancelar: () => { cerrado = true; onCancelar(); },
-      generarSalida: ({ img, cx, cy, escala, rotacion }) => {
+      generarSalida: ({ img, cx, cy, escala, rotacion, anchoMarco, altoMarco }) => {
         // 1 píxel del canvas de salida = 1 píxel real de la foto original,
         // al nivel de zoom actual, para no perder calidad al recortar.
         const factor = 1 / escala;
@@ -4205,6 +4274,7 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
 
     contenedor.querySelector('.modal-acciones').insertAdjacentHTML('beforebegin', '<div class="recorte-auto" id="recorte-auto"></div>');
     contenedor.querySelector('#recorte-marco').addEventListener('pointerdown', () => { tocado = true; });
+    contenedor.querySelector('.recorte-giro').addEventListener('pointerdown', () => { tocado = true; });
     pintarEstadoAuto();
   }
 
