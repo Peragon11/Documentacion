@@ -159,21 +159,53 @@
   .icono-accion.morado{ background:var(--morado); }
 
   /* Apariencia: se elige viendo cómo queda */
-  .selector-tema{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-  .selector-tema .segmento{ display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:0; background:none; box-shadow:none; border-radius:14px; color:var(--text-dim); font-size:.8rem; font-weight:500; }
-  .selector-tema .segmento.activo{ background:none; box-shadow:none; color:var(--text-light); font-weight:600; }
-  .selector-tema .muestra{ display:block; height:54px; border-radius:14px; border:2px solid var(--borde); position:relative; overflow:hidden; }
-  .selector-tema .muestra::before{ content:''; position:absolute; left:10px; top:12px; width:46%; height:6px; border-radius:3px; background:var(--linea); box-shadow:0 13px 0 var(--linea), 0 26px 0 var(--linea); }
-  .selector-tema .muestra::after{ content:''; position:absolute; right:9px; bottom:9px; width:14px; height:14px; border-radius:50%; background:var(--stamp); opacity:.9; }
-  .muestra-oscuro{ background:#14202E; --linea:#33506F; }
-  .muestra-claro{ background:#F2F3F5; --linea:#C6C9D0; }
-  .muestra-auto{ background:linear-gradient(115deg, #14202E 50%, #F2F3F5 50%); --linea:#7D8EA3; }
-  .selector-tema .segmento.activo .muestra{ border-color:var(--stamp); box-shadow:0 0 0 3px color-mix(in srgb, var(--stamp) 26%, transparent); }
 
   .ajustes .pie{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:2px; }
   .btn-salir{ display:inline-flex; align-items:center; gap:9px; background:none; border:none; padding:10px 4px; color:#E0897A; font-size:.92rem; font-weight:600; cursor:pointer; }
   html[data-tema="claro"] .btn-salir, html[data-tema="claro"] .estado-prov.aviso{ color:#B3432A; }
   .ajustes .version{ font-size:.74rem; color:var(--text-dim); }
+  /* Cabecera de la hoja: el asa y el título son la zona por la que se arrastra para cerrar */
+  .ajustes .cabecera-hoja{ margin:-22px -22px -4px; padding:10px 22px 4px; touch-action:none; cursor:grab; }
+  .ajustes .cabecera-hoja .asa{ width:42px; height:5px; border-radius:3px; background:var(--borde-fuerte); margin:0 auto 12px; }
+  .ajustes .fila-titulo{ display:flex; align-items:center; gap:6px; }
+  .ajustes .btn-atras-ajustes{ flex:none; width:36px; height:36px; margin-left:-8px; border:none; border-radius:50%; background:none; color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .ajustes .btn-atras-ajustes:active{ background:var(--ink-3); }
+  /* Al abrir Ajustes la hoja sube desde abajo (solo la animación de entrada: así no pisa el arrastre) */
+  .modal.sube{ animation:subirHoja .36s cubic-bezier(.2,.85,.25,1) backwards; }
+  .modal-fondo.entra{ animation:aparecerFondo .3s ease backwards; }
+  @keyframes subirHoja{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+  @keyframes aparecerFondo{ from{ opacity:0; } to{ opacity:1; } }
+
+  .icono-accion.tema{ background:linear-gradient(135deg, #1E2F42 50%, #F2EEE3 50%); }
+
+  /* Apariencia: cada modo con una maqueta de cómo se ve la app */
+  .lista-temas{ display:flex; flex-direction:column; gap:14px; }
+  .opcion-tema{ position:relative; display:flex; flex-direction:column; gap:10px; width:100%; padding:10px; background:var(--ink-3); border:2px solid transparent; border-radius:20px; color:var(--text-light); text-align:left; cursor:pointer; }
+  html[data-tema="claro"] .opcion-tema{ background:#fff; border-color:var(--borde-sutil); }
+  .opcion-tema.activa{ border-color:var(--stamp); box-shadow:0 0 0 3px color-mix(in srgb, var(--stamp) 22%, transparent); }
+  .opcion-tema .texto-tema{ display:block; padding:0 4px 2px; }
+  .opcion-tema .texto-tema strong{ display:block; font-size:1rem; font-weight:600; }
+  .opcion-tema .texto-tema small{ display:block; margin-top:2px; font-size:.8rem; color:var(--text-dim); }
+  .opcion-tema .marca-tema{ position:absolute; right:14px; bottom:14px; width:24px; height:24px; border-radius:50%; border:2px solid var(--borde-fuerte); }
+  .opcion-tema.activa .marca-tema{ background:var(--stamp) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2EEE3' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/16px no-repeat; border-color:var(--stamp); }
+  .maqueta{ position:relative; display:block; height:138px; border-radius:14px; overflow:hidden; border:1px solid var(--borde); }
+  .maqueta .capa{ position:absolute; inset:0; display:flex; flex-direction:column; background:var(--mq-fondo); }
+  .mq-oscuro{ --mq-fondo:#14202E; --mq-barra:#28405A; --mq-texto:#EDE9DE; --mq-ficha:#1E2F42; }
+  .mq-claro{ --mq-fondo:#F2F3F5; --mq-barra:#D8DADF; --mq-texto:#1E2A38; --mq-ficha:#E6E7EB; }
+  .maqueta .capa.oscura{ clip-path:polygon(0 0, 58% 0, 42% 100%, 0 100%); }
+  .maqueta .capa.clara{ clip-path:polygon(58% 0, 100% 0, 100% 100%, 42% 100%); }
+  .mq-barra{ display:flex; align-items:center; gap:6px; height:28px; padding:0 9px; background:var(--mq-barra); flex:none; }
+  .mq-logo{ width:15px; height:15px; border-radius:5px; background:#fff; }
+  .mq-titulo{ flex:1; max-width:34%; height:5px; border-radius:3px; background:var(--mq-texto); opacity:.85; }
+  .mq-boton{ width:14px; height:14px; border-radius:50%; background:var(--mq-fondo); }
+  .mq-boton:first-of-type{ margin-left:auto; }
+  .mq-cuerpo{ flex:1; display:flex; gap:12px; padding:12px 14px 0; }
+  .mq-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .mq-ficha i{ display:block; width:100%; max-width:52px; aspect-ratio:1; border-radius:14px; }
+  .mq-ficha b{ display:block; width:58%; height:4px; border-radius:2px; background:var(--mq-texto); opacity:.7; }
+  .mq-ficha.verde i{ background:var(--seal); }
+  .mq-ficha.azul i{ background:var(--azul); }
+  .mq-ficha.ambar i{ background:var(--amber); }
   .login-bloque{ display:flex; flex-direction:column; align-items:center; width:100%; max-width:320px; }
   .btn-grande{ width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; background:var(--paper); color:var(--text-ink); border:none; border-radius:16px; padding:20px 16px; font-size:1.1rem; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.25); margin-bottom:14px; }
   .btn-grande span{ font-size:.82rem; font-weight:400; opacity:.75; }
@@ -727,7 +759,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.3.7';
+const VERSION_APP = '2.3.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2283,7 +2315,7 @@ function textoEstadoProv(id) {
   if (est === 'reconectar') return 'Hay que volver a conectar';
   if (est === 'error') return 'No se pudo copiar; se reintentará';
   const n = pendientesProv(id);
-  return n > 0 ? `${n} pendiente${n === 1 ? '' : 's'} de copiar` : 'Al día';
+  return n > 0 ? `${n} pendiente${n === 1 ? '' : 's'} de copiar` : 'Sincronizado';
 }
 
 // Marca de cada nube (fondo blanco, como su logotipo).
@@ -2323,7 +2355,7 @@ function estadoGeneralCopias() {
   if (conectadas.some((p) => estadoProv[p.id] === 'copiando')) return { tono: 'copiando', titulo: 'Copiando…', detalle: 'Enviando los cambios a tus nubes.' };
   const pendientes = totalPendientes();
   if (pendientes > 0) return { tono: 'copiando', titulo: 'Copia pendiente', detalle: `${pluralizar(pendientes, 'elemento', 'elementos')} por enviar a tus nubes.` };
-  return { tono: 'ok', titulo: 'Todo a salvo', detalle: `${pluralizar(conectadas.length, 'nube', 'nubes')} al día.` };
+  return { tono: 'ok', titulo: 'Todo a salvo', detalle: `Sincronizado con ${pluralizar(conectadas.length, 'nube', 'nubes')}.` };
 }
 
 const SIGNOS_SELLO = {
@@ -4830,12 +4862,107 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarGuardar(); });
 }
 
-$('#btn-ajustes').addEventListener('click', () => {
+// Cerrar la hoja arrastrándola hacia abajo desde su barra de arriba (el asa y el título).
+// Al soltar: si se ha bajado bastante (o rápido), se desliza fuera y se cierra;
+// si no, vuelve a su sitio.
+function activarArrastreParaCerrar(zona) {
+  const hoja = zona.closest('.modal');
+  const fondo = zona.closest('.modal-fondo');
+  if (!hoja || !fondo) return;
+  let inicioY = 0; let desplazado = 0; let arrastrando = false; let t0 = 0;
+  zona.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return; // el botón de volver sigue siendo un botón
+    arrastrando = true; inicioY = e.clientY; desplazado = 0; t0 = Date.now();
+    hoja.style.transition = 'none';
+    try { zona.setPointerCapture(e.pointerId); } catch (err) { /* ignorar */ }
+  });
+  zona.addEventListener('pointermove', (e) => {
+    if (!arrastrando) return;
+    desplazado = Math.max(0, e.clientY - inicioY);
+    hoja.style.transform = 'translateY(' + desplazado + 'px)';
+    fondo.style.background = 'rgba(10,15,20,' + (0.62 * (1 - Math.min(desplazado / 420, 1))).toFixed(3) + ')';
+  });
+  const soltar = () => {
+    if (!arrastrando) return;
+    arrastrando = false;
+    const veloz = desplazado / Math.max(Date.now() - t0, 1) > 0.6;
+    hoja.style.transition = 'transform .24s ease';
+    if (desplazado > 110 || (veloz && desplazado > 40)) {
+      hoja.style.transform = 'translateY(105%)';
+      fondo.style.transition = 'opacity .24s ease';
+      fondo.style.opacity = '0';
+      setTimeout(() => { volverAtras(); }, 220);
+    } else {
+      hoja.style.transform = '';
+      fondo.style.background = '';
+    }
+  };
+  zona.addEventListener('pointerup', soltar);
+  zona.addEventListener('pointercancel', soltar);
+}
+
+const NOMBRES_TEMA = { auto: 'Automático, sigue a tu móvil', claro: 'Claro', oscuro: 'Oscuro' };
+
+// Maqueta de la app en un modo: barra de arriba y tres fichas de personas.
+function capaMaqueta(clases) {
+  return `<span class="capa ${clases}">
+    <span class="mq-barra"><i class="mq-logo"></i><i class="mq-titulo"></i><i class="mq-boton"></i><i class="mq-boton"></i></span>
+    <span class="mq-cuerpo">
+      <span class="mq-ficha verde"><i></i><b></b></span><span class="mq-ficha azul"><i></i><b></b></span><span class="mq-ficha ambar"><i></i><b></b></span>
+    </span>
+  </span>`;
+}
+function htmlMaqueta(tema) {
+  if (tema === 'auto') return `<span class="maqueta">${capaMaqueta('mq-oscuro oscura')}${capaMaqueta('mq-claro clara')}</span>`;
+  return `<span class="maqueta">${capaMaqueta(tema === 'claro' ? 'mq-claro' : 'mq-oscuro')}</span>`;
+}
+
+// Subpantalla de Apariencia: se sustituye el contenido de la misma hoja (no se
+// apila otra ventana). Al tocar un modo se aplica al momento.
+function abrirApariencia() {
+  const actual = obtenerTemaGuardado();
+  const opcion = (valor, nombre, descripcion) => `
+    <button type="button" class="opcion-tema${actual === valor ? ' activa' : ''}" data-valor="${valor}">
+      ${htmlMaqueta(valor)}
+      <span class="texto-tema"><strong>${nombre}</strong><small>${descripcion}</small></span>
+      <span class="marca-tema" aria-hidden="true"></span>
+    </button>`;
+  abrirModal(`
+    <div class="ajustes">
+      <div class="cabecera-hoja">
+        <div class="asa" aria-hidden="true"></div>
+        <div class="fila-titulo">
+          <button type="button" class="btn-atras-ajustes" id="ajustes-volver" aria-label="Volver a Ajustes">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <h3 class="ajustes-titulo">Apariencia</h3>
+        </div>
+      </div>
+      <div class="lista-temas">
+        ${opcion('auto', 'Automático', 'Sigue el modo claro u oscuro de tu móvil')}
+        ${opcion('claro', 'Claro', 'Fondo claro, como un papel')}
+        ${opcion('oscuro', 'Oscuro', 'Fondo oscuro, más suave de noche')}
+      </div>
+    </div>
+  `);
+  activarArrastreParaCerrar($('.cabecera-hoja'));
+  $('#ajustes-volver').addEventListener('click', () => abrirAjustes(false));
+  $$('.opcion-tema').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      guardarTema(btn.dataset.valor);
+      $$('.opcion-tema').forEach((b) => b.classList.toggle('activa', b === btn));
+    });
+  });
+}
+
+function abrirAjustes(animar = true) {
   const temaActual = obtenerTemaGuardado();
   abrirModal(`
     <div class="ajustes">
-      <div class="asa" aria-hidden="true"></div>
-      <h3 class="ajustes-titulo">Ajustes</h3>
+      <div class="cabecera-hoja">
+        <div class="asa" aria-hidden="true"></div>
+        <h3 class="ajustes-titulo">Ajustes</h3>
+      </div>
 
       <div class="bloque-copias">
         <div class="sello-copias" id="sello-copias"></div>
@@ -4845,11 +4972,15 @@ $('#btn-ajustes').addEventListener('click', () => {
       <div class="grupo">
         <button class="fila-accion" id="op-administrar-personas">
           <span class="icono-accion verde"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20.5c0-4.6 3.4-7.3 7.5-7.3s7.5 2.7 7.5 7.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-          <span><strong>Personas</strong><small>Añadir, renombrar y ordenar</small></span>
+          <span><strong>Personas</strong><small>Añadir, renombrar, ordenar y eliminar</small></span>
         </button>
         <button class="fila-accion" id="op-categorias">
           <span class="icono-accion azul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h6.5l2 2.2H20v11.3H4V5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
           <span><strong>Categorías</strong><small>Los tipos de documento que usas</small></span>
+        </button>
+        <button class="fila-accion" id="op-apariencia">
+          <span class="icono-accion tema"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#C1502E"/></svg></span>
+          <span><strong>Apariencia</strong><small>${NOMBRES_TEMA[temaActual] || 'Oscuro'}</small></span>
         </button>
         <button class="fila-accion" id="op-exportar">
           <span class="icono-accion ambar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -4859,15 +4990,6 @@ $('#btn-ajustes').addEventListener('click', () => {
           <span class="icono-accion morado"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           <span><strong>Importar copia</strong><small>Suma un archivo de copia a lo que ya tienes</small></span>
         </button>
-      </div>
-
-      <div>
-        <p class="etiqueta">Apariencia</p>
-        <div class="selector-tema" id="selector-tema">
-          <button type="button" class="segmento ${temaActual === 'auto' ? 'activo' : ''}" data-valor="auto"><span class="muestra muestra-auto"></span>Automático</button>
-          <button type="button" class="segmento ${temaActual === 'claro' ? 'activo' : ''}" data-valor="claro"><span class="muestra muestra-claro"></span>Claro</button>
-          <button type="button" class="segmento ${temaActual === 'oscuro' ? 'activo' : ''}" data-valor="oscuro"><span class="muestra muestra-oscuro"></span>Oscuro</button>
-        </div>
       </div>
 
       <div class="pie">
@@ -4880,6 +5002,14 @@ $('#btn-ajustes').addEventListener('click', () => {
     </div>
   `);
   refrescarSelloCopias();
+  activarArrastreParaCerrar($('.cabecera-hoja'));
+  if (animar) {
+    // La hoja sube desde abajo al abrir Ajustes.
+    $('.modal').classList.add('sube');
+    $('.modal-fondo').classList.add('entra');
+    // Si el sello detecta cosas por sincronizar, se lanza la sincronización ya.
+    if (hayProveedores() && totalPendientes() > 0 && !respaldoEnCurso) programarRespaldo(400);
+  }
   $('#op-administrar-personas').addEventListener('click', () => {
     // Cierra este menú de Ajustes a mano (sin history.go real) porque
     // justo después se empuja una capa nueva — ver la nota en
@@ -4906,13 +5036,7 @@ $('#btn-ajustes').addEventListener('click', () => {
     renderizarPantallaInicio();
     pushNavegacion(salirModoAdministrarInicio);
   });
-  $$('#selector-tema .segmento').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      $$('#selector-tema .segmento').forEach((b) => b.classList.remove('activo'));
-      btn.classList.add('activo');
-      guardarTema(btn.dataset.valor);
-    });
-  });
+  $('#op-apariencia').addEventListener('click', abrirApariencia);
   $('#lista-proveedores').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-accion]');
     if (!btn) return;
@@ -4942,7 +5066,8 @@ $('#btn-ajustes').addEventListener('click', () => {
     $('#modal-cancelar').addEventListener('click', volverAtras);
     $('#modal-salir').addEventListener('click', cerrarSesionCompleta);
   });
-});
+}
+$('#btn-ajustes').addEventListener('click', () => abrirAjustes(true));
 
 let contadorIdsImport = 0;
 function idUnico(prefijo) {
