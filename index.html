@@ -636,6 +636,22 @@
     max-width:none; max-height:none;
   }
   .recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:0 0 18px; }
+  .recorte-auto{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 12px;
+    min-height:34px; margin:-8px 0 14px; font-size:.78rem; color:var(--text-dim); text-align:center;
+  }
+  .recorte-auto button{
+    background:none; border:1px solid var(--borde); color:var(--text-light); border-radius:999px;
+    padding:6px 14px; font:inherit; font-size:.78rem; cursor:pointer;
+  }
+  .recorte-auto button:active{ background:var(--ink-3); }
+  .recorte-auto-texto{ display:inline-flex; align-items:center; gap:8px; }
+  .recorte-auto-punto{
+    width:12px; height:12px; border-radius:50%; border:2px solid var(--borde); border-top-color:var(--stamp);
+    animation:girar-recorte .8s linear infinite;
+  }
+  @keyframes girar-recorte{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion:reduce){ .recorte-auto-punto{ animation:none; } }
 
   .modal-acciones{ display:flex; gap:10px; margin-top:20px; }
   .btn-primario, .btn-secundario{ border:none; border-radius:10px; padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
@@ -765,7 +781,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.4.1';
+const VERSION_APP = '2.4.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -3648,25 +3664,261 @@ function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar })
   });
 }
 
+// ── Recorte automático de documentos (bordes de la tarjeta o el papel) ──
+// Usa OpenCV.js (visión por ordenador, ~10 MB), que NO se carga al abrir la app:
+// solo la primera vez que se hace una foto de un documento, y después queda en la
+// caché del navegador (ver sw.js). Todo ocurre en el móvil; la foto no sale de él.
+const OPENCV_URL = 'opencv.js';
+const ESCANER_LADO_DETECCION = 720;   // la búsqueda de bordes se hace sobre una copia pequeña
+const ESCANER_LADO_MAX_SALIDA = 3000; // y el recorte final sale de la foto grande (tope por memoria)
+let promesaOpenCv = null;
+
+// Devuelve { cv } y no cv a secas: el objeto cv de OpenCV.js se comporta como una
+// promesa (tiene .then), y resolver una promesa con él provoca un bucle infinito.
+function cargarOpenCv() {
+  if (promesaOpenCv) return promesaOpenCv;
+  promesaOpenCv = new Promise((resolve, reject) => {
+    if (window.cv && window.cv.Mat) { resolve({ cv: window.cv }); return; }
+    let resuelto = false;
+    let sondeo = null;
+    const terminar = (fallo) => {
+      if (resuelto) return;
+      resuelto = true;
+      clearInterval(sondeo);
+      if (fallo) { promesaOpenCv = null; reject(fallo); } else resolve({ cv: window.cv });
+    };
+    const revisar = () => { if (window.cv && window.cv.Mat) terminar(); };
+    // OpenCV avisa por aquí cuando termina de arrancar su motor interno (WebAssembly).
+    window.Module = Object.assign(window.Module || {}, { onRuntimeInitialized: revisar });
+    const s = document.createElement('script');
+    s.src = OPENCV_URL;
+    s.async = true;
+    s.onerror = () => terminar(new Error('No se pudo cargar OpenCV'));
+    document.head.appendChild(s);
+    sondeo = setInterval(revisar, 250);
+    setTimeout(() => terminar(new Error('OpenCV tarda demasiado')), 60000);
+  });
+  return promesaOpenCv;
+}
+
+// Ordena 4 puntos como [arriba-izq, arriba-der, abajo-der, abajo-izq].
+function ordenarEsquinas(pts) {
+  const suma = pts.map((p) => p.x + p.y);
+  const dif = pts.map((p) => p.y - p.x);
+  const tl = pts[suma.indexOf(Math.min(...suma))];
+  const br = pts[suma.indexOf(Math.max(...suma))];
+  const tr = pts[dif.indexOf(Math.min(...dif))];
+  const bl = pts[dif.indexOf(Math.max(...dif))];
+  return [tl, tr, br, bl];
+}
+
+// ¿Es un cuadrilátero razonable para un documento? Ángulos cerca de 90° (con margen
+// por la perspectiva) y lados opuestos de longitud parecida.
+function cuadrilateroValido(p) {
+  const lado = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const arriba = lado(p[0], p[1]), derecha = lado(p[1], p[2]), abajo = lado(p[2], p[3]), izquierda = lado(p[3], p[0]);
+  if (Math.min(arriba, derecha, abajo, izquierda) < 20) return false;
+  if (Math.max(arriba, abajo) / Math.min(arriba, abajo) > 1.7) return false;
+  if (Math.max(derecha, izquierda) / Math.min(derecha, izquierda) > 1.7) return false;
+  for (let i = 0; i < 4; i++) {
+    const a = p[(i + 3) % 4], b = p[i], c = p[(i + 1) % 4];
+    const v1 = { x: a.x - b.x, y: a.y - b.y }, v2 = { x: c.x - b.x, y: c.y - b.y };
+    const cos = (v1.x * v2.x + v1.y * v2.y) / (Math.hypot(v1.x, v1.y) * Math.hypot(v2.x, v2.y));
+    const grados = Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
+    if (grados < 60 || grados > 120) return false;
+  }
+  return true;
+}
+
+function areaPoligono(p) {
+  let a = 0;
+  for (let i = 0; i < p.length; i++) { const q = p[(i + 1) % p.length]; a += p[i].x * q.y - q.x * p[i].y; }
+  return Math.abs(a) / 2;
+}
+
+// Mejor cuadrilátero entre los contornos de una imagen binaria de bordes o de manchas.
+function mejorCuadrilatero(cv, binaria, areaTotal, ancho, alto) {
+  // Si una esquina cae pegada al borde de la foto, el documento sale cortado: no se
+  // recorta (saldría con la forma equivocada) y se deja la foto tal cual.
+  const margen = Math.max(ancho, alto) * 0.012;
+  const cortada = (pts) => pts.some((q) => q.x < margen || q.y < margen || q.x > ancho - margen || q.y > alto - margen);
+  const contornos = new cv.MatVector();
+  const jerarquia = new cv.Mat();
+  let mejor = null;
+  try {
+    cv.findContours(binaria, contornos, jerarquia, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+    for (let i = 0; i < contornos.size(); i++) {
+      const c = contornos.get(i);
+      const hull = new cv.Mat();
+      try {
+        if (cv.contourArea(c) < areaTotal * 0.10) continue;
+        cv.convexHull(c, hull, false, true);
+        const peri = cv.arcLength(hull, true);
+        for (const e of [0.02, 0.03, 0.045, 0.06]) {
+          const ap = new cv.Mat();
+          cv.approxPolyDP(hull, ap, e * peri, true);
+          let pts = null;
+          if (ap.rows === 4) pts = [0, 1, 2, 3].map((k) => ({ x: ap.data32S[k * 2], y: ap.data32S[k * 2 + 1] }));
+          ap.delete();
+          if (!pts) continue;
+          pts = ordenarEsquinas(pts);
+          const area = areaPoligono(pts);
+          if (area < areaTotal * 0.10 || area > areaTotal * 0.985) break;
+          if (!cuadrilateroValido(pts) || cortada(pts)) break;
+          if (!mejor || area > mejor.area) mejor = { pts, area };
+          break;
+        }
+      } finally { hull.delete(); c.delete(); }
+    }
+  } finally { contornos.delete(); jerarquia.delete(); }
+  return mejor;
+}
+
+// Busca los 4 vértices del documento en la copia pequeña (píxeles de esa copia) o null.
+function buscarEsquinasDocumento(cv, canvasPeq) {
+  const src = cv.imread(canvasPeq);
+  const gris = new cv.Mat();
+  const suave = new cv.Mat();
+  const trabajo = [];
+  const nuevo = () => { const m = new cv.Mat(); trabajo.push(m); return m; };
+  const areaTotal = src.rows * src.cols;
+  try {
+    cv.cvtColor(src, gris, cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gris, suave, new cv.Size(5, 5), 0);
+    const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+    trabajo.push(kernel);
+    const candidatos = [];
+
+    // Se prueban varios métodos, del más fiable al más permisivo, y se queda el primero
+    // que da un cuadrilátero válido.
+    // 1) Bordes de contraste (Canny): normal y para poco contraste (papel blanco en mesa clara).
+    for (const [bajo, alto] of [[50, 150], [20, 60]]) {
+      const bordes = nuevo();
+      cv.Canny(suave, bordes, bajo, alto);
+      cv.dilate(bordes, bordes, kernel, new cv.Point(-1, -1), 2);
+      candidatos.push(mejorCuadrilatero(cv, bordes, areaTotal, src.cols, src.rows));
+    }
+    // 2) Mancha clara u oscura frente al fondo (umbral automático de Otsu).
+    for (const tipo of [cv.THRESH_BINARY, cv.THRESH_BINARY_INV]) {
+      const bin = nuevo();
+      cv.threshold(suave, bin, 0, 255, tipo | cv.THRESH_OTSU);
+      cv.morphologyEx(bin, bin, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 3);
+      cv.morphologyEx(bin, bin, cv.MORPH_OPEN, kernel, new cv.Point(-1, -1), 2);
+      candidatos.push(mejorCuadrilatero(cv, bin, areaTotal, src.cols, src.rows));
+    }
+    const primero = candidatos.find(Boolean);
+    return primero ? primero.pts : null;
+  } finally {
+    src.delete(); gris.delete(); suave.delete(); trabajo.forEach((m) => m.delete());
+  }
+}
+
+function cargarImagenDeArchivo(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('No se pudo leer la foto')); };
+    img.src = url;
+  });
+}
+
+// Detecta el documento en la foto y lo devuelve recortado y enderezado (como si se
+// hubiera hecho de frente). Devuelve { file, ancho, alto } o null si no encuentra bordes.
+async function enderezarDocumento(file) {
+  const { cv } = await cargarOpenCv();
+  const img = await cargarImagenDeArchivo(file);
+  const anchoReal = img.naturalWidth, altoReal = img.naturalHeight;
+
+  const kPeq = Math.min(1, ESCANER_LADO_DETECCION / Math.max(anchoReal, altoReal));
+  const canvasPeq = document.createElement('canvas');
+  canvasPeq.width = Math.round(anchoReal * kPeq); canvasPeq.height = Math.round(altoReal * kPeq);
+  canvasPeq.getContext('2d').drawImage(img, 0, 0, canvasPeq.width, canvasPeq.height);
+  const esquinasBrutas = buscarEsquinasDocumento(cv, canvasPeq);
+  if (!esquinasBrutas) return null;
+  // Un pelo hacia dentro (1,5 %) para no dejar el borde de la sombra ni del fondo.
+  const centro = { x: esquinasBrutas.reduce((s, q) => s + q.x, 0) / 4, y: esquinasBrutas.reduce((s, q) => s + q.y, 0) / 4 };
+  const esquinasPeq = esquinasBrutas.map((q) => ({ x: centro.x + (q.x - centro.x) * 0.985, y: centro.y + (q.y - centro.y) * 0.985 }));
+
+  // La foto grande (con tope) es de donde sale el resultado, para no perder nitidez.
+  const kGrande = Math.min(1, ESCANER_LADO_MAX_SALIDA / Math.max(anchoReal, altoReal));
+  const canvasGrande = document.createElement('canvas');
+  canvasGrande.width = Math.round(anchoReal * kGrande); canvasGrande.height = Math.round(altoReal * kGrande);
+  canvasGrande.getContext('2d').drawImage(img, 0, 0, canvasGrande.width, canvasGrande.height);
+  const escala = canvasGrande.width / canvasPeq.width;
+  const p = esquinasPeq.map((q) => ({ x: q.x * escala, y: q.y * escala }));
+
+  const lado = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const ancho = Math.round(Math.max(lado(p[0], p[1]), lado(p[3], p[2])));
+  const alto = Math.round(Math.max(lado(p[0], p[3]), lado(p[1], p[2])));
+  if (ancho < 100 || alto < 100) return null;
+
+  const src = cv.imread(canvasGrande);
+  const dst = new cv.Mat();
+  const desde = cv.matFromArray(4, 1, cv.CV_32FC2, [p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y]);
+  const hasta = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, ancho, 0, ancho, alto, 0, alto]);
+  const salida = document.createElement('canvas');
+  try {
+    const M = cv.getPerspectiveTransform(desde, hasta);
+    cv.warpPerspective(src, dst, M, new cv.Size(ancho, alto), cv.INTER_LINEAR, cv.BORDER_REPLICATE);
+    M.delete();
+    cv.imshow(salida, dst);
+  } finally { src.delete(); dst.delete(); desde.delete(); hasta.delete(); }
+  const blob = await new Promise((resolve) => salida.toBlob(resolve, 'image/jpeg', .95));
+  if (!blob) return null;
+  const nombreBase = file.name.replace(/\.[^.]+$/, '') || 'documento';
+  return { file: new File([blob], nombreBase + '.jpg', { type: 'image/jpeg' }), ancho, alto };
+}
+
 // Recorte para fotos de documentos: el marco se adapta a la proporción de
 // la propia foto (no fuerza un cuadrado), y el resultado se recorta a la
 // resolución nativa de la imagen (copia 1:1 de los píxeles, sin reescalar)
 // para no perder calidad — el archivo recortado es el que se sube a Drive.
+//
+// Recorte automático: nada más abrir la foto se buscan en segundo plano los bordes
+// del documento (enderezarDocumento). Si se encuentran y aún no se ha tocado el
+// recorte, la foto se sustituye por el documento ya recortado y enderezado; con un
+// botón se puede volver a la foto original y viceversa. Si algo falla, el recorte
+// manual funciona igual que siempre.
 function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
   const ANCHO_MAX = 280, ALTO_MAX = 380;
-  const urlPrevia = URL.createObjectURL(file);
-  const preImg = new Image();
-  preImg.onload = () => {
-    const ratio = preImg.naturalWidth / preImg.naturalHeight;
-    URL.revokeObjectURL(urlPrevia);
-    let anchoMarco = ANCHO_MAX, altoMarco = Math.round(ANCHO_MAX / ratio);
-    if (altoMarco > ALTO_MAX) { altoMarco = ALTO_MAX; anchoMarco = Math.round(ALTO_MAX * ratio); }
+  let estadoAuto = 'buscando';   // buscando | listo | sin-bordes | no-disponible
+  let usandoAuto = false;
+  let original = null;           // { file, ancho, alto }
+  let automatico = null;         // { file, ancho, alto }
+  let tocado = false;            // ya se movió el recorte con los dedos
+  let cerrado = false;
 
-    montarRecortador(contenedor, file, {
+  function pintarEstadoAuto() {
+    const zona = contenedor.querySelector('#recorte-auto');
+    if (!zona) return;
+    if (estadoAuto === 'buscando') {
+      zona.innerHTML = '<span class="recorte-auto-texto"><span class="recorte-auto-punto"></span>Buscando los bordes del documento…</span>';
+    } else if (estadoAuto === 'listo') {
+      zona.innerHTML = usandoAuto
+        ? '<span class="recorte-auto-texto">Recortado automáticamente</span><button type="button" id="recorte-auto-alternar">Ver foto original</button>'
+        : '<button type="button" id="recorte-auto-alternar">Recorte automático</button>';
+      zona.querySelector('#recorte-auto-alternar').addEventListener('click', () => {
+        usandoAuto = !usandoAuto;
+        tocado = false;
+        mostrar(usandoAuto ? automatico : original);
+      });
+    } else if (estadoAuto === 'sin-bordes') {
+      zona.innerHTML = '<span class="recorte-auto-texto">No he encontrado los bordes: recórtalo a mano</span>';
+    } else {
+      zona.innerHTML = '<span class="recorte-auto-texto">Recorte automático no disponible ahora: recórtalo a mano</span>';
+    }
+  }
+
+  function mostrar(variante) {
+    let anchoMarco = ANCHO_MAX, altoMarco = Math.round(ANCHO_MAX / (variante.ancho / variante.alto));
+    if (altoMarco > ALTO_MAX) { altoMarco = ALTO_MAX; anchoMarco = Math.round(ALTO_MAX * (variante.ancho / variante.alto)); }
+
+    montarRecortador(contenedor, variante.file, {
       anchoMarco, altoMarco, radioMarco: 14,
       textoAyuda: 'Arrastra con un dedo para encajar el documento, pellizca con dos para hacer zoom o girarlo',
       textoConfirmar: 'Usar este recorte',
-      onCancelar,
+      onCancelar: () => { cerrado = true; onCancelar(); },
       generarSalida: ({ img, cx, cy, escala, rotacion }) => {
         // 1 píxel del canvas de salida = 1 píxel real de la foto original,
         // al nivel de zoom actual, para no perder calidad al recortar.
@@ -3683,12 +3935,38 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
         return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', .95));
       },
       onConfirmar: (blob) => {
+        cerrado = true;
         const nombreBase = file.name.replace(/\.[^.]+$/, '') || 'documento';
         onConfirmar(new File([blob], nombreBase + '.jpg', { type: 'image/jpeg' }));
       },
     });
+
+    contenedor.querySelector('.modal-acciones').insertAdjacentHTML('beforebegin', '<div class="recorte-auto" id="recorte-auto"></div>');
+    contenedor.querySelector('#recorte-marco').addEventListener('pointerdown', () => { tocado = true; });
+    pintarEstadoAuto();
+  }
+
+  const urlPrevia = URL.createObjectURL(file);
+  const preImg = new Image();
+  preImg.onload = () => {
+    URL.revokeObjectURL(urlPrevia);
+    original = { file, ancho: preImg.naturalWidth, alto: preImg.naturalHeight };
+    mostrar(original);
+
+    enderezarDocumento(file).then((res) => {
+      if (cerrado || !contenedor.isConnected) return;
+      if (!res) { estadoAuto = 'sin-bordes'; pintarEstadoAuto(); return; }
+      automatico = res;
+      estadoAuto = 'listo';
+      if (!tocado && !usandoAuto) { usandoAuto = true; mostrar(automatico); } else pintarEstadoAuto();
+    }).catch((e) => {
+      console.warn('Recorte automático no disponible', e);
+      if (cerrado || !contenedor.isConnected) return;
+      estadoAuto = 'no-disponible';
+      pintarEstadoAuto();
+    });
   };
-  preImg.onerror = () => { URL.revokeObjectURL(urlPrevia); onCancelar(); };
+  preImg.onerror = () => { URL.revokeObjectURL(urlPrevia); cerrado = true; onCancelar(); };
   preImg.src = urlPrevia;
 }
 

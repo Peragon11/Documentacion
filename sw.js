@@ -24,6 +24,21 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.method !== 'GET') return;
 
+  // opencv.js (recorte automático de documentos) pesa ~10 MB y no cambia: se sirve
+  // de la caché y solo se descarga la primera vez que hace falta.
+  if (url.pathname.endsWith('/opencv.js')) {
+    event.respondWith(
+      caches.match(event.request).then((guardado) => guardado || fetch(event.request).then((res) => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(event.request, clone));
+        }
+        return res;
+      }))
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((res) => {
