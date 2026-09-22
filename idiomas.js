@@ -95,7 +95,7 @@
     [`Revisa tus copias`, `Check your backups`, `Revisa les teves còpies`, `Controlla i tuoi backup`, `Vérifiez vos sauvegardes`, `Überprüfe deine Sicherungen`],
     [`Enviando los cambios a tus nubes.`, `Sending the changes to your clouds.`, `Enviant els canvis als teus núvols.`, `Invio delle modifiche ai tuoi cloud in corso.`, `Envoi des modifications vers vos clouds.`, `Änderungen werden an deine Clouds gesendet.`],
     [`Copia pendiente`, `Backup pending`, `Còpia pendent`, `Backup in sospeso`, `Sauvegarde en attente`, `Sicherung ausstehend`],
-    [`Todo a salvo`, `All safe`, `Tot a recer`, `Tutto al sicuro`, `Tout est en sécurité`, `Alles gesichert`],
+    [`Todo a salvo`, `All safe`, `Tot segur`, `Tutto al sicuro`, `Tout est en sécurité`, `Alles gesichert`],
     [`No hay ninguna nube conectada: no existe ninguna copia de seguridad.`, `No cloud is connected: there is no backup at all.`, `No hi ha cap núvol connectat: no existeix cap còpia de seguretat.`, `Nessun cloud collegato: non esiste alcun backup.`, `Aucun cloud n'est connecté : il n'existe aucune sauvegarde.`, `Keine Cloud verbunden: Es gibt überhaupt keine Sicherung.`],
 
     // ---- cerrar sesión (tres avisos)
