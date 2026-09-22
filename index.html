@@ -18,6 +18,14 @@
     if (modo === 'claro') document.documentElement.setAttribute('data-tema', 'claro');
   } catch (e) {}
   try {
+    // Este móvil ya tiene documentos guardados: la pantalla de bienvenida no se va a usar (el
+    // script principal, más abajo, entra directo a la app). Se oculta ya mismo, antes de que el
+    // navegador llegue a pintar nada: si no, cuando la carga tarda un poco (primera vez que se
+    // guarda en caché el service worker, o un móvil lento) se alcanza a ver un parpadeo de la
+    // bienvenida antes de pasar a los documentos.
+    if (localStorage.getItem('documentacion_datos_cache')) document.documentElement.setAttribute('data-hay-datos', '1');
+  } catch (e) {}
+  try {
     // Primera vez de verdad en este móvil (nunca se guardó nada ni se eligió idioma). Si el
     // idioma del propio móvil ya es uno de los que tenemos, se pone solo, sin preguntar. Solo se
     // pregunta cuando el idioma del móvil es otro distinto. Con datos guardados de antes de que
@@ -150,6 +158,7 @@
   @media (prefers-reduced-motion:reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
   html[data-preguntar-idioma] #vista-login{ display:none; }
+  html[data-hay-datos] #vista-login{ display:none; }
   #vista-idioma{
     min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center; background:var(--fondo-login);
@@ -1565,7 +1574,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.7.0';
+const VERSION_APP = '2.7.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
