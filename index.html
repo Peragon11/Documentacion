@@ -1574,7 +1574,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.7.1';
+const VERSION_APP = '2.8.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2013,6 +2013,18 @@ let ignorarProximoPopstate = false;
 function pushNavegacion(cerrarFn) {
   pilaNavegacion.push(cerrarFn);
   history.pushState({ documentacionNav: true }, '');
+}
+
+// Sustituye la capa de arriba de la pila (y su paso en el historial) por otra, sin que haga
+// falta ni un paso más ni uno menos para volver atrás — para pasar de un menú directamente a
+// la pantalla siguiente sin cerrar una capa y abrir otra por separado: cerrar hace un
+// history.go() asíncrono y abrir un history.pushState() síncrono justo después, y esa mezcla deja
+// la pila desincronizada del historial real (el síntoma: un botón de cerrar que dejaba de
+// funcionar). history.replaceState() no dispara popstate ni cambia cuántos pasos hay.
+function reemplazarCapaActual(cerrarFn) {
+  if (pilaNavegacion.length > 0) pilaNavegacion.pop();
+  pilaNavegacion.push(cerrarFn);
+  history.replaceState({ documentacionNav: true }, '');
 }
 
 function volverAtras() {
@@ -3782,8 +3794,8 @@ function abrirCategoriaGlobal(categoriaId) {
   $('#aviso-caducado-persona').classList.add('hidden');
   $('#aviso-porcaducar-persona').classList.add('hidden');
   $('#btn-volver').classList.remove('hidden');
-  $('#btn-subir').classList.add('hidden');
-  $('#btn-menu-persona').classList.add('hidden');
+  $('#btn-subir').classList.remove('hidden');
+  $('#btn-menu-persona').classList.remove('hidden');
   $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
@@ -5419,10 +5431,37 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
   preImg.src = urlPrevia;
 }
 
+// Pasa del menú de opciones directamente al modo selección, sustituyendo su capa de
+// navegación (ver reemplazarCapaActual) — usado tanto desde la persona como desde la
+// categoría global.
+function entrarModoSeleccionDesdeMenu() {
+  if (modoSeleccionDocs) return;
+  cerrarModal(); // solo el DOM del menú; su capa de navegación se sustituye a continuación, no se cierra aparte
+  activarModoSeleccion();
+  reemplazarCapaActual(limpiarModoSeleccion);
+}
+
 // Cambiar imagen/nombre y eliminar ya no viven aquí — se gestionan desde
 // Ajustes → "Administrar personas" (ver crearTilePersonaHome). Este menú,
-// dentro de la propia persona, solo deja acciones sobre sus documentos.
+// dentro de la propia persona o de la vista de una categoría, solo deja
+// acciones sobre los documentos que se están viendo.
 $('#btn-menu-persona').addEventListener('click', () => {
+  // Vista de una categoría (todas las personas a la vez): no hay una sola persona de la
+  // que "exportar su copia", así que aquí el menú solo deja seleccionar documentos.
+  if (categoriaGlobalActivaId !== null) {
+    const cat = datos.categorias.find((c) => c.id === categoriaGlobalActivaId) || CATEGORIA_SIN_ASIGNAR;
+    abrirModal(`
+      <div class="ajustes">
+        ${cabeceraMenu(cat.nombre)}
+        <div class="grupo">
+          ${filaMenu('op-seleccionar-docs', 'verde', ICONOS_MENU.seleccionar, 'Seleccionar documentos', 'Elige varios para compartirlos')}
+        </div>
+      </div>
+    `);
+    activarArrastreParaCerrar($('.cabecera-hoja'));
+    $('#op-seleccionar-docs').addEventListener('click', entrarModoSeleccionDesdeMenu);
+    return;
+  }
   const persona = datos.personas.find((p) => p.id === personaActivaId);
   if (!persona) return;
   abrirModal(`
@@ -5435,10 +5474,7 @@ $('#btn-menu-persona').addEventListener('click', () => {
     </div>
   `);
   activarArrastreParaCerrar($('.cabecera-hoja'));
-  $('#op-seleccionar-docs').addEventListener('click', () => {
-    cerrarCapas(1); // cierra este menú antes de activar el modo selección
-    entrarModoSeleccion();
-  });
+  $('#op-seleccionar-docs').addEventListener('click', entrarModoSeleccionDesdeMenu);
   $('#op-exportar-persona').addEventListener('click', () => abrirModalExportar(persona));
 });
 
@@ -5613,19 +5649,43 @@ function crearTarjetaDoc(doc) {
       ${badge ? `<span class="badge-mini ${badge.estado}">${badge.texto}</span>` : ''}
     </div>`;
 
-  let temporizadorLP = null;
-  const cancelarLP = () => { if (temporizadorLP) { clearTimeout(temporizadorLP); temporizadorLP = null; } };
-  fila.addEventListener('pointerdown', () => {
-    temporizadorLP = setTimeout(() => {
-      temporizadorLP = null;
+  // Mantener pulsado selecciona el documento (para compartir varios); aquí NUNCA sirve para
+  // moverlo, solo para seleccionarlo. Con un dedo real el toque tiembla unos píxeles aunque se
+  // mantenga "quieto" — cancelar con el primer pointermove (como antes) hacía que casi nunca
+  // llegara a dispararse. Se tolera un pequeño movimiento (como en arrastrar personas/categorías)
+  // y solo se cancela si es un desplazamiento de verdad, para no confundirlo con hacer scroll.
+  const UMBRAL_MOVIMIENTO_LP_DOC = 12;
+  let presionLargaDisparada = false;
+  fila.addEventListener('pointerdown', (eventoInicial) => {
+    if (eventoInicial.button !== undefined && eventoInicial.button !== 0) return;
+    const inicioX = eventoInicial.clientX, inicioY = eventoInicial.clientY;
+    let cancelado = false;
+    const timer = setTimeout(() => {
+      if (cancelado) return;
+      cancelado = true;
+      limpiar();
+      presionLargaDisparada = true;
       if (navigator.vibrate) navigator.vibrate(12);
       alternarSeleccionDoc(doc, fila, true);
     }, 420);
+    const cancelarSiSeMueve = (ev) => {
+      if (cancelado) return;
+      if (Math.hypot(ev.clientX - inicioX, ev.clientY - inicioY) > UMBRAL_MOVIMIENTO_LP_DOC) { cancelado = true; clearTimeout(timer); limpiar(); }
+    };
+    const cancelarPorSoltar = () => { if (cancelado) return; cancelado = true; clearTimeout(timer); limpiar(); };
+    function limpiar() {
+      window.removeEventListener('pointermove', cancelarSiSeMueve);
+      window.removeEventListener('pointerup', cancelarPorSoltar);
+      window.removeEventListener('pointercancel', cancelarPorSoltar);
+    }
+    window.addEventListener('pointermove', cancelarSiSeMueve, { passive: true });
+    window.addEventListener('pointerup', cancelarPorSoltar, { once: true });
+    window.addEventListener('pointercancel', cancelarPorSoltar, { once: true });
   });
-  fila.addEventListener('pointermove', cancelarLP);
-  fila.addEventListener('pointerup', cancelarLP);
-  fila.addEventListener('pointercancel', cancelarLP);
   fila.addEventListener('click', () => {
+    // El toque de soltar el dedo, tras una pulsación larga que ya ha seleccionado el
+    // documento, no debe volver a alternar la selección (la dejaría desmarcada otra vez).
+    if (presionLargaDisparada) { presionLargaDisparada = false; return; }
     if (modoSeleccionDocs) { alternarSeleccionDoc(doc, fila); return; }
     if (variasPaginas) abrirGaleriaDocumento(doc);
     else abrirVisor(doc, 0);
@@ -5654,12 +5714,15 @@ function crearTarjetaDoc(doc) {
   return fila;
 }
 
-function entrarModoSeleccion() {
-  if (modoSeleccionDocs) return;
+function activarModoSeleccion() {
   modoSeleccionDocs = true;
   document.body.classList.add('modo-seleccion');
-  pushNavegacion(limpiarModoSeleccion);
   actualizarBarraSeleccion();
+}
+function entrarModoSeleccion() {
+  if (modoSeleccionDocs) return;
+  activarModoSeleccion();
+  pushNavegacion(limpiarModoSeleccion);
 }
 
 function alternarSeleccionDoc(doc, fila, activarModo = false) {
@@ -6465,8 +6528,14 @@ $('#btn-subir').addEventListener('click', abrirModalSubida);
 
 function abrirModalSubida() {
   paginasSubidaPendientes = [];
+  // Desde una persona, la categoría se elige (la persona ya está fija). Desde la vista de
+  // una categoría (todas las personas a la vez), es al revés: la categoría ya está fija y
+  // lo que hace falta elegir es de quién es el documento.
+  const enCategoria = categoriaGlobalActivaId !== null;
   const opcionesCat = datos.categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
   const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : null);
+  const opcionesPersona = datos.personas.map((p) => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
+  const personaPreseleccionada = personaFiltroActiva !== 'todos' ? personaFiltroActiva : (datos.personas[0] ? datos.personas[0].id : null);
 
   abrirModal(`
     <h3>Subir documento</h3>
@@ -6477,10 +6546,15 @@ function abrirModalSubida() {
         <label for="input-nombre">Nombre del documento (así se guardará en Drive)</label>
         <input type="search" id="input-nombre" name="q" placeholder="Ej: DNI" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
+      ${enCategoria ? `
+      <div class="campo">
+        <label for="input-persona">Persona</label>
+        ${datos.personas.length ? `<select id="input-persona">${opcionesPersona}</select>` : `<p style="color:var(--text-dim);font-size:.85rem;margin:0;">Todavía no tienes a nadie añadido.</p>`}
+      </div>` : `
       <div class="campo">
         <label for="input-categoria">Categoría</label>
         <select id="input-categoria">${opcionesCat}</select>
-      </div>
+      </div>`}
       <div class="campo">
         <label for="input-caducidad">Fecha de caducidad (opcional)</label>
         <input type="date" id="input-caducidad" autocomplete="off">
@@ -6494,7 +6568,8 @@ function abrirModalSubida() {
     <input type="file" id="input-archivo" accept="image/*,application/pdf" capture="environment" class="visually-hidden">
   `);
 
-  $('#input-categoria').value = catPreseleccionada;
+  if (enCategoria) { if ($('#input-persona')) $('#input-persona').value = personaPreseleccionada; }
+  else $('#input-categoria').value = catPreseleccionada;
   const seccionNormal = $('#seccion-normal-subida');
   const zonaRecorte = $('#zona-recorte-subida');
   const inputArchivo = $('#input-archivo');
@@ -6585,17 +6660,21 @@ function abrirModalSubida() {
 function actualizarBotonGuardar() {
   const btn = $('#modal-guardar');
   if (!btn) return;
-  btn.disabled = !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
+  const enCategoria = categoriaGlobalActivaId !== null;
+  const faltaPersona = enCategoria && !$('#input-persona'); // vista de categoría sin ninguna persona creada todavía
+  btn.disabled = faltaPersona || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
 }
 
 async function guardarDocumentoNuevo() {
   const btn = $('#modal-guardar');
   btn.disabled = true; btn.textContent = 'Subiendo…';
 
+  const enCategoria = categoriaGlobalActivaId !== null;
   const nombre = $('#input-nombre').value.trim();
-  const categoriaId = $('#input-categoria').value;
+  const categoriaId = enCategoria ? categoriaGlobalActivaId : $('#input-categoria').value;
+  const personaId = enCategoria ? $('#input-persona').value : personaActivaId;
   const caducidad = $('#input-caducidad').value || null;
-  const persona = datos.personas.find((p) => p.id === personaActivaId);
+  const persona = datos.personas.find((p) => p.id === personaId);
   const categoriaObj = datos.categorias.find((c) => c.id === categoriaId);
 
   try {
@@ -6607,16 +6686,14 @@ async function guardarDocumentoNuevo() {
     }
     datos.documentos.push({
       id: 'doc-' + Date.now(),
-      personaId: personaActivaId,
+      personaId,
       nombre, categoria: categoriaId,
       fechaCaducidad: caducidad, fechaSubida: new Date().toISOString().slice(0, 10),
       paginas,
     });
     await guardarMetadatos();
     volverAtras();
-    renderizarCabeceraPersona();
-    renderizarChipsCategorias();
-    renderizarAvisoCaducidadPersona();
+    if (enCategoria) { renderizarChipsPersonas(); } else { renderizarCabeceraPersona(); renderizarChipsCategorias(); renderizarAvisoCaducidadPersona(); }
     renderizarDocumentos();
     mostrarToast('Documento guardado');
     setTimeout(avisarSiSinNube, 900);
