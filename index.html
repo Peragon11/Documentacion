@@ -23,14 +23,15 @@
     // pregunta cuando el idioma del móvil es otro distinto. Con datos guardados de antes de que
     // esto existiera no se pregunta nunca (esas personas ya usan la app; pueden cambiarlo en Ajustes).
     if (!localStorage.getItem('documentacion_idioma') && !localStorage.getItem('documentacion_datos_cache')) {
+      var idiomasApp = ['es', 'en', 'ca', 'it', 'fr', 'de'];
       var idiomaMovil = ((navigator.language || (navigator.languages && navigator.languages[0]) || '') + '').toLowerCase().slice(0, 2);
-      if (idiomaMovil === 'es' || idiomaMovil === 'en' || idiomaMovil === 'ca') localStorage.setItem('documentacion_idioma', idiomaMovil);
+      if (idiomasApp.indexOf(idiomaMovil) >= 0) localStorage.setItem('documentacion_idioma', idiomaMovil);
       else document.documentElement.setAttribute('data-preguntar-idioma', '1');
     }
   } catch (e) {}
   try {
     var i = localStorage.getItem('documentacion_idioma');
-    if (i === 'en' || i === 'ca') {
+    if (i === 'en' || i === 'ca' || i === 'it' || i === 'fr' || i === 'de') {
       document.documentElement.lang = i;
       // hasta que la app pone los textos en su idioma no se enseña nada (así no se ve un instante en castellano)
       var ocultar = document.createElement('style'); ocultar.id = 'ocultar-idioma'; ocultar.textContent = 'body{visibility:hidden}';
@@ -157,10 +158,9 @@
   #vista-idioma .lead-idiomas{ max-width:320px; color:var(--text-dim); line-height:1.6; margin:0 0 30px; font-size:.95rem; }
   #vista-idioma .lead-idiomas span{ display:block; }
   .btn-idioma-inicio{ display:flex; align-items:center; justify-content:center; gap:10px; }
-  .btn-idioma-inicio .sigla-idioma-inicio{
-    flex:none; width:30px; height:30px; border-radius:50%; background:var(--text-ink); color:var(--paper);
-    display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; opacity:.7;
-  }
+  .bandera-idioma{ display:block; flex:none; border-radius:50%; overflow:hidden; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .bandera-idioma svg{ display:block; width:100%; height:100%; }
+  .bandera-idioma-inicio{ width:30px; height:30px; }
   #vista-login{
     min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center;
@@ -1145,7 +1145,8 @@
   .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
   .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
   .icono-accion.idioma{ background:linear-gradient(135deg, var(--azul), var(--morado)); }
-  .icono-accion.sigla{ font-size:.78rem; font-weight:700; letter-spacing:.02em; }
+  .icono-accion.sigla{ overflow:hidden; padding:0; }
+  .icono-accion.sigla .bandera-idioma{ width:100%; height:100%; border-radius:0; box-shadow:none; }
 
   /* ==================== ESTILOS (skins) ====================
      Cada estilo redefine colores (oscuro y claro), forma (radios), letra y algunos detalles.
@@ -1462,12 +1463,8 @@
 
 <div id="vista-idioma">
   <img class="icono-login" src="icono.png" alt="">
-  <p class="lead-idiomas"><span>¿En qué idioma quieres usar la app?</span><span>What language do you want to use the app in?</span><span>En quin idioma vols fer servir l'aplicació?</span></p>
-  <div class="login-bloque">
-    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="es"><span class="sigla-idioma-inicio">ES</span><strong>Castellano</strong></button>
-    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="en"><span class="sigla-idioma-inicio">EN</span><strong>English</strong></button>
-    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="ca"><span class="sigla-idioma-inicio">CA</span><strong>Català</strong></button>
-  </div>
+  <p class="lead-idiomas"><span>¿En qué idioma quieres usar la app?</span><span>What language do you want to use the app in?</span><span>En quin idioma vols fer servir l'aplicació?</span><span>In quale lingua vuoi usare l'app?</span><span>Dans quelle langue voulez-vous utiliser l'appli ?</span><span>In welcher Sprache möchtest du die App nutzen?</span></p>
+  <div class="login-bloque" id="botones-idioma-inicio"></div>
 </div>
 
 <div id="vista-login">
@@ -1568,7 +1565,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.6.0';
+const VERSION_APP = '2.7.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1646,10 +1643,25 @@ const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 //  - Las frases que el código compone con datos (nombres, números, plurales) usan trad('frase {dato}', { dato }).
 const IDIOMA_STORAGE_KEY = 'documentacion_idioma';
 const IDIOMAS = {
-  es: { nombre: 'Castellano', sigla: 'ES', html: 'es' },
-  en: { nombre: 'English', sigla: 'EN', html: 'en' },
-  ca: { nombre: 'Català', sigla: 'CA', html: 'ca' },
+  es: { nombre: 'Castellano', html: 'es' },
+  en: { nombre: 'English', html: 'en' },
+  ca: { nombre: 'Català', html: 'ca' },
+  it: { nombre: 'Italiano', html: 'it' },
+  fr: { nombre: 'Français', html: 'fr' },
+  de: { nombre: 'Deutsch', html: 'de' },
 };
+// Banderas (una insignia circular con la bandera, en vez de las siglas de antes). Cada una es un
+// rectángulo con sus franjas reales; "xMidYMid slice" hace que llene el círculo sin deformarse,
+// igual que un object-fit:cover en una foto.
+const BANDERAS_IDIOMA = {
+  es: `<svg viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice"><rect width="3" height="2" fill="#AA151B"/><rect y="0.5" width="3" height="1" fill="#F1BF00"/></svg>`,
+  en: `<svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice"><rect width="60" height="30" fill="#00247D"/><path d="M0,0 L60,30" stroke="#FFF" stroke-width="6"/><path d="M60,0 L0,30" stroke="#FFF" stroke-width="6"/><path d="M0,0 L60,30" stroke="#CF142B" stroke-width="2"/><path d="M60,0 L0,30" stroke="#CF142B" stroke-width="2"/><rect x="24" width="12" height="30" fill="#FFF"/><rect y="9" width="60" height="12" fill="#FFF"/><rect x="27" width="6" height="30" fill="#CF142B"/><rect y="12" width="60" height="6" fill="#CF142B"/></svg>`,
+  ca: `<svg viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice"><rect width="3" height="2" fill="#FCDD09"/><rect y="0.2222" width="3" height="0.2222" fill="#DA121A"/><rect y="0.6667" width="3" height="0.2222" fill="#DA121A"/><rect y="1.1111" width="3" height="0.2222" fill="#DA121A"/><rect y="1.5556" width="3" height="0.2222" fill="#DA121A"/></svg>`,
+  it: `<svg viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice"><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#FFFFFF"/><rect x="2" width="1" height="2" fill="#CE2B37"/></svg>`,
+  fr: `<svg viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice"><rect width="1" height="2" fill="#0055A4"/><rect x="1" width="1" height="2" fill="#FFFFFF"/><rect x="2" width="1" height="2" fill="#EF4135"/></svg>`,
+  de: `<svg viewBox="0 0 3 2" preserveAspectRatio="xMidYMid slice"><rect width="3" height="0.6667" fill="#000000"/><rect y="0.6667" width="3" height="0.6667" fill="#DD0000"/><rect y="1.3333" width="3" height="0.6667" fill="#FFCE00"/></svg>`,
+};
+function bandera(id) { return BANDERAS_IDIOMA[id] || ''; }
 function obtenerIdiomaGuardado() {
   try { const s = localStorage.getItem(IDIOMA_STORAGE_KEY); return IDIOMAS[s] ? s : 'es'; } catch (e) { return 'es'; }
 }
@@ -1801,6 +1813,11 @@ navigator.serviceWorker?.addEventListener('message', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  $('#botones-idioma-inicio').innerHTML = Object.keys(IDIOMAS).map((id) => `
+    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="${id}">
+      <span class="bandera-idioma bandera-idioma-inicio">${bandera(id)}</span>
+      <strong>${IDIOMAS[id].nombre}</strong>
+    </button>`).join('');
   $$('.btn-idioma-inicio').forEach((btn) => {
     btn.addEventListener('click', () => {
       guardarIdioma(btn.dataset.idiomaInicio);
@@ -6782,7 +6799,7 @@ function abrirEstilos() {
 function abrirIdiomas() {
   const filas = Object.keys(IDIOMAS).map((id) => `
     <button class="fila-accion fila-cat" data-idioma="${id}">
-      <span class="icono-accion idioma sigla" data-no-t>${IDIOMAS[id].sigla}</span>
+      <span class="icono-accion sigla"><span class="bandera-idioma" data-no-t>${bandera(id)}</span></span>
       <span><strong data-no-t>${IDIOMAS[id].nombre}</strong></span>
       ${idiomaActual === id ? `<span class="marca-actual">${ICONOS_MENU.check}</span>` : ''}
     </button>`).join('');
