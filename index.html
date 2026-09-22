@@ -416,7 +416,7 @@
      (fichas, chips, la propia barra) siempre tenga contraste de sobra. */
   .rueda-color-cont{ position:relative; width:220px; height:220px; margin:4px auto 20px; touch-action:none; }
   .rueda-color{
-    width:100%; height:100%; border-radius:50%; cursor:pointer;
+    width:100%; height:100%; border-radius:50%; cursor:pointer; touch-action:none;
     background:conic-gradient(from 0deg, hsl(0 45% 42%), hsl(60 45% 42%), hsl(120 45% 42%), hsl(180 45% 42%), hsl(240 45% 42%), hsl(300 45% 42%), hsl(360 45% 42%));
     box-shadow:0 6px 18px rgba(0,0,0,.28);
   }
@@ -425,8 +425,7 @@
     border:3px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.3);
     pointer-events:none;
   }
-  .rueda-color-previsualizacion{ display:flex; align-items:center; justify-content:center; gap:10px; margin:0 0 18px; color:var(--text-dim); font-size:.85rem; }
-  .rueda-color-muestra{ width:26px; height:26px; border-radius:50%; flex:none; border:1px solid var(--borde); }
+  .rueda-color-muestra{ width:100%; height:52px; border-radius:var(--r-campo); margin:0 0 20px; border:1px solid var(--borde); }
   .categoria-barra-nueva{
     display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:56px;
     padding:14px 20px; border-radius:var(--r-tarjeta); border:2px dashed var(--borde); background:none;
@@ -1604,7 +1603,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.9.7';
+const VERSION_APP = '2.9.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4239,13 +4238,10 @@ function hexAHue(hex) {
 function abrirRuedaColorCategoria(cat, filaHome) {
   abrirModal(`
     <h3>Color de la categoría</h3>
+    <div class="rueda-color-muestra" id="rueda-color-muestra" style="background:${cat.color}"></div>
     <div class="rueda-color-cont">
       <div class="rueda-color" id="rueda-color"></div>
       <div class="rueda-color-selector" id="rueda-color-selector"></div>
-    </div>
-    <div class="rueda-color-previsualizacion">
-      <span class="rueda-color-muestra" id="rueda-color-muestra" style="background:${cat.color}"></span>
-      <span id="rueda-color-hex">${cat.color}</span>
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cerrar</button>
@@ -4256,24 +4252,35 @@ function abrirRuedaColorCategoria(cat, filaHome) {
   const rueda = $('#rueda-color');
   const selector = $('#rueda-color-selector');
   const muestra = $('#rueda-color-muestra');
-  const textoHex = $('#rueda-color-hex');
 
-  function colocarSelector(hue) {
-    const anguloRad = hue * Math.PI / 180;
-    const radioPct = 42; // % del radio — cerca del borde sin salirse del círculo
-    selector.style.left = (50 + radioPct * Math.sin(anguloRad)) + '%';
-    selector.style.top = (50 - radioPct * Math.cos(anguloRad)) + '%';
+  // El punto se coloca en el mismo píxel donde está el dedo (limitado al borde si se sale del
+  // círculo) — NO directo al radio fijo solo según el ángulo, que es lo que hacía que un
+  // arrastre casi vertical (o casi horizontal) pareciera "girar en un solo eje": cualquier
+  // pequeño desvío del centro se traducía en un ángulo grande y el punto saltaba de golpe al
+  // borde en esa dirección. Siguiendo el píxel real del dedo, el movimiento es siempre directo.
+  function colocarSelectorPx(x, y) {
+    selector.style.left = x + 'px';
+    selector.style.top = y + 'px';
   }
-  colocarSelector(hexAHue(cat.color));
+  // Posición inicial (al abrir, sin gesto todavía): no hay un píxel de dedo del que partir, así
+  // que aquí sí hace falta calcularla a partir del tono guardado.
+  function colocarSelectorPorHue(hue, radioPx) {
+    const anguloRad = hue * Math.PI / 180;
+    colocarSelectorPx(radioPx + radioPx * 0.82 * Math.sin(anguloRad), radioPx - radioPx * 0.82 * Math.cos(anguloRad));
+  }
+  colocarSelectorPorHue(hexAHue(cat.color), rueda.clientWidth / 2);
 
   function elegirDesdeEvento(clientX, clientY) {
     const r = rueda.getBoundingClientRect();
-    const dx = clientX - (r.left + r.width / 2), dy = clientY - (r.top + r.height / 2);
+    let dx = clientX - (r.left + r.width / 2);
+    let dy = clientY - (r.top + r.height / 2);
+    const radioMax = r.width / 2 - 2; // un pelín dentro del borde
+    const distancia = Math.hypot(dx, dy) || 1;
+    if (distancia > radioMax) { const f = radioMax / distancia; dx *= f; dy *= f; }
     const hue = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
     const color = hslAHex(hue, SATURACION_RUEDA_COLOR, LUMINOSIDAD_RUEDA_COLOR);
-    colocarSelector(hue);
+    colocarSelectorPx(r.width / 2 + dx, r.height / 2 + dy);
     muestra.style.background = color;
-    textoHex.textContent = color;
     if (filaHome) filaHome.style.background = color;
     return color;
   }
@@ -4282,11 +4289,13 @@ function abrirRuedaColorCategoria(cat, filaHome) {
   // para arrastrar fichas/selección: aquí no hace falta detectar cuándo el dedo SALE del
   // círculo para cancelar nada, todo lo contrario — se quiere seguir el gesto aunque el dedo se
   // vaya fuera del borde mientras se arrastra, y pointer capture ya lo hace sin más código.
+  // preventDefault, además, para que el navegador no intente hacer scroll con el mismo gesto.
   let colorElegido = cat.color;
   rueda.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
     try { rueda.setPointerCapture(e.pointerId); } catch (err) { /* algunos navegadores no lo permiten; se sigue igualmente */ }
     colorElegido = elegirDesdeEvento(e.clientX, e.clientY);
-    const mover = (ev) => { colorElegido = elegirDesdeEvento(ev.clientX, ev.clientY); };
+    const mover = (ev) => { ev.preventDefault(); colorElegido = elegirDesdeEvento(ev.clientX, ev.clientY); };
     const soltar = () => {
       rueda.removeEventListener('pointermove', mover);
       if (colorElegido !== cat.color) {
