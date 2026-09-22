@@ -17,6 +17,27 @@
     var modo = t === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro') : t;
     if (modo === 'claro') document.documentElement.setAttribute('data-tema', 'claro');
   } catch (e) {}
+  try {
+    // Primera vez de verdad en este móvil (nunca se guardó nada ni se eligió idioma). Si el
+    // idioma del propio móvil ya es uno de los que tenemos, se pone solo, sin preguntar. Solo se
+    // pregunta cuando el idioma del móvil es otro distinto. Con datos guardados de antes de que
+    // esto existiera no se pregunta nunca (esas personas ya usan la app; pueden cambiarlo en Ajustes).
+    if (!localStorage.getItem('documentacion_idioma') && !localStorage.getItem('documentacion_datos_cache')) {
+      var idiomaMovil = ((navigator.language || (navigator.languages && navigator.languages[0]) || '') + '').toLowerCase().slice(0, 2);
+      if (idiomaMovil === 'es' || idiomaMovil === 'en' || idiomaMovil === 'ca') localStorage.setItem('documentacion_idioma', idiomaMovil);
+      else document.documentElement.setAttribute('data-preguntar-idioma', '1');
+    }
+  } catch (e) {}
+  try {
+    var i = localStorage.getItem('documentacion_idioma');
+    if (i === 'en' || i === 'ca') {
+      document.documentElement.lang = i;
+      // hasta que la app pone los textos en su idioma no se enseña nada (así no se ve un instante en castellano)
+      var ocultar = document.createElement('style'); ocultar.id = 'ocultar-idioma'; ocultar.textContent = 'body{visibility:hidden}';
+      document.head.appendChild(ocultar);
+      setTimeout(function () { var o = document.getElementById('ocultar-idioma'); if (o) o.remove(); }, 2500); // por si algo falla
+    }
+  } catch (e) {}
   // Estilo (skin): se activa antes de pintar para que no haya parpadeo, y se cargan sus letras.
   window.__fuentesSkin = {
     pasaporte: 'family=Cormorant+Garamond:wght@600;700&family=Lato:wght@400;700',
@@ -127,6 +148,19 @@
   button:focus-visible, input:focus-visible, [tabindex]:focus-visible{ outline:2px solid var(--seal); outline-offset:2px; }
   @media (prefers-reduced-motion:reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
+  html[data-preguntar-idioma] #vista-login{ display:none; }
+  #vista-idioma{
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px 24px; text-align:center; background:var(--fondo-login);
+  }
+  html:not([data-preguntar-idioma]) #vista-idioma{ display:none; }
+  #vista-idioma .lead-idiomas{ max-width:320px; color:var(--text-dim); line-height:1.6; margin:0 0 30px; font-size:.95rem; }
+  #vista-idioma .lead-idiomas span{ display:block; }
+  .btn-idioma-inicio{ display:flex; align-items:center; justify-content:center; gap:10px; }
+  .btn-idioma-inicio .sigla-idioma-inicio{
+    flex:none; width:30px; height:30px; border-radius:50%; background:var(--text-ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; opacity:.7;
+  }
   #vista-login{
     min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center;
@@ -1065,6 +1099,54 @@
   .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
   .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
 
+  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
+  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
+  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
+  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
+  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
+  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
+  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
+  .mqs-cuerpo{ display:block; padding:10px; }
+  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
+  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
+  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
+  .mqs-ficha.a i{ background:var(--azul); }
+  .mqs-ficha.z i{ background:var(--amber); }
+  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
+  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
+  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
+  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
+  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
+  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
+  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
+  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
+  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
+  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
+  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
+  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
+  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
+  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
+  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
+  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
+  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+  .mq-skin[data-skin="chicle"] .mqs-barra{ background:linear-gradient(90deg, var(--c1), var(--c5), var(--c4)); border-bottom:none; }
+  .mq-skin[data-skin="chicle"] .mqs-barra b{ color:var(--sobre-acento); font-weight:700; }
+  .mq-skin[data-skin="chicle"] :is(.mqs-logo, .mqs-btn){ background:var(--paper); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c1); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha.a i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c2); }
+  .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
+  .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
+  .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
+  .icono-accion.idioma{ background:linear-gradient(135deg, var(--azul), var(--morado)); }
+  .icono-accion.sigla{ font-size:.78rem; font-weight:700; letter-spacing:.02em; }
+
   /* ==================== ESTILOS (skins) ====================
      Cada estilo redefine colores (oscuro y claro), forma (radios), letra y algunos detalles.
      El atributo data-skin va en <html>; también en las maquetas de la pantalla de Estilos. */
@@ -1378,6 +1460,16 @@
 </head>
 <body>
 
+<div id="vista-idioma">
+  <img class="icono-login" src="icono.png" alt="">
+  <p class="lead-idiomas"><span>¿En qué idioma quieres usar la app?</span><span>What language do you want to use the app in?</span><span>En quin idioma vols fer servir l'aplicació?</span></p>
+  <div class="login-bloque">
+    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="es"><span class="sigla-idioma-inicio">ES</span><strong>Castellano</strong></button>
+    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="en"><span class="sigla-idioma-inicio">EN</span><strong>English</strong></button>
+    <button class="btn-grande btn-idioma-inicio" data-idioma-inicio="ca"><span class="sigla-idioma-inicio">CA</span><strong>Català</strong></button>
+  </div>
+</div>
+
 <div id="vista-login">
   <img class="icono-login" src="icono.png" alt="">
   <h1>Documentación</h1>
@@ -1467,6 +1559,7 @@
   <button class="btn-primario" id="btn-compartir-seleccion" type="button" disabled>Compartir</button>
 </div>
 
+<script src="idiomas.js"></script>
 <script>
 const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleusercontent.com';
 
@@ -1475,7 +1568,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.5.4';
+const VERSION_APP = '2.6.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1543,6 +1636,125 @@ let promptInstalacionDiferido = null;
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
+// ---- Idiomas de la interfaz (castellano, English, català) ----
+// Solo cambia lo que se ve en pantalla. Los datos (nombres de personas, categorías y documentos), las
+// copias de seguridad en las nubes y los archivos de exportación NO dependen del idioma: cada app
+// puede tener uno distinto y se leen igual. Los textos están escritos en castellano; los diccionarios
+// están en idiomas.js. Dos mecanismos:
+//  - Lo que sale tal cual (botones, avisos, ayudas…) se traduce solo, buscando el texto en el
+//    diccionario al colocarlo en la pantalla (traducirArbol y un observador de cambios).
+//  - Las frases que el código compone con datos (nombres, números, plurales) usan trad('frase {dato}', { dato }).
+const IDIOMA_STORAGE_KEY = 'documentacion_idioma';
+const IDIOMAS = {
+  es: { nombre: 'Castellano', sigla: 'ES', html: 'es' },
+  en: { nombre: 'English', sigla: 'EN', html: 'en' },
+  ca: { nombre: 'Català', sigla: 'CA', html: 'ca' },
+};
+function obtenerIdiomaGuardado() {
+  try { const s = localStorage.getItem(IDIOMA_STORAGE_KEY); return IDIOMAS[s] ? s : 'es'; } catch (e) { return 'es'; }
+}
+let idiomaActual = obtenerIdiomaGuardado(); // ya desde el principio, para que lo que se componga en el arranque salga en su idioma
+
+// Frase compuesta por el código: se busca en el diccionario y se rellenan los {marcadores}.
+function trad(clave, vars) {
+  let s = clave;
+  if (idiomaActual !== 'es') {
+    const propio = (window.DICC_CODIGO || {})[idiomaActual] || {};
+    const general = (window.DICC_DOM || {})[idiomaActual] || {};
+    if (propio[clave] !== undefined) s = propio[clave];
+    else if (general[clave] !== undefined) s = general[clave];
+  }
+  return vars ? s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m)) : s;
+}
+// "3 personas", "1 documento": el número y la palabra en singular o plural, traducida
+const contar = (n, uno, varios) => `${n} ${trad(n === 1 ? uno : varios)}`;
+// Une los nombres de varias nubes: "Google Drive y Dropbox"
+const unirConY = (lista) => (lista.length === 2 ? trad('{a} y {b}', { a: lista[0], b: lista[1] }) : lista.join(', '));
+
+const ATRIBUTOS_TRADUCIBLES = ['placeholder', 'aria-label', 'title', 'alt'];
+// Lo que son datos del usuario (nombres de documentos, personas, páginas…) no se traduce nunca.
+const NO_TRADUCIR = 'script, style, textarea, option, .doc-nombre, .nombre-persona, .galeria-pagina-nombre, .visor-topbar .titulo, .categoria-barra-nombre, .nombre-opcion-cat, [data-no-t]';
+let prefijosIdioma = { en: null, ca: null };
+function prefijosDe(id) {
+  if (!prefijosIdioma[id]) prefijosIdioma[id] = Object.keys((window.DICC_DOM || {})[id] || {}).filter((k) => k.endsWith(':')).sort((a, b) => b.length - a.length);
+  return prefijosIdioma[id];
+}
+// Texto en castellano → texto en el idioma actual (o el mismo si no está en el diccionario).
+function traducirCadena(orig) {
+  if (idiomaActual === 'es') return orig;
+  const dicc = (window.DICC_DOM || {})[idiomaActual];
+  if (!dicc) return orig;
+  const partes = /^(\s*)([\s\S]*?)(\s*)$/.exec(orig);
+  const clave = partes[2].replace(/\s+/g, ' ');
+  if (!clave) return orig;
+  let res = dicc[clave];
+  if (res === undefined) {
+    for (const p of prefijosDe(idiomaActual)) { if (clave.startsWith(p)) { res = dicc[p] + clave.slice(p.length); break; } }
+  }
+  return res === undefined ? orig : partes[1] + res + partes[3];
+}
+// Cada nodo recuerda su texto original en castellano (orig) y lo último que se puso (puesto); si otro
+// código lo cambia, ese valor pasa a ser el nuevo original.
+function procesarTexto(n) {
+  if (n.parentElement && n.parentElement.closest(NO_TRADUCIR)) return;
+  const v = n.nodeValue;
+  if (!n.__i18n || n.__i18n.puesto !== v) n.__i18n = { orig: v, puesto: v };
+  const destino = traducirCadena(n.__i18n.orig);
+  if (destino !== v) n.nodeValue = destino;
+  n.__i18n.puesto = destino;
+}
+function procesarAtributos(el) {
+  if (el.closest && el.closest('[data-no-t]')) return;
+  for (const a of ATRIBUTOS_TRADUCIBLES) {
+    if (!el.hasAttribute(a)) continue;
+    const v = el.getAttribute(a);
+    const reg = el.__i18nAttr || (el.__i18nAttr = {});
+    if (!reg[a] || reg[a].puesto !== v) reg[a] = { orig: v, puesto: v };
+    const destino = traducirCadena(reg[a].orig);
+    if (destino !== v) el.setAttribute(a, destino);
+    reg[a].puesto = destino;
+  }
+}
+function traducirArbol(raiz) {
+  if (!raiz) return;
+  if (raiz.nodeType === 3) { procesarTexto(raiz); return; }
+  if (raiz.nodeType === 1 && raiz.matches && raiz.matches(NO_TRADUCIR)) return;
+  if (raiz.nodeType === 1) procesarAtributos(raiz);
+  const recorrido = document.createTreeWalker(raiz, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+    acceptNode: (nodo) => (nodo.nodeType === 1 && nodo.matches(NO_TRADUCIR) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  let nodo;
+  while ((nodo = recorrido.nextNode())) { if (nodo.nodeType === 3) procesarTexto(nodo); else procesarAtributos(nodo); }
+}
+let observadorIdioma = null;
+function iniciarObservadorIdioma() {
+  if (observadorIdioma) return;
+  observadorIdioma = new MutationObserver((mutaciones) => {
+    if (idiomaActual === 'es') return; // en castellano no hay nada que traducir (al volver a él se restaura todo de una vez)
+    for (const m of mutaciones) {
+      if (m.type === 'childList') m.addedNodes.forEach((nodo) => traducirArbol(nodo));
+      else if (m.type === 'characterData') procesarTexto(m.target);
+      else if (m.type === 'attributes') procesarAtributos(m.target);
+    }
+  });
+  observadorIdioma.observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATRIBUTOS_TRADUCIBLES });
+}
+const TITULO_ES = document.title;
+const DESCRIPCION_ES = (document.querySelector('meta[name="description"]') || {}).content || '';
+function aplicarIdioma(id) {
+  idiomaActual = IDIOMAS[id] ? id : 'es';
+  document.documentElement.lang = IDIOMAS[idiomaActual].html;
+  document.title = trad(TITULO_ES);
+  const meta = document.querySelector('meta[name="description"]');
+  if (meta && DESCRIPCION_ES) meta.setAttribute('content', trad(DESCRIPCION_ES));
+  traducirArbol(document.body);
+  iniciarObservadorIdioma();
+}
+function guardarIdioma(id) {
+  try { localStorage.setItem(IDIOMA_STORAGE_KEY, id); } catch (e) { /* ignorar */ }
+  aplicarIdioma(id);
+}
+
 function appYaInstalada() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -1589,6 +1801,14 @@ navigator.serviceWorker?.addEventListener('message', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  $$('.btn-idioma-inicio').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      guardarIdioma(btn.dataset.idiomaInicio);
+      document.documentElement.removeAttribute('data-preguntar-idioma');
+      $('#vista-idioma').classList.add('hidden');
+    });
+  });
+
   $('#btn-banner-instalar')?.addEventListener('click', async () => {
     if (!promptInstalacionDiferido) return;
     promptInstalacionDiferido.prompt();
@@ -1931,14 +2151,14 @@ async function alConectarProveedor(id) {
       const remoto = crudo ? interpretarCopia(crudo) : null;
       if (remoto) {
         restaurarCopia(id, remoto);
-        mostrarToast(`Copia de ${prov.nombre} recuperada`);
+        mostrarToast(trad('Copia de {nube} recuperada', { nube: prov.nombre }));
       } else if (sinDatos) {
         datos = { personas: [], categorias: categoriasIniciales(), documentos: [] };
         entrarEnLaApp();
         await guardarMetadatos();
       }
     } else {
-      mostrarToast(`${prov.nombre} conectado`);
+      mostrarToast(trad('{nube} conectado', { nube: prov.nombre }));
     }
     estadoProv[id] = 'ok';
   } catch (e) {
@@ -1949,7 +2169,7 @@ async function alConectarProveedor(id) {
       guardarProv(id, null);
       volverALogin();
     }
-    mostrarToast(`No se pudo conectar con ${prov.nombre}.`, true);
+    mostrarToast(trad('No se pudo conectar con {nube}.', { nube: prov.nombre }), true);
   }
   refrescarEstadoAjustes();
   programarRespaldo(500);
@@ -2267,7 +2487,7 @@ async function procesarRetornoOAuth() {
   guardarJsonLocal('documentacion_oauth_pendiente', null);
   if (!pendiente || pendiente.estado !== estado || !PROVEEDORES[pendiente.id]) return null;
   const prov = PROVEEDORES[pendiente.id];
-  if (error || !codigo) { mostrarToast(`No se completó la conexión con ${prov.nombre}.`, true); return null; }
+  if (error || !codigo) { mostrarToast(trad('No se completó la conexión con {nube}.', { nube: prov.nombre }), true); return null; }
   if (!mostrandoDatosLocales) { mostrarApp(); mostrarPantallaCarga(); }
   try {
     await prov.canjearCodigo(codigo, pendiente.verificador);
@@ -2276,7 +2496,7 @@ async function procesarRetornoOAuth() {
     console.error(e);
     guardarProv(prov.id, null);
     if (!mostrandoDatosLocales) volverALogin();
-    mostrarToast(`No se pudo conectar con ${prov.nombre}.`, true);
+    mostrarToast(trad('No se pudo conectar con {nube}.', { nube: prov.nombre }), true);
     return null;
   }
 }
@@ -2742,9 +2962,9 @@ function textoUltimaSync() {
   if (!hayProveedores()) return '';
   const ultima = ultimaSincronizacion();
   const cuando = ultima
-    ? new Date(ultima).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    : 'todavía no';
-  return `Última sincronización automática: ${cuando}`;
+    ? new Date(ultima).toLocaleString(({ es: 'es-ES', en: 'en-GB', ca: 'ca-ES' })[idiomaActual], { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : trad('todavía no');
+  return trad('Última sincronización automática: {cuando}', { cuando });
 }
 
 // Antes de exportar: consulta TODAS las nubes conectadas (aunque no haya nada
@@ -3010,7 +3230,7 @@ async function respaldarEn(id, forzar = false) {
       if (fusion.adoptado) {
         adoptado = true;
         try { refrescarPantallaActual(); } catch (e) { /* ignorar */ }
-        mostrarToast(`Se han traído a este móvil las novedades de ${prov.nombre}`);
+        mostrarToast(trad('Se han traído a este móvil las novedades de {nube}', { nube: prov.nombre }));
       }
     }
 
@@ -3053,7 +3273,7 @@ async function respaldarEn(id, forzar = false) {
       }
     }
 
-    if (recuperados) mostrarToast(`${prov.nombre} había perdido ${recuperados === 1 ? 'un archivo' : recuperados + ' archivos'}: se ${recuperados === 1 ? 'ha' : 'han'} vuelto a subir`);
+    if (recuperados) mostrarToast(recuperados === 1 ? trad('{nube} había perdido un archivo: se ha vuelto a subir', { nube: prov.nombre }) : trad('{nube} había perdido {n} archivos: se han vuelto a subir', { nube: prov.nombre, n: recuperados }));
 
     const rev = revisionLocal();
     if (subioAlgo || estado.revSubida !== rev || !remoto) {
@@ -3074,7 +3294,7 @@ async function respaldarEn(id, forzar = false) {
     console.error(e);
     if (e.message === 'reconectar' || e.message === 'token-caducado') {
       estadoProv[id] = 'reconectar';
-      if (!avisadoReconectar[id]) { avisadoReconectar[id] = true; mostrarToast(`Hay que volver a conectar ${prov.nombre} (en Ajustes).`, true); }
+      if (!avisadoReconectar[id]) { avisadoReconectar[id] = true; mostrarToast(trad('Hay que volver a conectar {nube} (en Ajustes).', { nube: prov.nombre }), true); }
     } else {
       estadoProv[id] = 'error';
     }
@@ -3228,7 +3448,7 @@ function textoEstadoProv(id) {
   if (est === 'reconectar') return 'Hay que volver a conectar';
   if (est === 'error') return 'No se pudo copiar; se reintentará';
   const n = pendientesProv(id);
-  return n > 0 ? `${n} pendiente${n === 1 ? '' : 's'} de copiar` : 'Sincronizado';
+  return n > 0 ? trad(n === 1 ? '{n} pendiente de copiar' : '{n} pendientes de copiar', { n }) : 'Sincronizado';
 }
 
 // Marca de cada nube (fondo blanco, como su logotipo).
@@ -3250,7 +3470,7 @@ function htmlFilasProveedores() {
         <strong>${p.nombre}</strong>
         ${con && p.correo() ? `<span class="correo-prov">${escapeHtml(p.correo())}</span>` : ''}
         <span class="estado-prov ${tono}"><i class="punto-estado"></i>${con ? textoEstadoProv(p.id) : 'Sin conectar'}</span>
-        ${con ? `<button type="button" class="enlace-prov" data-prov="${p.id}" data-accion="ver" aria-label="Ver carpeta en ${p.nombre}">Ver carpeta</button>` : ''}
+        ${con ? `<button type="button" class="enlace-prov" data-prov="${p.id}" data-accion="ver" aria-label="${trad('Ver carpeta en {nube}', { nube: p.nombre })}">Ver carpeta</button>` : ''}
       </div>
       <button type="button" class="btn-prov${accion === 'desconectar' ? '' : ' primario'}" data-prov="${p.id}" data-accion="${accion}">${etiqueta}</button>
     </div>`;
@@ -3263,12 +3483,12 @@ function estadoGeneralCopias() {
   if (!conectadas.length) return { tono: 'sin', titulo: 'Solo en este móvil', detalle: 'Conecta una nube para tener copia de seguridad.' };
   const flojas = conectadas.filter((p) => estadoProv[p.id] === 'reconectar' || estadoProv[p.id] === 'error');
   if (flojas.length) {
-    return { tono: 'aviso', titulo: 'Revisa tus copias', detalle: `${flojas.map((p) => p.nombre).join(' y ')} ${flojas.length === 1 ? 'necesita' : 'necesitan'} atención.` };
+    return { tono: 'aviso', titulo: 'Revisa tus copias', detalle: trad(flojas.length === 1 ? '{nubes} necesita atención.' : '{nubes} necesitan atención.', { nubes: unirConY(flojas.map((p) => p.nombre)) }) };
   }
   if (conectadas.some((p) => estadoProv[p.id] === 'copiando')) return { tono: 'copiando', titulo: 'Copiando…', detalle: 'Enviando los cambios a tus nubes.' };
   const pendientes = totalPendientes();
-  if (pendientes > 0) return { tono: 'copiando', titulo: 'Copia pendiente', detalle: `${pluralizar(pendientes, 'elemento', 'elementos')} por enviar a tus nubes.` };
-  return { tono: 'ok', titulo: 'Todo a salvo', detalle: `Sincronizado con ${pluralizar(conectadas.length, 'nube', 'nubes')}.` };
+  if (pendientes > 0) return { tono: 'copiando', titulo: 'Copia pendiente', detalle: trad('{cosas} por enviar a tus nubes.', { cosas: contar(pendientes, 'elemento', 'elementos') }) };
+  return { tono: 'ok', titulo: 'Todo a salvo', detalle: trad('Sincronizado con {nubes}.', { nubes: contar(conectadas.length, 'nube', 'nubes') }) };
 }
 
 const SIGNOS_SELLO = {
@@ -3313,7 +3533,7 @@ async function desconectarProveedor(id) {
   delete estadoProv[id];
   guardarJsonLocal(CLAVE_BORRADOS, leerJsonLocal(CLAVE_BORRADOS, []).filter((b) => b.prov !== id));
   refrescarEstadoAjustes();
-  mostrarToast(`${prov.nombre} desconectado`);
+  mostrarToast(trad('{nube} desconectado', { nube: prov.nombre }));
 }
 
 function totalPendientes() {
@@ -3327,11 +3547,11 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
   const personas = datos.personas.length;
   const docs = datos.documentos.length;
   const paginas = datos.documentos.reduce((n, d) => n + d.paginas.length, 0);
-  const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
-  const resumen = `${plural(personas, 'persona', 'personas')}, ${plural(docs, 'documento', 'documentos')} y ${plural(paginas, 'página', 'páginas')}`;
+  const resumen = trad('{a}, {b} y {c}', { a: contar(personas, 'persona', 'personas'), b: contar(docs, 'documento', 'documentos'), c: contar(paginas, 'página', 'páginas') });
+  const palabraBorrar = trad('BORRAR'); // la palabra que hay que escribir para confirmar, en el idioma de la interfaz
   const motivo = sinNube
     ? 'No hay ninguna nube conectada: no existe ninguna copia de seguridad.'
-    : `Hay ${plural(pendientes, 'cosa', 'cosas')} que todavía no se han copiado a la nube.`;
+    : trad('Hay {cosas} que todavía no se han copiado a la nube.', { cosas: contar(pendientes, 'cosa', 'cosas') });
   const rojo = 'color:var(--stamp);font-size:.92rem;line-height:1.55;margin:0 0 12px;';
   const normal = 'color:var(--text-dim);font-size:.88rem;line-height:1.5;margin:0 0 14px;';
   const columna = 'display:flex;flex-direction:column;gap:10px;';
@@ -3353,7 +3573,7 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
   function aviso2() {
     abrirModal(`
       <h3 style="color:var(--stamp);">Aviso 2 de 3</h3>
-      <p style="${rojo}"><strong>Se va a borrar todo esto: ${resumen}.</strong></p>
+      <p style="${rojo}"><strong>${trad('Se va a borrar todo esto: {resumen}.', { resumen })}</strong></p>
       <p style="${normal}">Esta es la única copia que existe. Si tienes un solo momento de duda, cancela y conecta una nube en Ajustes → Copias de seguridad.</p>
       <div style="${columna}">
         <button class="btn-primario" id="triple-atras">No, cancelar</button>
@@ -3366,17 +3586,17 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
     abrirModal(`
       <h3 style="color:var(--stamp);">Aviso 3 de 3: último</h3>
       <p style="${rojo}"><strong>Esto no se puede deshacer.</strong></p>
-      <p style="${normal}">Para confirmar, escribe <strong style="color:var(--text-light)">BORRAR</strong> en el recuadro.</p>
-      <div class="campo"><input type="text" id="triple-texto" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BORRAR"></div>
+      <p style="${normal}">Para confirmar, escribe <strong style="color:var(--text-light)">${palabraBorrar}</strong> en el recuadro.</p>
+      <div class="campo"><input type="text" id="triple-texto" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${palabraBorrar}"></div>
       <div style="${columna}">
         <button class="btn-primario" id="triple-atras">Cancelar</button>
         <button class="btn-secundario" id="triple-final" disabled>Borrar todo y cerrar sesión</button>
       </div>`);
     const texto = $('#triple-texto');
     const final = $('#triple-final');
-    texto.addEventListener('input', () => { final.disabled = texto.value.trim().toUpperCase() !== 'BORRAR'; });
+    texto.addEventListener('input', () => { final.disabled = texto.value.trim().toUpperCase() !== palabraBorrar.toUpperCase(); });
     $('#triple-atras').addEventListener('click', volverAtras);
-    final.addEventListener('click', () => { if (texto.value.trim().toUpperCase() === 'BORRAR') cerrarSesionCompleta(); });
+    final.addEventListener('click', () => { if (texto.value.trim().toUpperCase() === palabraBorrar.toUpperCase()) cerrarSesionCompleta(); });
   }
   aviso1();
 }
@@ -3385,7 +3605,7 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
 // copiado en las nubes se conserva ahí.
 function cerrarSesionCompleta() {
   Object.keys(PROVEEDORES).forEach((id) => { if (PROVEEDORES[id].conectado()) { try { PROVEEDORES[id].desconectar(); } catch (e) { /* ignorar */ } } });
-  const conservar = new Set([TEMA_STORAGE_KEY, 'documentacion_modo_inicio']);
+  const conservar = new Set([TEMA_STORAGE_KEY, SKIN_STORAGE_KEY, IDIOMA_STORAGE_KEY, 'documentacion_modo_inicio']);
   Object.keys(localStorage).filter((k) => k.startsWith('documentacion_') && !conservar.has(k)).forEach((k) => localStorage.removeItem(k));
   try { indexedDB.deleteDatabase(DB_NOMBRE); } catch (e) { /* ignorar */ }
   location.reload();
@@ -3814,9 +4034,9 @@ function abrirRenombrarPersona(persona) {
 function confirmarEliminarPersona(persona) {
   const docs = datos.documentos.filter((d) => d.personaId === persona.id);
   abrirModal(`
-    <h3>¿Eliminar a ${escapeHtml(persona.nombre)}?</h3>
+    <h3>${trad('¿Eliminar a {nombre}?', { nombre: escapeHtml(persona.nombre) })}</h3>
     <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;">
-      Se eliminarán también sus ${docs.length} documento${docs.length === 1 ? '' : 's'} de Drive. Esta acción no se puede deshacer.
+      ${trad(docs.length === 1 ? 'Se eliminarán también sus {n} documento de Drive. Esta acción no se puede deshacer.' : 'Se eliminarán también sus {n} documentos de Drive. Esta acción no se puede deshacer.', { n: docs.length })}
     </p>
     <div class="campo">
       <label for="input-confirmar-nombre">Escribe <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> para confirmar</label>
@@ -3921,7 +4141,7 @@ function crearBarraCategoriaHome(cat, editable) {
 function abrirRenombrarCategoria(cat) {
   abrirModalRenombrar('Renombrar categoría', cat.nombre, (nuevo) => {
     if (nuevo.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
-      mostrarToast(`"${CATEGORIA_SIN_ASIGNAR.nombre}" es un nombre reservado, elige otro.`, true);
+      mostrarToast(trad('"{nombre}" es un nombre reservado, elige otro.', { nombre: trad(CATEGORIA_SIN_ASIGNAR.nombre) }), true);
       return;
     }
     if (nuevo === cat.nombre) { volverAtras(); return; }
@@ -3937,7 +4157,7 @@ function abrirRenombrarCategoria(cat) {
 function abrirNuevaCategoria() {
   abrirModalRenombrar('Nueva categoría', '', (nombre) => {
     if (nombre.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
-      mostrarToast(`"${CATEGORIA_SIN_ASIGNAR.nombre}" es un nombre reservado, elige otro.`, true);
+      mostrarToast(trad('"{nombre}" es un nombre reservado, elige otro.', { nombre: trad(CATEGORIA_SIN_ASIGNAR.nombre) }), true);
       return;
     }
     const id = 'cat-' + Date.now();
@@ -3958,7 +4178,7 @@ function confirmarEliminarCategoria(cat) {
   if (num === 0) { eliminarCategoriaGuardando(cat, false); return; }
   abrirModal(`
     <h3>Eliminar categoría</h3>
-    <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;">¿Eliminar «${escapeHtml(cat.nombre)}»? Sus ${num} documento${num === 1 ? '' : 's'} pasarán a mostrarse como «${CATEGORIA_SIN_ASIGNAR.nombre}».</p>
+    <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 14px;">${trad(num === 1 ? '¿Eliminar «{cat}»? Sus {n} documento pasarán a mostrarse como «{sin}».' : '¿Eliminar «{cat}»? Sus {n} documentos pasarán a mostrarse como «{sin}».', { cat: escapeHtml(cat.nombre), n: num, sin: trad(CATEGORIA_SIN_ASIGNAR.nombre) })}</p>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
       <button class="btn-primario btn-peligro" id="btn-confirmar-eliminar-cat">Eliminar</button>
@@ -5431,7 +5651,7 @@ function alternarSeleccionDoc(doc, fila, activarModo = false) {
 
 function actualizarBarraSeleccion() {
   const n = docsSeleccionados.size;
-  $('#texto-seleccion').textContent = `${n} seleccionado${n === 1 ? '' : 's'}`;
+  $('#texto-seleccion').textContent = trad(n === 1 ? '{n} seleccionado' : '{n} seleccionados', { n });
   $('#btn-compartir-seleccion').disabled = n === 0;
   $('#barra-seleccion').classList.toggle('hidden', !modoSeleccionDocs);
 }
@@ -5479,7 +5699,7 @@ async function compartirPaginas(paginas, tituloGrupo) {
     }
     await navigator.share({
       files: archivos,
-      title: tituloGrupo || (archivos.length === 1 ? paginas[0].nombre : `${archivos.length} documentos`),
+      title: tituloGrupo || (archivos.length === 1 ? paginas[0].nombre : trad('{n} documentos', { n: archivos.length })),
     });
   } catch (e) {
     if (e.name !== 'AbortError') mostrarToast('No se pudo compartir.', true);
@@ -5621,7 +5841,7 @@ function calcularBadgeCaducidad(fecha) {
   if (!fecha) return null;
   const dias = diasHastaCaducidad(fecha);
   if (dias <= 0) return { estado: 'caducado', texto: 'Caducado' };
-  if (dias <= 60) return { estado: 'aviso', texto: `${dias} día${dias === 1 ? '' : 's'}` };
+  if (dias <= 60) return { estado: 'aviso', texto: trad(dias === 1 ? '{n} día' : '{n} días', { n: dias }) };
   return null;
 }
 // Cuenta, para una persona, cuántos de sus documentos están ya
@@ -5659,13 +5879,13 @@ function renderizarAvisoCaducidadPersona() {
   const bannerCaducado = $('#aviso-caducado-persona');
   bannerCaducado.classList.toggle('hidden', caducados === 0);
   if (caducados > 0) {
-    bannerCaducado.innerHTML = `<span>Tiene ${caducados} documento${caducados === 1 ? '' : 's'} caducado${caducados === 1 ? '' : 's'}</span>`;
+    bannerCaducado.innerHTML = `<span>${trad(caducados === 1 ? 'Tiene {n} documento caducado' : 'Tiene {n} documentos caducados', { n: caducados })}</span>`;
   }
 
   const bannerAviso = $('#aviso-porcaducar-persona');
   bannerAviso.classList.toggle('hidden', avisos === 0);
   if (avisos > 0) {
-    bannerAviso.innerHTML = `<span>Tiene ${avisos} documento${avisos === 1 ? '' : 's'} a punto de caducar</span>`;
+    bannerAviso.innerHTML = `<span>${trad(avisos === 1 ? 'Tiene {n} documento a punto de caducar' : 'Tiene {n} documentos a punto de caducar', { n: avisos })}</span>`;
   }
 }
 function formatearFecha(iso) {
@@ -5741,10 +5961,11 @@ function comprobarCaducidadesYNotificar() {
 function notificarCaducidad(doc, dias) {
   const persona = datos.personas.find((p) => p.id === doc.personaId);
   const categoria = datos.categorias.find((c) => c.id === doc.categoria);
-  const quien = persona ? ` de ${persona.nombre}` : '';
-  const texto = dias < 0 ? 'ha caducado' : dias === 0 ? 'caduca hoy' : `caduca en ${dias} días`;
-  const titulo = 'Documento a punto de caducar';
-  const cuerpo = `${categoria ? categoria.nombre : doc.nombre}${quien} ${texto}.`;
+  const que = categoria ? categoria.nombre : doc.nombre;
+  const estado = dias < 0 ? 'ha caducado' : dias === 0 ? 'caduca hoy' : dias === 1 ? 'caduca mañana' : 'caduca en {n} días';
+  const titulo = trad('Documento a punto de caducar');
+  // "Carnet de Ana ha caducado.": con o sin la persona, en el idioma de la interfaz
+  const cuerpo = persona ? trad('{doc} de {persona} ' + estado + '.', { doc: que, persona: persona.nombre, n: dias }) : trad('{doc} ' + estado + '.', { doc: que, n: dias });
   const opciones = {
     body: cuerpo, icon: 'icono.png', badge: 'icono_notificacion.png',
     tag: 'caducidad-' + doc.id, data: { personaId: doc.personaId },
@@ -5854,7 +6075,7 @@ function abrirGaleriaDocumento(doc) {
     btn.className = 'galeria-pagina';
     btn.innerHTML = `
       <div class="miniatura">${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}</div>
-      <p class="galeria-pagina-nombre">${escapeHtml(pagina.nombre || `Página ${indice + 1}`)}</p>`;
+      <p class="galeria-pagina-nombre">${escapeHtml(pagina.nombre || trad('Página {n}', { n: indice + 1 }))}</p>`;
     btn.addEventListener('click', () => abrirVisor(doc, indice));
     cuerpo.appendChild(btn);
 
@@ -5899,7 +6120,7 @@ function agregarPagina(doc) {
       <h3>Nombre de la página</h3>
       <div class="campo">
         <label for="input-nombre-pagina">Ej: Reverso, Página 2...</label>
-        <input type="search" id="input-nombre-pagina" name="q" value="${escapeHtml(`Página ${doc.paginas.length + 1}`)}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
+        <input type="search" id="input-nombre-pagina" name="q" value="${escapeHtml(trad('Página {n}', { n: doc.paginas.length + 1 }))}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -5912,7 +6133,7 @@ function agregarPagina(doc) {
     input.select();
     $('#modal-cancelar').addEventListener('click', volverAtras);
     $('#modal-guardar-pagina').addEventListener('click', async () => {
-      const nombrePagina = input.value.trim() || `Página ${doc.paginas.length + 1}`;
+      const nombrePagina = input.value.trim() || trad('Página {n}', { n: doc.paginas.length + 1 });
       const btn = $('#modal-guardar-pagina');
       btn.disabled = true; btn.textContent = 'Subiendo…';
       try {
@@ -5969,7 +6190,7 @@ function filaMenu(id, tinte, icono, titulo, detalle, salir = false) {
   </button>`;
 }
 function textoCaducidadMenu(doc) {
-  return doc.fechaCaducidad ? 'Caduca el ' + doc.fechaCaducidad.split('-').reverse().join('/') : 'Sin fecha de caducidad';
+  return doc.fechaCaducidad ? trad('Caduca el {fecha}', { fecha: doc.fechaCaducidad.split('-').reverse().join('/') }) : 'Sin fecha de caducidad';
 }
 function textoCategoriaMenu(doc) {
   const cat = datos.categorias.find((c) => c.id === doc.categoria);
@@ -6136,9 +6357,9 @@ function abrirModalCaducidad(doc) {
 
 function confirmarBorrado(doc, indicePagina = null) {
   const borrandoUnaPagina = indicePagina !== null && doc.paginas.length > 1;
-  const nombreMostrado = borrandoUnaPagina ? (doc.paginas[indicePagina].nombre || `página ${indicePagina + 1}`) : doc.nombre;
+  const nombreMostrado = borrandoUnaPagina ? (doc.paginas[indicePagina].nombre || trad('página {n}', { n: indicePagina + 1 })) : doc.nombre;
   abrirModal(`
-    <h3>¿Eliminar «${escapeHtml(nombreMostrado)}»?</h3>
+    <h3>${trad('¿Eliminar «{nombre}»?', { nombre: escapeHtml(nombreMostrado) })}</h3>
     <p style="color:var(--text-dim);font-size:.88rem;margin:0 0 6px;">Se borrará también de tu Google Drive. Esta acción no se puede deshacer.</p>
     <label class="check-aviso">
       <input type="checkbox" id="check-borrado-permanente">
@@ -6284,7 +6505,7 @@ function abrirModalSubida() {
   function agregarPaginaPendienteSubida(archivo) {
     const numero = paginasSubidaPendientes.length + 1;
     const nombreDoc = $('#input-nombre').value.trim();
-    const nombrePagina = numero === 1 ? (nombreDoc || archivo.name.replace(/\.[^.]+$/, '')) : `Página ${numero}`;
+    const nombrePagina = numero === 1 ? (nombreDoc || archivo.name.replace(/\.[^.]+$/, '')) : trad('Página {n}', { n: numero });
     paginasSubidaPendientes.push({ archivo, nombre: nombrePagina });
     if (!nombreDoc) $('#input-nombre').value = nombrePagina;
     renderizarListaPaginasSubida();
@@ -6529,7 +6750,7 @@ function abrirEstilos() {
   const opcion = (id) => `
     <button type="button" class="opcion-tema opcion-estilo${actual === id ? ' activa' : ''}" data-valor="${id}">
       ${htmlMaquetaSkin(id)}
-      <span class="texto-tema"><strong>${SKINS[id].nombre}</strong><small>${SKINS[id].descripcion}</small></span>
+      <span class="texto-tema"><strong>${trad(SKINS[id].nombre)}</strong><small>${trad(SKINS[id].descripcion)}</small></span>
       <span class="marca-tema" aria-hidden="true"></span>
     </button>`;
   abrirModal(`
@@ -6552,6 +6773,41 @@ function abrirEstilos() {
     btn.addEventListener('click', () => {
       guardarSkin(btn.dataset.valor);
       $$('.opcion-estilo').forEach((b) => b.classList.toggle('activa', b === btn));
+    });
+  });
+}
+
+// Subpantalla de Idioma: el idioma solo cambia lo que se ve en la app. Las copias de seguridad y los
+// archivos de exportación no dependen de él (cada app puede tener el suyo).
+function abrirIdiomas() {
+  const filas = Object.keys(IDIOMAS).map((id) => `
+    <button class="fila-accion fila-cat" data-idioma="${id}">
+      <span class="icono-accion idioma sigla" data-no-t>${IDIOMAS[id].sigla}</span>
+      <span><strong data-no-t>${IDIOMAS[id].nombre}</strong></span>
+      ${idiomaActual === id ? `<span class="marca-actual">${ICONOS_MENU.check}</span>` : ''}
+    </button>`).join('');
+  abrirModal(`
+    <div class="ajustes">
+      <div class="cabecera-hoja">
+        <div class="asa" aria-hidden="true"></div>
+        <div class="fila-titulo">
+          <button type="button" class="btn-atras-ajustes" id="ajustes-volver" aria-label="Volver a Ajustes">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <h3 class="ajustes-titulo">Idioma</h3>
+        </div>
+      </div>
+      <div class="grupo">${filas}</div>
+    </div>
+  `);
+  activarArrastreParaCerrar($('.cabecera-hoja'));
+  $('#ajustes-volver').addEventListener('click', () => abrirAjustes(false));
+  $$('[data-idioma]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      guardarIdioma(btn.dataset.idioma);
+      // lo que ya estaba pintado con frases compuestas (nombres, plurales…) se vuelve a pintar en el idioma nuevo
+      try { refrescarPantallaActual(); } catch (e) { /* ignorar */ }
+      abrirIdiomas();
     });
   });
 }
@@ -6623,7 +6879,11 @@ function abrirAjustes(animar = true) {
         </button>
         <button class="fila-accion" id="op-estilo">
           <span class="icono-accion estilo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.9-.9 1.6-1.9-.3-1 .3-2.1 1.4-2.1H17a4 4 0 0 0 4-4c0-5.2-4-10-9-10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.2" r="1.2" fill="currentColor"/><circle cx="15" cy="7.6" r="1.2" fill="currentColor"/></svg></span>
-          <span><strong>Estilo</strong><small>${SKINS[obtenerSkinGuardado()].nombre}</small></span>
+          <span><strong>Estilo</strong><small>${trad(SKINS[obtenerSkinGuardado()].nombre)}</small></span>
+        </button>
+        <button class="fila-accion" id="op-idioma">
+          <span class="icono-accion idioma"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+          <span><strong>Idioma</strong><small data-no-t>${IDIOMAS[idiomaActual].nombre}</small></span>
         </button>
         <button class="fila-accion" id="op-exportar">
           <span class="icono-accion ambar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -6639,7 +6899,7 @@ function abrirAjustes(animar = true) {
         <button class="fila-accion salir" id="op-cerrar-sesion">
           <span class="icono-accion rojo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           <span><strong>Cerrar sesión</strong></span>
-          <span class="version-fila">Versión ${VERSION_APP}</span>
+          <span class="version-fila">${trad('Versión {v}', { v: VERSION_APP })}</span>
         </button>
       </div>
     </div>
@@ -6681,6 +6941,7 @@ function abrirAjustes(animar = true) {
   });
   $('#op-apariencia').addEventListener('click', abrirApariencia);
   $('#op-estilo').addEventListener('click', abrirEstilos);
+  $('#op-idioma').addEventListener('click', abrirIdiomas);
   $('#lista-proveedores').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-accion]');
     if (!btn) return;
@@ -6796,15 +7057,15 @@ function leerPaqueteExportacion(buffer) {
 }
 
 function abrirModalExportar(persona = null) {
-  const titulo = persona ? `Exportar copia de ${escapeHtml(persona.nombre)}` : 'Exportar copia';
+  const titulo = persona ? trad('Exportar copia de {nombre}', { nombre: escapeHtml(persona.nombre) }) : 'Exportar copia';
   const introQuien = persona
-    ? `con los documentos de <strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong> (no con el resto de personas que tengas guardadas)`
-    : 'con todas las personas, categorías y documentos que tienes guardados';
+    ? trad('con los documentos de {nombre} (no con el resto de personas que tengas guardadas)', { nombre: `<strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong>` })
+    : trad('con todas las personas, categorías y documentos que tienes guardados');
   const patronNombre = persona ? `${escapeHtml(persona.nombre)}_00h00m_día-mes-año.txt` : 'copia_00h00m_día-mes-año.txt';
 
   abrirModal(`
     <h3>${titulo}</h3>
-    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">Esto genera un único archivo, que se llamará <strong style="color:var(--text-light)">${patronNombre}</strong>, ${introQuien}, listo para pasarlo a otro dispositivo.</p>
+    <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">${trad('Esto genera un único archivo, que se llamará {archivo}, {alcance}, listo para pasarlo a otro dispositivo.', { archivo: `<strong style="color:var(--text-light)">${patronNombre}</strong>`, alcance: introQuien })}</p>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;"><strong style="color:var(--text-light)">Antes de generarlo, la app se sincroniza</strong> con las nubes que tengas conectadas: suma lo que haya en cada una y en este móvil, para que el archivo lo lleve todo.</p>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 14px;">El otro dispositivo solo necesita tener esta misma app instalada. Al abrir el archivo allí, todo lo que trae se sumará a lo que ya hubiera guardado, sin duplicar lo que ya esté y sin borrar nada.</p>
     <p style="color:var(--text-dim);font-size:.85rem;line-height:1.5;margin:0 0 18px;">Una vez se genere, lo envías al otro dispositivo por el medio que prefieras. Desde allí, solo hay que ir a Ajustes → <strong style="color:var(--text-light)">"Importar copia"</strong> (o pulsar "Importar archivo" en la pantalla inicial) y seleccionar ese archivo.</p>
@@ -6828,7 +7089,7 @@ function abrirModalExportar(persona = null) {
       ? datos.documentos.some((d) => d.personaId === persona.id)
       : datos.personas.length;
     if (!hayAlgoQueExportar) {
-      mostrarToast(persona ? `${persona.nombre} todavía no tiene documentos guardados.` : 'No hay nada que exportar todavía.', true);
+      mostrarToast(persona ? trad('{nombre} todavía no tiene documentos guardados.', { nombre: persona.nombre }) : 'No hay nada que exportar todavía.', true);
       return;
     }
     try {
@@ -6943,7 +7204,7 @@ function abrirModalImportar() {
   });
 }
 
-const pluralizar = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+const pluralizar = contar; // (el motor de idiomas traduce la palabra)
 
 // Importar SUMA: lo que ya esté (mismo id) se da por bueno y solo se añade lo
 // que falta, como al sincronizar con las nubes. En copias antiguas, que no
@@ -6978,7 +7239,7 @@ async function procesarImportacion(file, desdeBienvenida = false) {
       const meta = paquete.documentos[i];
       const bytesPorPagina = paquete.archivos[i];
       const spanProgreso = $('#texto-progreso-importar');
-      if (spanProgreso) spanProgreso.textContent = `Revisando documento ${i + 1} de ${paquete.documentos.length}…`;
+      if (spanProgreso) spanProgreso.textContent = trad('Revisando documento {i} de {total}…', { i: i + 1, total: paquete.documentos.length });
 
       if (!datos.personas.some((p) => p.id === meta.personaId)) continue;
       const categoriaId = datos.categorias.some((c) => c.id === meta.categoria) ? meta.categoria : CATEGORIA_SIN_ASIGNAR.id;
@@ -7022,7 +7283,7 @@ async function procesarImportacion(file, desdeBienvenida = false) {
     renderizarPantallaInicio();
     mostrarToast(sumado.personas + sumado.documentos + sumado.paginas + sumado.cambios === 0
       ? 'No había nada nuevo: ya lo tenías todo'
-      : `Sumado: ${pluralizar(sumado.personas, 'persona', 'personas')}, ${pluralizar(sumado.documentos, 'documento', 'documentos')} y ${pluralizar(sumado.paginas, 'página', 'páginas')}` + (sumado.cambios ? `; además, ${pluralizar(sumado.cambios, 'cambio más reciente', 'cambios más recientes')}` : ''));
+      : trad('Sumado: {a}, {b} y {c}', { a: contar(sumado.personas, 'persona', 'personas'), b: contar(sumado.documentos, 'documento', 'documentos'), c: contar(sumado.paginas, 'página', 'páginas') }) + (sumado.cambios ? trad('; además, {cambios}', { cambios: contar(sumado.cambios, 'cambio más reciente', 'cambios más recientes') }) : ''));
     setTimeout(avisarSiSinNube, 900);
   } catch (e) {
     console.error(e);
@@ -7040,6 +7301,9 @@ async function procesarImportacion(file, desdeBienvenida = false) {
   }
 }
 
+
+aplicarIdioma(idiomaActual);
+{ const ocultar = document.getElementById('ocultar-idioma'); if (ocultar) ocultar.remove(); }
 
 function mostrarToast(msg, esError = false) {
   const t = $('#toast');

@@ -1,5 +1,5 @@
-const CACHE = 'documentacion-shell-v2';
-const SHELL = ['./index.html', './manifest.json', './icono.png', './icono_notificacion.png'];
+const CACHE = 'documentacion-shell-v3';
+const SHELL = ['./index.html', './idiomas.js', './manifest.json', './icono.png', './icono_notificacion.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
