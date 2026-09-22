@@ -1574,7 +1574,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.8.0';
+const VERSION_APP = '2.9.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -3643,7 +3643,7 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
 // copiado en las nubes se conserva ahí.
 function cerrarSesionCompleta() {
   Object.keys(PROVEEDORES).forEach((id) => { if (PROVEEDORES[id].conectado()) { try { PROVEEDORES[id].desconectar(); } catch (e) { /* ignorar */ } } });
-  const conservar = new Set([TEMA_STORAGE_KEY, SKIN_STORAGE_KEY, IDIOMA_STORAGE_KEY, 'documentacion_modo_inicio']);
+  const conservar = new Set([TEMA_STORAGE_KEY, SKIN_STORAGE_KEY, IDIOMA_STORAGE_KEY, 'documentacion_modo_inicio', VISTA_DOCS_STORAGE_KEY]);
   Object.keys(localStorage).filter((k) => k.startsWith('documentacion_') && !conservar.has(k)).forEach((k) => localStorage.removeItem(k));
   try { indexedDB.deleteDatabase(DB_NOMBRE); } catch (e) { /* ignorar */ }
   location.reload();
@@ -5441,6 +5441,22 @@ function entrarModoSeleccionDesdeMenu() {
   reemplazarCapaActual(limpiarModoSeleccion);
 }
 
+// Fila del menú para cambiar entre ver los documentos de varias páginas replegados (una ficha
+// con el número de páginas) o desplegados (cada página, su propia ficha). Se usa igual desde el
+// menú de una persona que desde el de una categoría.
+function filaVistaDocs() {
+  const desplegado = obtenerVistaDocsGuardada() === 'desplegado';
+  return filaMenu('op-vista-docs', 'morado', ICONOS_MENU.vista,
+    desplegado ? 'Replegar páginas' : 'Desplegar páginas',
+    desplegado ? 'Un documento de varias páginas, una sola ficha' : 'Cada página de un documento, en su propia ficha');
+}
+function activarFilaVistaDocs() {
+  $('#op-vista-docs').addEventListener('click', () => {
+    guardarVistaDocs(obtenerVistaDocsGuardada() === 'desplegado' ? 'replegado' : 'desplegado');
+    volverAtras();
+  });
+}
+
 // Cambiar imagen/nombre y eliminar ya no viven aquí — se gestionan desde
 // Ajustes → "Administrar personas" (ver crearTilePersonaHome). Este menú,
 // dentro de la propia persona o de la vista de una categoría, solo deja
@@ -5455,11 +5471,13 @@ $('#btn-menu-persona').addEventListener('click', () => {
         ${cabeceraMenu(cat.nombre)}
         <div class="grupo">
           ${filaMenu('op-seleccionar-docs', 'verde', ICONOS_MENU.seleccionar, 'Seleccionar documentos', 'Elige varios para compartirlos')}
+          ${filaVistaDocs()}
         </div>
       </div>
     `);
     activarArrastreParaCerrar($('.cabecera-hoja'));
     $('#op-seleccionar-docs').addEventListener('click', entrarModoSeleccionDesdeMenu);
+    activarFilaVistaDocs();
     return;
   }
   const persona = datos.personas.find((p) => p.id === personaActivaId);
@@ -5469,12 +5487,14 @@ $('#btn-menu-persona').addEventListener('click', () => {
       ${cabeceraMenu(persona.nombre)}
       <div class="grupo">
         ${filaMenu('op-seleccionar-docs', 'verde', ICONOS_MENU.seleccionar, 'Seleccionar documentos', 'Elige varios para compartirlos')}
+        ${filaVistaDocs()}
         ${filaMenu('op-exportar-persona', 'ambar', ICONOS_MENU.exportar, 'Exportar copia', 'Guarda sus documentos en un archivo')}
       </div>
     </div>
   `);
   activarArrastreParaCerrar($('.cabecera-hoja'));
   $('#op-seleccionar-docs').addEventListener('click', entrarModoSeleccionDesdeMenu);
+  activarFilaVistaDocs();
   $('#op-exportar-persona').addEventListener('click', () => abrirModalExportar(persona));
 });
 
@@ -5535,6 +5555,19 @@ function crearChipPersona(persona, color) {
     renderizarDocumentos();
   });
   return btn;
+}
+
+// ---- Modo de vista de los documentos de varias páginas ----
+// "replegado" (de siempre): una sola ficha por documento, con el número de páginas en una
+// marca. "desplegado": cada página de un documento aparece como su propia ficha, una debajo
+// de otra, y se abre directamente en esa página al tocarla (sin pasar por la galería).
+const VISTA_DOCS_STORAGE_KEY = 'documentacion_vista_docs';
+function obtenerVistaDocsGuardada() {
+  return localStorage.getItem(VISTA_DOCS_STORAGE_KEY) === 'desplegado' ? 'desplegado' : 'replegado';
+}
+function guardarVistaDocs(modo) {
+  localStorage.setItem(VISTA_DOCS_STORAGE_KEY, modo);
+  renderizarDocumentos();
 }
 
 function renderizarDocumentos() {
@@ -5630,23 +5663,44 @@ function renderizarDocumentosPorCategoria() {
   });
 }
 
+// Devuelve la ficha (o fichas) de un documento para la lista, según el modo de vista guardado:
+// en "replegado" es una sola ficha con la primera página y una marca con el número de páginas;
+// en "desplegado", si tiene varias páginas, cada una sale como su propia ficha, una debajo de
+// otra (un DocumentFragment con varias fichas en vez de una sola).
 function crearTarjetaDoc(doc) {
+  if (doc.paginas.length > 1 && obtenerVistaDocsGuardada() === 'desplegado') {
+    const frag = document.createDocumentFragment();
+    doc.paginas.forEach((_, indice) => frag.appendChild(crearTarjetaDocUnica(doc, indice)));
+    return frag;
+  }
+  return crearTarjetaDocUnica(doc, null);
+}
+
+// indicePagina === null → ficha replegada (la de siempre, con la primera página y la marca del
+// número de páginas). Un número → ficha de esa página concreta, para el modo desplegado: sin la
+// marca de páginas (ya está desplegada) y con el nombre de la página debajo del nombre del
+// documento, para distinguir unas fichas de otras.
+function crearTarjetaDocUnica(doc, indicePagina) {
+  const modoExpandido = indicePagina !== null;
+  const pagina = modoExpandido ? doc.paginas[indicePagina] : doc.paginas[0];
   const badge = calcularBadgeCaducidad(doc.fechaCaducidad);
-  const primera = doc.paginas[0];
-  const esImagen = (primera.mimeType || '').startsWith('image/');
+  const esImagen = (pagina.mimeType || '').startsWith('image/');
   const variasPaginas = doc.paginas.length > 1;
 
+  const clave = claveSeleccion(doc, indicePagina);
   const fila = document.createElement('button');
-  fila.className = 'doc-fila' + (docsSeleccionados.has(doc.id) ? ' seleccionada' : '') + (badge ? ' ' + badge.estado : '');
+  fila.className = 'doc-fila' + (docsSeleccionados.has(clave) ? ' seleccionada' : '') + (badge ? ' ' + badge.estado : '');
   fila.innerHTML = `
     <div class="miniatura">
       ${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}
       <span class="check-seleccion"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      ${variasPaginas ? `<span class="marca-paginas">${doc.paginas.length}</span>` : ''}
+      ${!modoExpandido && variasPaginas ? `<span class="marca-paginas">${doc.paginas.length}</span>` : ''}
     </div>
     <div class="info">
       <p class="doc-nombre">${escapeHtml(doc.nombre)}</p>
-      ${badge ? `<span class="badge-mini ${badge.estado}">${badge.texto}</span>` : ''}
+      ${modoExpandido && variasPaginas
+        ? `<span class="badge-mini pagina">${escapeHtml(pagina.nombre || trad('Página {n}', { n: indicePagina + 1 }))}</span>`
+        : (badge ? `<span class="badge-mini ${badge.estado}">${badge.texto}</span>` : '')}
     </div>`;
 
   // Mantener pulsado selecciona el documento (para compartir varios); aquí NUNCA sirve para
@@ -5666,7 +5720,7 @@ function crearTarjetaDoc(doc) {
       limpiar();
       presionLargaDisparada = true;
       if (navigator.vibrate) navigator.vibrate(12);
-      alternarSeleccionDoc(doc, fila, true);
+      alternarSeleccionDoc(clave, fila, true);
     }, 420);
     const cancelarSiSeMueve = (ev) => {
       if (cancelado) return;
@@ -5686,13 +5740,14 @@ function crearTarjetaDoc(doc) {
     // El toque de soltar el dedo, tras una pulsación larga que ya ha seleccionado el
     // documento, no debe volver a alternar la selección (la dejaría desmarcada otra vez).
     if (presionLargaDisparada) { presionLargaDisparada = false; return; }
-    if (modoSeleccionDocs) { alternarSeleccionDoc(doc, fila); return; }
+    if (modoSeleccionDocs) { alternarSeleccionDoc(clave, fila); return; }
+    if (modoExpandido) { abrirVisor(doc, indicePagina); return; }
     if (variasPaginas) abrirGaleriaDocumento(doc);
     else abrirVisor(doc, 0);
   });
 
   if (esImagen) {
-    obtenerBlobPagina(primera).then((blob) => {
+    obtenerBlobPagina(pagina).then((blob) => {
       const url = URL.createObjectURL(blob);
       const cont = fila.querySelector('.miniatura');
       const img = document.createElement('img');
@@ -5725,17 +5780,35 @@ function entrarModoSeleccion() {
   pushNavegacion(limpiarModoSeleccion);
 }
 
-function alternarSeleccionDoc(doc, fila, activarModo = false) {
+// Identifica lo que selecciona una ficha: en replegado (o una sola página) es el documento
+// entero (igual que siempre); en desplegado, cada página es su propia unidad, independiente de
+// las demás páginas del mismo documento.
+function claveSeleccion(doc, indicePagina) {
+  return indicePagina === null ? doc.id : `${doc.id}#${indicePagina}`;
+}
+
+function alternarSeleccionDoc(clave, fila, activarModo = false) {
   if (activarModo) entrarModoSeleccion();
   if (!modoSeleccionDocs) return;
-  if (docsSeleccionados.has(doc.id)) {
-    docsSeleccionados.delete(doc.id);
+  if (docsSeleccionados.has(clave)) {
+    docsSeleccionados.delete(clave);
     fila.classList.remove('seleccionada');
   } else {
-    docsSeleccionados.add(doc.id);
+    docsSeleccionados.add(clave);
     fila.classList.add('seleccionada');
   }
   actualizarBarraSeleccion();
+}
+
+// Resuelve las claves guardadas (id de documento entero, o "id#índice" de una página suelta)
+// en pares {doc, indicePagina}, para compartir/borrar solo lo que de verdad está marcado.
+function unidadesSeleccionadas() {
+  return [...docsSeleccionados].map((clave) => {
+    const [id, indiceStr] = clave.split('#');
+    const doc = datos.documentos.find((d) => d.id === id);
+    if (!doc) return null;
+    return { doc, indicePagina: indiceStr === undefined ? null : Number(indiceStr) };
+  }).filter(Boolean);
 }
 
 function actualizarBarraSeleccion() {
@@ -5759,8 +5832,14 @@ function salirModoSeleccion() {
 
 $('#btn-cancelar-seleccion').addEventListener('click', volverAtras);
 $('#btn-compartir-seleccion').addEventListener('click', async () => {
-  const docs = datos.documentos.filter((d) => docsSeleccionados.has(d.id));
-  await compartirDocumentos(docs);
+  // Cada unidad seleccionada puede ser un documento entero (modo replegado) o una sola
+  // página suelta (modo desplegado) — se comparten exactamente las páginas marcadas.
+  const unidades = unidadesSeleccionadas();
+  const paginas = unidades.flatMap((u) => u.indicePagina === null ? u.doc.paginas : [u.doc.paginas[u.indicePagina]]);
+  const titulo = unidades.length === 1
+    ? (unidades[0].indicePagina === null ? unidades[0].doc.nombre : (unidades[0].doc.paginas[unidades[0].indicePagina].nombre || unidades[0].doc.nombre))
+    : trad('{n} documentos', { n: unidades.length });
+  await compartirPaginas(paginas, titulo);
   volverAtras();
 });
 
@@ -5793,13 +5872,6 @@ async function compartirPaginas(paginas, tituloGrupo) {
   } catch (e) {
     if (e.name !== 'AbortError') mostrarToast('No se pudo compartir.', true);
   }
-}
-
-// Comparte documentos completos (todas sus páginas juntas) — usado desde
-// la selección múltiple de la lista de documentos.
-async function compartirDocumentos(docs) {
-  const paginas = docs.flatMap((doc) => doc.paginas);
-  await compartirPaginas(paginas, docs.length === 1 ? docs[0].nombre : `${docs.length} documentos`);
 }
 
 function medirImagenBlob(blob) {
@@ -6266,6 +6338,7 @@ const ICONOS_MENU = {
   mas: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   papelera: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   seleccionar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  vista: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="14" width="16" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"/></svg>',
   exportar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   check: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
