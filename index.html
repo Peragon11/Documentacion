@@ -1295,7 +1295,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.4';
+const VERSION_APP = '3.0.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -5686,16 +5686,34 @@ function salirModoSeleccion() {
 }
 
 $('#btn-cancelar-seleccion').addEventListener('click', volverAtras);
-$('#btn-compartir-seleccion').addEventListener('click', async () => {
+$('#btn-compartir-seleccion').addEventListener('click', () => {
   // Cada unidad seleccionada puede ser un documento entero (modo replegado) o una sola
   // página suelta (modo desplegado) — se comparten exactamente las páginas marcadas.
   const unidades = unidadesSeleccionadas();
+  if (!unidades.length) return;
   const paginas = unidades.flatMap((u) => u.indicePagina === null ? u.doc.paginas : [u.doc.paginas[u.indicePagina]]);
   const titulo = unidades.length === 1
     ? (unidades[0].indicePagina === null ? unidades[0].doc.nombre : (unidades[0].doc.paginas[unidades[0].indicePagina].nombre || unidades[0].doc.nombre))
     : trad('{n} documentos', { n: unidades.length });
-  await compartirPaginas(paginas, titulo);
-  volverAtras();
+
+  // Las mismas dos opciones que en el menú de un documento suelto, para no tener que
+  // salir de la selección y entrar uno por uno si lo que se quiere es el PDF.
+  abrirModal(`
+    <div class="ajustes">
+      ${cabeceraMenu(titulo)}
+      <div class="grupo">
+        ${filaMenu('op-compartir-sel', 'azul', ICONOS_MENU.compartir, 'Compartir', 'Envía los archivos por WhatsApp, correo…')}
+        ${filaMenu('op-compartir-sel-pdf', 'morado', ICONOS_MENU.pdf, 'Compartir como PDF', paginas.length === 1 ? 'Un PDF con este documento' : 'Un solo PDF con todo lo elegido')}
+      </div>
+    </div>
+  `);
+  activarArrastreParaCerrar($('.cabecera-hoja'));
+  // Se cierran de golpe el menú y el modo selección (cerrarCapas es síncrono, así no se
+  // pisa con lo que viene después) y se comparte con lo que ya está guardado aquí arriba,
+  // porque al salir del modo selección la lista de marcados se vacía.
+  const cerrarYCompartir = (accion) => { cerrarCapas(2); accion(); };
+  $('#op-compartir-sel').addEventListener('click', () => cerrarYCompartir(() => compartirPaginas(paginas, titulo)));
+  $('#op-compartir-sel-pdf').addEventListener('click', () => cerrarYCompartir(() => compartirPaginasComoPdf(paginas, titulo)));
 });
 
 // Al compartir (WhatsApp, correo…) el archivo lleva EXACTAMENTE el mismo nombre que tiene en la nube.
@@ -5848,6 +5866,39 @@ async function compartirDocumentoComoPdf(doc) {
       return;
     }
     await navigator.share({ files: [archivo], title: doc.nombre });
+  } catch (e) {
+    if (e.name !== 'AbortError') mostrarToast('No se pudo generar el PDF.', true);
+  }
+}
+
+// Une en un solo PDF todo lo que esté seleccionado, aunque sean de personas o categorías
+// distintas. Las páginas que YA son un PDF no se pueden meter dentro de otro PDF: se envían
+// aparte, junto al que se genera con las fotos, para no dejarse nada por el camino.
+async function compartirPaginasComoPdf(paginas, titulo) {
+  const esPdf = (p) => (p.mimeType || '').startsWith('application/pdf');
+  const imagenes = paginas.filter((p) => !esPdf(p));
+  const pdfsSueltos = paginas.filter(esPdf);
+  if (!imagenes.length) { await compartirPaginas(pdfsSueltos, titulo); return; }
+  if (!navigator.share) {
+    mostrarToast('Este móvil no permite compartir archivos desde el navegador.', true);
+    return;
+  }
+  mostrarToast('Generando PDF…');
+  try {
+    const paginasPdf = await Promise.all(imagenes.map(async (pagina) => {
+      const blob = await obtenerBlobPagina(pagina);
+      const { ancho, alto } = await medirImagenBlob(blob);
+      return { bytesJpeg: new Uint8Array(await blob.arrayBuffer()), anchoPx: ancho, altoPx: alto };
+    }));
+    const archivos = [new File([construirPdfDesdeImagenes(paginasPdf)], (titulo || 'documentos') + '.pdf', { type: 'application/pdf' })];
+    for (const pagina of pdfsSueltos) {
+      archivos.push(new File([await obtenerBlobPagina(pagina)], nombreArchivoParaCompartir(pagina), { type: 'application/pdf' }));
+    }
+    if (navigator.canShare && !navigator.canShare({ files: archivos })) {
+      mostrarToast('Estos archivos no se pueden compartir desde aquí.', true);
+      return;
+    }
+    await navigator.share({ files: archivos, title: titulo });
   } catch (e) {
     if (e.name !== 'AbortError') mostrarToast('No se pudo generar el PDF.', true);
   }

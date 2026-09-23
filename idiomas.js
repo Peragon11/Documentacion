@@ -200,6 +200,8 @@
     [`Sin fecha de caducidad`, `No expiry date`, `Sense data de caducitat`, `Nessuna data di scadenza`, `Aucune date d'expiration`, `Kein Ablaufdatum`],
     [`Compartir esta página`, `Share this page`, `Comparteix aquesta pàgina`, `Condividi questa pagina`, `Partager cette page`, `Diese Seite teilen`],
     [`Envía la imagen por WhatsApp, correo…`, `Send the image via WhatsApp, email…`, `Envia la imatge per WhatsApp, correu…`, `Invia l'immagine tramite WhatsApp, email…`, `Envoyez l'image par WhatsApp, e-mail…`, `Sende das Bild per WhatsApp, E-Mail…`],
+    [`Envía los archivos por WhatsApp, correo…`, `Send the files via WhatsApp, email…`, `Envia els fitxers per WhatsApp, correu…`, `Invia i file tramite WhatsApp, email…`, `Envoyez les fichiers par WhatsApp, e-mail…`, `Sende die Dateien per WhatsApp, E-Mail…`],
+    [`Un solo PDF con todo lo elegido`, `A single PDF with everything selected`, `Un sol PDF amb tot el que has triat`, `Un unico PDF con tutto ciò che hai scelto`, `Un seul PDF avec toute la sélection`, `Ein einziges PDF mit allem Ausgewählten`],
     [`Compartir como PDF`, `Share as PDF`, `Comparteix com a PDF`, `Condividi come PDF`, `Partager en PDF`, `Als PDF teilen`],
     [`Un PDF solo con esta página`, `A PDF with just this page`, `Un PDF només amb aquesta pàgina`, `Un PDF con solo questa pagina`, `Un PDF avec seulement cette page`, `Ein PDF nur mit dieser Seite`],
     [`Un PDF con este documento`, `A PDF with this document`, `Un PDF amb aquest document`, `Un PDF con questo documento`, `Un PDF avec ce document`, `Ein PDF mit diesem Dokument`],
