@@ -541,9 +541,16 @@
   .titulo-grupo .punto-grupo{ width:8px; height:8px; border-radius:50%; background:currentColor; flex:none; }
   .titulo-grupo .avatar-mini-grupo{ width:30px; height:30px; max-width:none; border-radius:50%; flex:none; box-shadow:none; }
 
-  .lista-docs{ display:flex; flex-direction:column; gap:10px; }
+  /* Las fichas de una misma categoría comparten color de fondo, así que hace falta un hueco
+     claro entre un documento y el siguiente para que no parezcan uno solo. Las páginas de un
+     mismo documento (modo desplegado) sí van muy juntas: así se agrupan a simple vista. */
+  .lista-docs{ display:flex; flex-direction:column; gap:5px; }
+  .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:19px; }
   @media (orientation:landscape){
     .lista-docs{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+    /* En apaisado las fichas ya van en dos columnas, cada una con su hueco a los lados: no
+       hace falta el margen extra (y además descuadraría las filas de la cuadrícula). */
+    .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:0; }
     /* En apaisado todas las fichas vuelven a la proporción fija, aunque
        la foto sea vertical (el !important pisa el aspect-ratio que el
        JS le pone a las verticales para el modo vertical de la pantalla),
@@ -557,6 +564,9 @@
     display:flex; flex-direction:column; width:100%;
     background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2));
     border:none; border-radius:var(--r-tarjeta); overflow:hidden;
+    /* Sombra suave: dos fichas seguidas del mismo color se leen como dos tarjetas separadas
+       y no como una mancha continua. Los estilos que ponen su propia sombra la pisan. */
+    box-shadow:0 5px 12px rgba(0,0,0,.24);
     cursor:pointer; text-align:left;
   }
   /* !important: en varios skins (Pasaporte, Carpeta, Chicle, Bosque) la regla de fondo de
@@ -1285,7 +1295,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.3';
+const VERSION_APP = '3.0.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -5494,10 +5504,18 @@ function renderizarDocumentosPorCategoria() {
 function crearTarjetaDoc(doc) {
   if (doc.paginas.length > 1 && obtenerVistaDocsGuardada() === 'desplegado') {
     const frag = document.createDocumentFragment();
-    doc.paginas.forEach((_, indice) => frag.appendChild(crearTarjetaDocUnica(doc, indice)));
+    doc.paginas.forEach((_, indice) => {
+      const fila = crearTarjetaDocUnica(doc, indice);
+      // Solo la primera página abre documento nuevo: las demás van pegadas a ella, para que
+      // se vea de un vistazo qué páginas son del mismo documento (ver .inicio-doc en el CSS).
+      if (indice === 0) fila.classList.add('inicio-doc');
+      frag.appendChild(fila);
+    });
     return frag;
   }
-  return crearTarjetaDocUnica(doc, null);
+  const fila = crearTarjetaDocUnica(doc, null);
+  fila.classList.add('inicio-doc');
+  return fila;
 }
 
 // indicePagina === null → ficha replegada (la de siempre, con la primera página y la marca del
