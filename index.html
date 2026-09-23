@@ -1340,6 +1340,13 @@
     border:none; box-shadow:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), inset -4px -4px 0 0 rgba(0,0,0,.26);
   }
   html[data-skin="pixeles"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .ajustes .grupo){ margin-left:4px; margin-right:4px; width:calc(100% - 8px); }
+  /* El botón de conectar/desconectar de cada nube, con el mismo borde pixelado de 4px que el
+     resto, queda demasiado grande junto al email y "Ver carpeta" y se los come — aquí más
+     pequeño y con un borde más fino, solo para este botón. */
+  html[data-skin="pixeles"] .btn-prov{
+    padding:5px 8px;
+    box-shadow:0 -2px 0 0 var(--borde-px), 0 2px 0 0 var(--borde-px), -2px 0 0 0 var(--borde-px), 2px 0 0 0 var(--borde-px), inset -2px -2px 0 0 rgba(0,0,0,.26);
+  }
   html[data-skin="pixeles"] .doc-fila .miniatura, html[data-skin="pixeles"] .galeria-pagina .miniatura{ box-shadow:0 0 0 2px var(--borde-px); margin:10px 10px 0; }
   html[data-skin="pixeles"] .btn-primario:active, html[data-skin="pixeles"] .btn-secundario:active, html[data-skin="pixeles"] .btn-icono-top:active, html[data-skin="pixeles"] .chip:active{ transform:translate(2px,2px); box-shadow:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), inset 4px 4px 0 0 rgba(0,0,0,.26); }
   html[data-skin="pixeles"] .topbar{ border-bottom:4px solid var(--borde-px); backdrop-filter:none; box-shadow:0 4px 0 rgba(0,0,0,.25); }
@@ -1605,7 +1612,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '2.9.9';
+const VERSION_APP = '3.0.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
