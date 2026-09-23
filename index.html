@@ -1619,7 +1619,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.1';
+const VERSION_APP = '3.0.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6857,11 +6857,14 @@ function abrirModalSubida() {
   }
 
   function agregarPaginaPendienteSubida(archivo) {
+    // El nombre de archivo que pone la cámara (una foto recién hecha) es casi siempre un número
+    // largo sin sentido — no se usa nunca como nombre por defecto, ni del documento ni de la
+    // página: se deja vacío para que se escriba a mano, con el campo y su marcador de posición
+    // tal cual, en vez de rellenarlo solo con algo que luego hay que borrar.
     const numero = paginasSubidaPendientes.length + 1;
     const nombreDoc = $('#input-nombre').value.trim();
-    const nombrePagina = numero === 1 ? (nombreDoc || archivo.name.replace(/\.[^.]+$/, '')) : trad('Página {n}', { n: numero });
+    const nombrePagina = numero === 1 ? nombreDoc : trad('Página {n}', { n: numero });
     paginasSubidaPendientes.push({ archivo, nombre: nombrePagina });
-    if (!nombreDoc) $('#input-nombre').value = nombrePagina;
     renderizarListaPaginasSubida();
     actualizarBotonGuardar();
   }
