@@ -18,8 +18,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Solo se cachea lo propio de la app: las peticiones a Google, Dropbox o
-  // OneDrive (datos y documentos del usuario) pasan siempre directas.
+  // Solo se cachea lo propio de la app: las peticiones a Google Drive o Dropbox
+  // (datos y documentos del usuario) pasan siempre directas.
   if (url.origin !== self.location.origin) return;
 
   if (event.request.method !== 'GET') return;
@@ -39,14 +39,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Primero la red (para que una versión nueva se note enseguida) y, si falla, la copia
+  // guardada. Una respuesta mala del servidor (un 500 pasajero, por ejemplo) cuenta también
+  // como fallo: mejor servir la última copia buena que romper la app.
   event.respondWith(
     fetch(event.request)
       .then((res) => {
         if (res.ok) {
           const clone = res.clone();
           caches.open(CACHE).then((c) => c.put(event.request, clone));
+          return res;
         }
-        return res;
+        return caches.match(event.request).then((guardado) => guardado || res);
       })
       .catch(() => caches.match(event.request))
   );

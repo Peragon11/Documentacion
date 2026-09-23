@@ -85,7 +85,6 @@
     --ink-2:#1E2F42;
     --ink-3:#28405A;
     --paper:#F2EEE3;
-    --paper-2:#E8E1CF;
     --stamp:#C1502E;
     --stamp-dark:#9C3D24;
     --seal:#5C8374;
@@ -286,8 +285,8 @@
   .opcion-tema.activa .marca-tema{ background:var(--stamp) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2EEE3' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/16px no-repeat; border-color:var(--stamp); }
   .maqueta{ position:relative; display:block; height:138px; border-radius:14px; overflow:hidden; border:1px solid var(--borde); }
   .maqueta .capa{ position:absolute; inset:0; display:flex; flex-direction:column; background:var(--mq-fondo); }
-  .mq-oscuro{ --mq-fondo:#14202E; --mq-barra:#28405A; --mq-texto:#EDE9DE; --mq-ficha:#1E2F42; }
-  .mq-claro{ --mq-fondo:#F2F3F5; --mq-barra:#D8DADF; --mq-texto:#1E2A38; --mq-ficha:#E6E7EB; }
+  .mq-oscuro{ --mq-fondo:#14202E; --mq-barra:#28405A; --mq-texto:#EDE9DE; }
+  .mq-claro{ --mq-fondo:#F2F3F5; --mq-barra:#D8DADF; --mq-texto:#1E2A38; }
   .maqueta .capa.oscura{ clip-path:polygon(0 0, 58% 0, 42% 100%, 0 100%); }
   .maqueta .capa.clara{ clip-path:polygon(58% 0, 100% 0, 100% 100%, 42% 100%); }
   .mq-barra{ display:flex; align-items:center; gap:6px; height:28px; padding:0 9px; background:var(--mq-barra); flex:none; }
@@ -488,7 +487,6 @@
     font-size:.95rem; font-weight:600; text-align:center; max-width:100%; line-height:1.2;
     overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
   }
-  .persona-tile .cuenta-docs{ font-size:.75rem; color:var(--text-dim); margin-top:-6px; }
   .persona-tile.arrastrando-tile{
     z-index:30; cursor:grabbing; transition:none; pointer-events:none;
   }
@@ -690,12 +688,6 @@
   .modal h3{ margin:0 0 18px; font-size:1.1rem; font-weight:600; }
   .campo{ margin-bottom:16px; }
   .campo label{ display:block; font-size:.8rem; color:var(--text-dim); margin-bottom:6px; }
-  .segmentado{ display:flex; gap:3px; background:var(--ink-3); border-radius:calc(var(--r-campo) + 2px); padding:3px; }
-  .segmento{
-    flex:1; background:none; border:none; color:var(--text-dim); cursor:pointer;
-    padding:9px 6px; border-radius:calc(var(--r-campo) - 1px); font-size:.82rem; font-weight:600;
-  }
-  .segmento.activo{ background:var(--ink-2); color:var(--text-light); box-shadow:0 1px 4px rgba(0,0,0,.18); }
   .campo input[type=text], .campo input[type=date], .campo input[type=search], .campo select{
     width:100%; background:var(--ink-3); border:1px solid var(--borde);
     color:var(--text-light); border-radius:var(--r-campo); padding:11px 12px; font-size:.92rem;
@@ -715,11 +707,6 @@
   }
   .check-aviso input{ width:19px; height:19px; flex:none; accent-color:var(--stamp); }
 
-  .zona-archivo{
-    border:1.5px dashed var(--borde-fuerte); border-radius:calc(var(--r-campo) + 3px); padding:20px 14px; text-align:center;
-    cursor:pointer; margin-bottom:16px;
-  }
-  .zona-archivo.activa{ border-color:var(--seal); }
   #lista-paginas-subida:not(:empty){ margin-bottom:10px; }
   .pagina-subida-fila{ display:flex; align-items:center; gap:10px; padding:6px 0; }
   .pagina-subida-miniatura{
@@ -733,12 +720,6 @@
   }
   .btn-quitar-pagina-subida{ flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer; }
   #btn-anadir-pagina-subida{ margin-bottom:16px; }
-  .zona-archivo p{ margin:8px 0 0; font-size:.85rem; color:var(--text-dim); }
-  .zona-archivo .nombre-archivo{ color:var(--text-light); font-weight:600; margin-top:6px; }
-  .zona-archivo .previsualizacion{
-    max-height:120px; border-radius:8px; margin:0 auto; pointer-events:none;
-    -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
-  }
 
   .selector-foto{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
   .selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; border-radius:var(--r-avatar-mini); }
@@ -811,7 +792,6 @@
   .btn-secundario{ background:transparent; color:var(--text-dim); border:1px solid var(--borde); }
   .btn-peligro{ background:var(--stamp); color:var(--sobre-acento); }
 
-  .menu-opciones{ display:flex; flex-direction:column; gap:2px; }
   .opcion-menu{
     display:flex; align-items:center; gap:12px; background:none; border:none; color:var(--text-light);
     text-align:left; padding:13px 6px; font-size:.92rem; cursor:pointer; border-radius:calc(var(--r-boton) - 2px);
@@ -819,8 +799,6 @@
   .opcion-menu:active{ background:var(--ink-3); }
   .opcion-menu.peligro{ color:#E0897A; }
 
-  .punto-cat{ width:10px; height:10px; border-radius:50%; flex:none; }
-  .opcion-menu .nombre-opcion-cat{ flex:1; }
 
   .toast{
     position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%);
@@ -834,317 +812,6 @@
   .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
   .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
   .opcion-estilo .texto-tema{ padding-right:44px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="chicle"] .mqs-barra{ background:linear-gradient(90deg, var(--c1), var(--c5), var(--c4)); border-bottom:none; }
-  .mq-skin[data-skin="chicle"] .mqs-barra b{ color:var(--sobre-acento); font-weight:700; }
-  .mq-skin[data-skin="chicle"] :is(.mqs-logo, .mqs-btn){ background:var(--paper); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c1); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha.a i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c2); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
-  .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
-  .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="chicle"] .mqs-barra{ background:linear-gradient(90deg, var(--c1), var(--c5), var(--c4)); border-bottom:none; }
-  .mq-skin[data-skin="chicle"] .mqs-barra b{ color:var(--sobre-acento); font-weight:700; }
-  .mq-skin[data-skin="chicle"] :is(.mqs-logo, .mqs-btn){ background:var(--paper); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c1); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha.a i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c2); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
-  .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
-  .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
-
-  /* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
-  .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
-  .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
   .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
   .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
   .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
@@ -1343,7 +1010,7 @@
   html[data-skin="pixeles"]{ --fondo-login:var(--ink); }
   html[data-skin="pixeles"] body{ background-image:conic-gradient(rgba(127,127,127,.07) 25%, transparent 0 50%, rgba(127,127,127,.07) 0 75%, transparent 0); background-size:8px 8px; }
   /* Borde de 4 px con las esquinas escalonadas (como en los videojuegos de 8 bits) + relieve abajo a la derecha */
-  html[data-skin="pixeles"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .categoria-barra-nueva, .ajustes .grupo, .btn-primario, .btn-secundario, .btn-grande, .btn-google, .chip, .btn-icono-top, .btn-prov, .input-busqueda, .campo input, .campo select, .opcion-tema, .segmentado, .zona-archivo, .toast, .aviso-caducidad-banner){
+  html[data-skin="pixeles"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .categoria-barra-nueva, .ajustes .grupo, .btn-primario, .btn-secundario, .btn-grande, .btn-google, .chip, .btn-icono-top, .btn-prov, .input-busqueda, .campo input, .campo select, .opcion-tema, .toast, .aviso-caducidad-banner){
     border:none; box-shadow:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), inset -4px -4px 0 0 rgba(0,0,0,.26);
   }
   html[data-skin="pixeles"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .ajustes .grupo){ margin-left:4px; margin-right:4px; width:calc(100% - 8px); }
@@ -1477,7 +1144,6 @@
   html[data-skin="chicle"] .campo input:focus, html[data-skin="chicle"] .input-busqueda:focus{ outline:none; border-color:var(--c4); }
   html[data-skin="chicle"] .toast{ background:var(--c3); color:var(--sobre-acento); border:3px solid var(--paper); box-shadow:0 5px 0 rgba(0,0,0,.20); }
   html[data-skin="chicle"] .toast.error{ background:var(--stamp); }
-  html[data-skin="chicle"] .zona-archivo{ border-color:var(--c4); border-width:3px; }
 
   /* ---- bosque ---- */
   [data-skin="bosque"]{ --ink:#0F1E19; --ink-2:#172D26; --ink-3:#213D34; --paper:#F0EBD9; --text-ink:#10231C; --stamp:#EE9B4A; --sobre-acento:#10231C; --text-light:#F0EBD9; --text-dim:#A6BCB0; --seal:#7DB896; --amber:#E7B24B; --azul:#7EA5C8; --morado:#B399D3; --stamp-dark:#D0813A; --borde-sutil:rgba(240,235,217,.08); --borde:rgba(240,235,217,.17); --borde-fuerte:rgba(240,235,217,.28); --topbar-fondo:rgba(23,45,38,.95); 
@@ -1619,7 +1285,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.2';
+const VERSION_APP = '3.0.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1627,14 +1293,6 @@ const NOMBRE_CARPETA_ANTIGUA = 'Documentación'; // nombre de versiones anterior
 const NOMBRE_METADATOS = 'documentacion-datos.json';
 
 const MAPA_EXTENSIONES_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/heic': '.heic', 'application/pdf': '.pdf' };
-
-const CATEGORIAS_INICIALES = [
-  { id: 'dni', nombre: 'DNI / NIE', color: '#5C8374' },
-  { id: 'conducir', nombre: 'Carnet de conducir', color: '#4A7BA6' },
-  { id: 'discapacidad', nombre: 'Tarjeta de discapacidad', color: '#C1502E' },
-  { id: 'sanidad', nombre: 'Tarjeta sanitaria', color: '#8A6FB0' },
-  { id: 'otros', nombre: 'Otros', color: '#9FB0C3' },
-];
 
 const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
 
@@ -1671,7 +1329,7 @@ let accessToken = null;
 let tokenExpiry = 0;
 let carpetaId = null;
 let archivoMetadatosId = null;
-let datos = { personas: [], categorias: CATEGORIAS_INICIALES, documentos: [] };
+let datos = { personas: [], categorias: [], documentos: [] };
 let personaActivaId = null;
 let categoriaGlobalActivaId = null;
 let momentoUltimoArrastrePersona = 0;
@@ -1739,7 +1397,7 @@ const unirConY = (lista) => (lista.length === 2 ? trad('{a} y {b}', { a: lista[0
 
 const ATRIBUTOS_TRADUCIBLES = ['placeholder', 'aria-label', 'title', 'alt'];
 // Lo que son datos del usuario (nombres de documentos, personas, páginas…) no se traduce nunca.
-const NO_TRADUCIR = 'script, style, textarea, option, .doc-nombre, .nombre-persona, .galeria-pagina-nombre, .visor-topbar .titulo, .categoria-barra-nombre, .nombre-opcion-cat, [data-no-t]';
+const NO_TRADUCIR = 'script, style, textarea, option, .doc-nombre, .nombre-persona, .galeria-pagina-nombre, .visor-topbar .titulo, .categoria-barra-nombre, [data-no-t]';
 let prefijosIdioma = { en: null, ca: null };
 function prefijosDe(id) {
   if (!prefijosIdioma[id]) prefijosIdioma[id] = Object.keys((window.DICC_DOM || {})[id] || {}).filter((k) => k.endsWith(':')).sort((a, b) => b.length - a.length);
@@ -2098,13 +1756,12 @@ function initGIS() {
 
 $('#btn-conectar').addEventListener('click', () => PROVEEDORES.google.conectar());
 $('#btn-conectar-dropbox').addEventListener('click', () => PROVEEDORES.dropbox.conectar());
-const categoriasIniciales = () => CATEGORIAS_INICIALES.map((c) => Object.assign({}, c));
 
 // Importar un archivo de copia desde la pantalla inicial: se entra en la app
 // vacía y se reutiliza el mismo importador de Ajustes. Si el archivo no vale y
 // no llegó a entrar nada, se vuelve a la pantalla inicial sin guardar nada.
 async function importarDesdeBienvenida(file) {
-  datos = { personas: [], categorias: categoriasIniciales(), documentos: [] };
+  datos = { personas: [], categorias: [], documentos: [] };
   entrarEnLaApp();
   abrirModal('<h3>Importando…</h3>');
   await procesarImportacion(file, true);
@@ -2123,7 +1780,7 @@ function mostrarPanelLogin(panel) {
 $('#btn-ya-usaba').addEventListener('click', () => mostrarPanelLogin('nubes'));
 $('#btn-volver-login').addEventListener('click', () => mostrarPanelLogin('inicio'));
 $('#btn-empezar').addEventListener('click', () => {
-  datos = { personas: [], categorias: categoriasIniciales(), documentos: [] };
+  datos = { personas: [], categorias: [], documentos: [] };
   entrarEnLaApp();
   guardarMetadatos();
 });
@@ -2236,7 +1893,7 @@ async function alConectarProveedor(id) {
         restaurarCopia(id, remoto);
         mostrarToast(trad('Copia de {nube} recuperada', { nube: prov.nombre }));
       } else if (sinDatos) {
-        datos = { personas: [], categorias: categoriasIniciales(), documentos: [] };
+        datos = { personas: [], categorias: [], documentos: [] };
         entrarEnLaApp();
         await guardarMetadatos();
       }
@@ -2463,17 +2120,6 @@ async function guardarMetadatos() {
   subirRevisionLocal();
   guardarDatosEnCacheLocal();
   programarRespaldo();
-}
-
-function obtenerExtension(file) {
-  const partes = file.name.split('.');
-  if (partes.length > 1) return '.' + partes.pop().toLowerCase();
-  return MAPA_EXTENSIONES_MIME[file.type] || '';
-}
-function construirNombreArchivo(nombreElegido, file) {
-  const ext = obtenerExtension(file);
-  const yaLoTiene = ext && nombreElegido.toLowerCase().endsWith(ext);
-  return yaLoTiene ? nombreElegido : nombreElegido + ext;
 }
 
 async function subirArchivoADrive(file, nombreArchivo, carpetaDestinoId) {
@@ -2992,8 +2638,8 @@ function programarRespaldo(espera = 2000) {
   clearTimeout(temporizadorRespaldo);
   temporizadorRespaldo = setTimeout(ejecutarRespaldo, espera);
 }
-window.addEventListener('online', () => programarRespaldo(1000));
-document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(sincronizarSiToca, 1500); });
+window.addEventListener('online', () => { olvidarDescargasFallidas(); programarRespaldo(1000); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { olvidarDescargasFallidas(); setTimeout(sincronizarSiToca, 1500); } });
 
 // Una pasada por todas las nubes indicadas; devuelve si alguna aportó datos
 // nuevos al móvil. Con forzar, cada nube se consulta aunque no haya nada que subir.
@@ -3057,6 +2703,7 @@ function textoUltimaSync() {
 // se pudieron sincronizar.
 async function sincronizarTodo() {
   clearTimeout(temporizadorRespaldo);
+  olvidarDescargasFallidas(); // una consulta completa reintenta también lo que falló antes
   while (respaldoEnCurso) await pausa(200);
   const activos = Object.keys(PROVEEDORES).filter((id) => PROVEEDORES[id].conectado());
   if (!activos.length) return { fallos: [] };
@@ -3391,7 +3038,7 @@ async function respaldarEn(id, forzar = false) {
 function restaurarCopia(id, remoto) {
   datos = {
     personas: remoto.datos.personas || [],
-    categorias: remoto.datos.categorias || categoriasIniciales(),
+    categorias: remoto.datos.categorias || [],
     documentos: remoto.datos.documentos || [],
   };
   normalizarDocumentosPaginas(datos.documentos);
@@ -3467,7 +3114,12 @@ async function bajarDeNubes(pagina) {
 }
 
 let descargandoFaltantes = false;
+// Archivos que no se han podido bajar: se saltan en lo que queda de pasada para no
+// atascarla, pero la lista se vacía al recuperar la conexión, al volver a la app y en cada
+// sincronización completa — si el fallo fue pasajero (un túnel, un corte de un segundo), se
+// vuelve a intentar en vez de quedarse sin bajar hasta reiniciar la app.
 const descargasFallidas = new Set();
+function olvidarDescargasFallidas() { descargasFallidas.clear(); }
 // Completa la copia local con los archivos que solo están en una nube (por
 // ejemplo, tras recuperar una copia en un móvil nuevo).
 async function descargarFaltantes() {
@@ -4183,6 +3835,19 @@ function renderizarCategoriasHome() {
   cont.classList.remove('pocas', 'tres', 'centrado', 'vacio');
   cont.classList.add('modo-categorias');
 
+  // Al empezar no hay ninguna categoría: se explica dónde se crean en vez de dejar la
+  // pantalla en blanco (en modo administrar sí se ve el botón de crear, así que no hace falta).
+  if (datos.categorias.length === 0 && !modoEdicionCategorias) {
+    cont.classList.remove('modo-categorias');
+    cont.classList.add('vacio');
+    cont.innerHTML = `
+      <div class="estado-vacio">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="color:var(--text-dim)"><path d="M4 5h6.5l2 2.2H20v11.3H4V5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <p>Todavía no tienes categorías.<br>Ve a Ajustes → "Categorías" para crear la primera y así ordenar tus documentos por tipo.</p>
+      </div>`;
+    return;
+  }
+
   datos.categorias.forEach((cat) => cont.appendChild(crearBarraCategoriaHome(cat, modoEdicionCategorias)));
 
   if (modoEdicionCategorias) {
@@ -4524,7 +4189,7 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
         window.removeEventListener('pointerup', cancelarPorSoltar);
         window.removeEventListener('pointercancel', cancelarPorSoltar);
       }
-      window.addEventListener('pointermove', cancelarSiSeMueve);
+      window.addEventListener('pointermove', cancelarSiSeMueve, { passive: true }); // no llama a preventDefault: el scroll lo mueve a mano
       window.addEventListener('pointerup', cancelarPorSoltar, { once: true });
       window.addEventListener('pointercancel', cancelarPorSoltar, { once: true });
     });
@@ -5377,14 +5042,6 @@ async function enderezarConEsquinas(file, esquinas, img) {
   return { file: new File([blob], nombreBase + '.jpg', { type: 'image/jpeg' }), ancho, alto };
 }
 
-// Detecta el documento en la foto y lo devuelve recortado y enderezado, o null si no
-// encuentra bordes claros.
-async function enderezarDocumento(file, img) {
-  img = img || await cargarImagenDeArchivo(file);
-  const det = await detectarEsquinasEnFoto(file, img);
-  return det ? enderezarConEsquinas(file, det.esquinas, img) : null;
-}
-
 // Recorte para fotos de documentos: el marco se adapta a la proporción de
 // la propia foto (no fuerza un cuadrado), y el resultado se recorta a la
 // resolución nativa de la imagen (copia 1:1 de los píxeles, sin reescalar)
@@ -6229,11 +5886,6 @@ function renderizarAvisoCaducidadPersona() {
     bannerAviso.innerHTML = `<span>${trad(avisos === 1 ? 'Tiene {n} documento a punto de caducar' : 'Tiene {n} documentos a punto de caducar', { n: avisos })}</span>`;
   }
 }
-function formatearFecha(iso) {
-  const [a, m, d] = iso.split('-');
-  return `${d}/${m}/${a}`;
-}
-
 function obtenerAvisosCaducidad() {
   try { return JSON.parse(localStorage.getItem('documentacion_avisos_caducidad') || '{}'); }
   catch (e) { return {}; }
@@ -6636,11 +6288,14 @@ function abrirMenuGaleria(doc) {
 }
 
 function abrirModalCategoriaDoc(doc) {
-  const filas = datos.categorias.map((cat) => `
+  const hayCategoria = datos.categorias.some((c) => c.id === doc.categoria);
+  // La última fila es siempre "Sin categoría": sirve para quitarle la categoría a un documento
+  // y es la única opción posible mientras no haya ninguna categoría creada.
+  const filas = datos.categorias.concat([{ id: '', nombre: trad(CATEGORIA_SIN_ASIGNAR.nombre), color: CATEGORIA_SIN_ASIGNAR.color }]).map((cat) => `
     <button class="fila-accion fila-cat" data-id="${cat.id}">
       <span class="icono-accion" style="background:${cat.color}">${ICONOS_MENU.carpeta}</span>
       <span><strong>${escapeHtml(cat.nombre)}</strong></span>
-      ${cat.id === doc.categoria ? `<span class="marca-actual">${ICONOS_MENU.check}</span>` : ''}
+      ${cat.id === doc.categoria || (cat.id === '' && !hayCategoria) ? `<span class="marca-actual">${ICONOS_MENU.check}</span>` : ''}
     </button>`).join('');
 
   abrirModal(`
@@ -6656,8 +6311,7 @@ function abrirModalCategoriaDoc(doc) {
       doc.categoria = btn.dataset.id;
       await guardarMetadatos();
       volverAtras(); // cierra esta pantalla y el menú de opciones, vuelve al visor
-      renderizarChipsCategorias();
-      renderizarDocumentos();
+      refrescarPantallaActual(); // refresca lo que toque según se esté viendo una persona o una categoría
       mostrarToast('Categoría actualizada');
     });
   });
@@ -6681,8 +6335,7 @@ function abrirModalCaducidad(doc) {
     doc.fechaCaducidad = $('#input-caducidad-doc').value || null;
     guardarMetadatos().then(() => {
       volverAtras();
-      renderizarAvisoCaducidadPersona();
-      renderizarDocumentos();
+      refrescarPantallaActual();
       mostrarToast('Caducidad actualizada');
     });
   });
@@ -6690,8 +6343,7 @@ function abrirModalCaducidad(doc) {
     doc.fechaCaducidad = null;
     guardarMetadatos().then(() => {
       volverAtras();
-      renderizarAvisoCaducidadPersona();
-      renderizarDocumentos();
+      refrescarPantallaActual();
       mostrarToast('Fecha de caducidad eliminada');
     });
   });
@@ -6765,10 +6417,7 @@ function confirmarBorrado(doc, indicePagina = null) {
         datos.documentos = datos.documentos.filter((d) => d.id !== doc.id);
         await guardarMetadatos();
         cerrarTodasLasCapas();
-        renderizarCabeceraPersona();
-        renderizarChipsCategorias();
-        renderizarAvisoCaducidadPersona();
-        renderizarDocumentos();
+        refrescarPantallaActual();
         mostrarToast('Documento eliminado');
       }
     } catch (e) {
@@ -6785,8 +6434,11 @@ function abrirModalSubida() {
   // una categoría (todas las personas a la vez), es al revés: la categoría ya está fija y
   // lo que hace falta elegir es de quién es el documento.
   const enCategoria = categoriaGlobalActivaId !== null;
-  const opcionesCat = datos.categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('');
-  const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : null);
+  // "Sin categoría" siempre está disponible: al empezar no hay ninguna categoría creada, y
+  // aun teniéndolas puede que un documento no encaje en ninguna.
+  const opcionesCat = datos.categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('')
+    + `<option value="">${trad('Sin categoría')}</option>`;
+  const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : '');
   const opcionesPersona = datos.personas.map((p) => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
   const personaPreseleccionada = personaFiltroActiva !== 'todos' ? personaFiltroActiva : (datos.personas[0] ? datos.personas[0].id : null);
 
@@ -6949,8 +6601,7 @@ async function guardarDocumentoNuevo() {
     });
     await guardarMetadatos();
     volverAtras();
-    if (enCategoria) { renderizarChipsPersonas(); } else { renderizarCabeceraPersona(); renderizarChipsCategorias(); renderizarAvisoCaducidadPersona(); }
-    renderizarDocumentos();
+    refrescarPantallaActual(); // ya distingue solo entre estar viendo una persona o una categoría
     mostrarToast('Documento guardado');
     setTimeout(avisarSiSinNube, 900);
   } catch (e) {
