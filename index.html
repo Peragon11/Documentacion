@@ -218,7 +218,10 @@
   html[data-tema="claro"] .ajustes .grupo{ background:#fff; border-color:var(--borde); }
   html[data-tema="claro"] .ajustes .fila-accion:active{ background:var(--ink); }
 
-  .fila-prov{ display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:12px; padding:12px 14px; }
+  .fila-prov{
+    display:grid; grid-template-columns:44px minmax(0,1fr); align-items:center; column-gap:12px; row-gap:10px;
+    padding:12px 14px;
+  }
   .marca-prov{ width:44px; height:44px; border-radius:calc(var(--r-caja) + 1px); background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.18); }
   .info-prov{ display:flex; flex-direction:column; min-width:0; gap:1px; }
   .info-prov strong{ font-size:.96rem; font-weight:600; color:var(--text-light); }
@@ -229,8 +232,12 @@
   .estado-prov.copiando .punto-estado{ background:var(--azul); opacity:1; }
   .estado-prov.aviso{ color:#E0897A; }
   .estado-prov.aviso .punto-estado{ background:var(--amber); opacity:1; }
-  .enlace-prov{ align-self:flex-start; background:none; border:none; padding:3px 0 0; margin:0; color:var(--text-dim); font-size:.78rem; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
-  .btn-prov{ flex:none; border-radius:var(--r-pill); padding:7px 13px; font-size:.78rem; font-weight:600; cursor:pointer; border:1px solid var(--borde); background:transparent; color:var(--text-dim); }
+  /* "Ver carpeta" y Conectar/Reconectar/Desconectar, uno al lado del otro, en su propia fila
+     a todo el ancho de la ficha (debajo del logo también) — así el nombre/email de arriba
+     tienen todo el ancho para respirar, sin un botón detrás empujándolos. */
+  .fila-botones-prov{ grid-column:1/-1; display:flex; gap:8px; }
+  .fila-botones-prov .btn-prov{ flex:1; }
+  .btn-prov{ border-radius:var(--r-pill); padding:7px 13px; font-size:.78rem; font-weight:600; cursor:pointer; border:1px solid var(--borde); background:transparent; color:var(--text-dim); }
   .btn-prov.primario{ background:var(--stamp); border-color:var(--stamp); color:var(--sobre-acento); }
   .btn-prov:active{ transform:scale(.97); }
 
@@ -1612,7 +1619,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.0';
+const VERSION_APP = '3.0.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -3546,9 +3553,11 @@ function htmlFilasProveedores() {
         <strong>${p.nombre}</strong>
         ${con && p.correo() ? `<span class="correo-prov">${escapeHtml(p.correo())}</span>` : ''}
         <span class="estado-prov ${tono}"><i class="punto-estado"></i>${con ? textoEstadoProv(p.id) : 'Sin conectar'}</span>
-        ${con ? `<button type="button" class="enlace-prov" data-prov="${p.id}" data-accion="ver" aria-label="${trad('Ver carpeta en {nube}', { nube: p.nombre })}">Ver carpeta</button>` : ''}
       </div>
-      <button type="button" class="btn-prov${accion === 'desconectar' ? '' : ' primario'}" data-prov="${p.id}" data-accion="${accion}">${etiqueta}</button>
+      <div class="fila-botones-prov">
+        ${con ? `<button type="button" class="btn-prov" data-prov="${p.id}" data-accion="ver" aria-label="${trad('Ver carpeta en {nube}', { nube: p.nombre })}">Ver carpeta</button>` : ''}
+        <button type="button" class="btn-prov${accion === 'desconectar' ? '' : ' primario'}" data-prov="${p.id}" data-accion="${accion}">${etiqueta}</button>
+      </div>
     </div>`;
   }).join('');
 }
