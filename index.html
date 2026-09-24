@@ -501,6 +501,11 @@
     box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
   }
 
+  /* Aviso de la primera vez en cada modo de inicio: cómo cambiar al otro (el icono es el mismo del botón de arriba) */
+  .tutorial-modo{ display:flex; align-items:center; gap:12px; margin:0 0 18px; padding:12px 14px; background:var(--ink-2); border:1px solid var(--borde); border-radius:var(--r-tarjeta); color:var(--text-light); font-size:.9rem; line-height:1.45; }
+  .tutorial-modo .tuto-texto{ flex:1; min-width:0; }
+  .tutorial-modo .tuto-icono{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin:0 2px; border-radius:var(--r-redondo); background:var(--ink-3); vertical-align:middle; }
+  .tutorial-modo .tuto-cerrar{ flex:none; background:none; border:none; color:var(--stamp); font-weight:700; font-size:.88rem; padding:8px 4px; cursor:pointer; }
   .estado-vacio{ text-align:center; padding:60px 20px; color:var(--text-dim); }
   .estado-vacio svg{ opacity:.4; margin-bottom:14px; }
   .estado-vacio p{ margin:0 0 18px; font-size:.9rem; line-height:1.5; }
@@ -1403,6 +1408,7 @@
 
   <main>
     <section id="pantalla-personas">
+      <div class="tutorial-modo hidden" id="tutorial-modo"></div>
       <div class="grid-personas" id="grid-personas"></div>
       <span id="version-pie"></span>
     </section>
@@ -1437,7 +1443,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.1.7';
+const VERSION_APP = '3.1.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1937,6 +1943,8 @@ $('#btn-ya-usaba').addEventListener('click', () => mostrarPanelLogin('nubes'));
 $('#btn-volver-login').addEventListener('click', () => mostrarPanelLogin('inicio'));
 $('#btn-empezar').addEventListener('click', () => {
   datos = { personas: [], categorias: [], documentos: [] };
+  modoInicio = 'personas'; // al empezar de cero siempre se ve primero la pantalla de personas
+  guardarModoInicio(modoInicio);
   entrarEnLaApp();
   guardarMetadatos();
 });
@@ -3501,7 +3509,7 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
 // copiado en las nubes se conserva ahí.
 function cerrarSesionCompleta() {
   Object.keys(PROVEEDORES).forEach((id) => { if (PROVEEDORES[id].conectado()) { try { PROVEEDORES[id].desconectar(); } catch (e) { /* ignorar */ } } });
-  const conservar = new Set([TEMA_STORAGE_KEY, SKIN_STORAGE_KEY, IDIOMA_STORAGE_KEY, 'documentacion_modo_inicio', VISTA_DOCS_STORAGE_KEY]);
+  const conservar = new Set([TEMA_STORAGE_KEY, SKIN_STORAGE_KEY, IDIOMA_STORAGE_KEY, VISTA_DOCS_STORAGE_KEY]); // el modo de inicio no se conserva: de cero se empieza en personas
   Object.keys(localStorage).filter((k) => k.startsWith('documentacion_') && !conservar.has(k)).forEach((k) => localStorage.removeItem(k));
   try { indexedDB.deleteDatabase(DB_NOMBRE); } catch (e) { /* ignorar */ }
   location.reload();
@@ -3580,18 +3588,40 @@ let modoInicio = obtenerModoInicioGuardado();
 function renderizarPantallaInicio() {
   if (modoInicio === 'categorias') renderizarCategoriasHome();
   else renderizarPersonas();
+  actualizarTutorialModo();
 }
+
+// La primera vez que se ve cada modo se explica cómo pasar al otro, con el dibujo del botón de arriba.
+// Se da por visto al pulsar "Entendido" o al usar ese botón.
+const clavesTutorialModo = { personas: 'documentacion_tuto_personas', categorias: 'documentacion_tuto_categorias' };
+function actualizarTutorialModo() {
+  const caja = $('#tutorial-modo');
+  const visto = (() => { try { return localStorage.getItem(clavesTutorialModo[modoInicio]) === '1'; } catch (e) { return true; } })();
+  if (visto || modoEdicionPersonas || modoEdicionCategorias) { caja.classList.add('hidden'); caja.innerHTML = ''; return; }
+  const aCategorias = modoInicio === 'personas';
+  caja.innerHTML = `
+    <span class="tuto-texto"><span>${aCategorias ? 'Para cambiar al modo categorías, pulsa el botón de arriba' : 'Para cambiar al modo personas, pulsa el botón de arriba'}</span> <span class="tuto-icono">${aCategorias ? ICONO_VER_LISTA : ICONO_VER_CUADRICULA}</span></span>
+    <button type="button" class="tuto-cerrar">Entendido</button>`;
+  caja.classList.remove('hidden');
+  caja.querySelector('.tuto-cerrar').addEventListener('click', () => { marcarTutorialModoVisto(modoInicio); caja.classList.add('hidden'); caja.innerHTML = ''; });
+}
+function marcarTutorialModoVisto(modo) {
+  try { localStorage.setItem(clavesTutorialModo[modo], '1'); } catch (e) { /* ignorar */ }
+}
+
+const ICONO_VER_LISTA = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="3" rx="1.5"/><rect x="3" y="11" width="18" height="3" rx="1.5"/><rect x="3" y="17" width="18" height="3" rx="1.5"/></svg>';
+const ICONO_VER_CUADRICULA = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>';
 
 function actualizarBotonAlternarVista() {
   const btn = $('#btn-ver-categorias-top');
   if (modoInicio === 'categorias') {
     // Ya se ve en lista (categorías) — el icono anuncia a qué se cambia: cuadrícula.
     btn.setAttribute('aria-label', 'Ver en cuadrícula (personas)');
-    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>';
+    btn.innerHTML = ICONO_VER_CUADRICULA;
   } else {
     // Ya se ve en cuadrícula (personas) — el icono anuncia a qué se cambia: lista.
     btn.setAttribute('aria-label', 'Ver en lista (categorías)');
-    btn.innerHTML = '<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="18" height="3" rx="1.5"/><rect x="3" y="11" width="18" height="3" rx="1.5"/><rect x="3" y="17" width="18" height="3" rx="1.5"/></svg>';
+    btn.innerHTML = ICONO_VER_LISTA;
   }
 }
 
@@ -3679,6 +3709,7 @@ $('#btn-ver-categorias-top').addEventListener('click', () => {
   // Si se estaba administrando, primero se quita esa capa de navegación
   // (cerrarCapas ya llama a salirModoAdministrarInicio al cerrarla).
   if (modoEdicionCategorias || modoEdicionPersonas) cerrarCapas(1);
+  marcarTutorialModoVisto(modoInicio); // ya sabe usar el botón: no hace falta repetirle el aviso del modo que deja
   modoInicio = modoInicio === 'categorias' ? 'personas' : 'categorias';
   guardarModoInicio(modoInicio);
   actualizarBotonAlternarVista();
