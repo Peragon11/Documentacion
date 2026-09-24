@@ -591,14 +591,28 @@
     background:rgba(0,0,0,.55); color:#fff; font-size:.72rem; font-weight:700;
     display:flex; align-items:center; justify-content:center;
   }
+  /* Selección de documentos: tres señales a la vez para que se note de un vistazo —el círculo
+     de arriba a la derecha (vacío mientras no está marcado, relleno y con el visto cuando sí),
+     el aro alrededor de la ficha entera y un velo de color sobre la miniatura. */
   .check-seleccion{
-    display:none; position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%;
-    background:rgba(0,0,0,.4); border:2px solid var(--paper); color:var(--paper);
+    display:none; position:absolute; top:9px; right:9px; z-index:2; width:38px; height:38px; border-radius:50%;
+    background:rgba(0,0,0,.38); border:3px solid #fff; color:var(--sobre-acento);
+    box-shadow:0 2px 8px rgba(0,0,0,.45);
     align-items:center; justify-content:center;
+    transition:background .14s ease, border-color .14s ease, transform .14s ease;
+  }
+  .check-seleccion svg{
+    width:22px; height:22px; stroke-width:3.4; opacity:0; transform:scale(.4);
+    transition:opacity .14s ease, transform .14s cubic-bezier(.2,.9,.3,1.3);
   }
   body.modo-seleccion .check-seleccion{ display:flex; }
-  .doc-fila.seleccionada .check-seleccion{ background:var(--stamp); border-color:var(--stamp); }
-  .doc-fila.seleccionada .miniatura{ outline:3px solid var(--stamp); outline-offset:-3px; }
+  .doc-fila.seleccionada .check-seleccion{ background:var(--stamp); border-color:#fff; transform:scale(1.08); }
+  .doc-fila.seleccionada .check-seleccion svg{ opacity:1; transform:none; }
+  .doc-fila.seleccionada{ outline:4px solid var(--stamp); outline-offset:1px; }
+  .doc-fila.seleccionada .miniatura::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:color-mix(in srgb, var(--stamp) 30%, transparent);
+  }
   .barra-seleccion{
     position:fixed; left:0; right:0; bottom:0; z-index:45;
     display:flex; align-items:center; gap:12px;
@@ -1295,7 +1309,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.7';
+const VERSION_APP = '3.0.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
