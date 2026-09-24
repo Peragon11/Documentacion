@@ -258,6 +258,8 @@
     [`Los tipos de documento que usas`, `The types of document you use`, `Els tipus de document que fas servir`, `I tipi di documento che usi`, `Les types de documents que vous utilisez`, `Die Dokumentarten, die du verwendest`],
     [`Guarda todo en un archivo`, `Save everything to a file`, `Ho desa tot en un fitxer`, `Salva tutto in un file`, `Enregistrer le tout dans un fichier`, `Speichert alles in einer Datei`],
     [`Suma un archivo de copia a lo que ya tienes`, `Add a backup file to what you already have`, `Suma un fitxer de còpia al que ja tens`, `Aggiunge un file di backup a ciò che hai già`, `Ajoute un fichier de sauvegarde à ce que vous avez déjà`, `Fügt eine Sicherungsdatei zu dem hinzu, was du bereits hast`],
+    [`Política de privacidad`, `Privacy policy`, `Política de privadesa`, `Informativa sulla privacy`, `Politique de confidentialité`, `Datenschutzerklärung`],
+    [`Qué datos usa la app y dónde se guardan`, `What data the app uses and where it is stored`, `Quines dades fa servir l'app i on es desen`, `Quali dati usa l'app e dove vengono salvati`, `Quelles données l'app utilise et où elles sont stockées`, `Welche Daten die App nutzt und wo sie gespeichert werden`],
     [`Cerrar sesión`, `Sign out`, `Tanca la sessió`, `Esci`, `Se déconnecter`, `Abmelden`],
     [`Todavía no hay carpeta: haz antes una copia.`, `There is no folder yet: make a backup first.`, `Encara no hi ha carpeta: fes abans una còpia.`, `Non esiste ancora una cartella: fai prima un backup.`, `Il n'y a pas encore de dossier : faites d'abord une sauvegarde.`, `Es gibt noch keinen Ordner: erstelle zuerst eine Sicherung.`],
     [`¿Cerrar sesión?`, `Sign out?`, `Vols tancar la sessió?`, `Vuoi uscire?`, `Se déconnecter ?`, `Abmelden?`],

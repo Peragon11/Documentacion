@@ -337,7 +337,7 @@
     font-family:var(--fuente-marca); letter-spacing:.01em;
   }
   /* Nombre largo: se reparte en dos líneas (ajustarTituloTopbar) */
-  .topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.1; overflow:hidden; max-height:calc(2.2em + 2px); }
+  .topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.2; overflow:hidden; max-height:calc(2.4em + 7px); padding-bottom:5px; margin-bottom:-5px; }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:var(--r-avatar-mini); flex:none; box-shadow:none; }
   .icono-marca{ width:38px; height:38px; border-radius:var(--r-marca); flex:none; display:block; }
   @media (max-width:340px){ .icono-marca{ width:32px; height:32px; border-radius:calc(var(--r-marca) - 1px); } } /* pantallas muy estrechas: el título necesita el hueco */
@@ -376,13 +376,13 @@
 
   #pantalla-personas{ display:flex; flex-direction:column; min-height:100%; }
   .grid-personas{
-    display:grid; grid-template-columns:repeat(2, 1fr); gap:12px 18px; position:relative;
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:10px 18px; position:relative;
   }
   @media (orientation:landscape){
     .grid-personas{ grid-template-columns:repeat(4, 1fr); }
   }
   .grid-personas.pocas{
-    display:flex; flex-direction:column; align-items:center; gap:12px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
     width:100%; max-width:260px; margin:auto;
   }
   .grid-personas.centrado{ margin:auto 0; }
@@ -448,13 +448,13 @@
     -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
     display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px; width:100%; min-width:0;
   }
-  /* El hueco del nombre mide SIEMPRE dos líneas (--altura-nombre), tenga el nombre una o dos: así
+  /* El hueco del nombre mide SIEMPRE una línea (--altura-nombre), sea el nombre largo o corto: así
      todas las fichas de persona miden lo mismo y la separación de una a la siguiente no cambia
      según cuánto ocupe el nombre. Los estilos que le cambian la letra o le ponen marco/relleno
-     al nombre redefinen --altura-nombre con la altura de sus dos líneas más lo que añaden. */
+     al nombre redefinen --altura-nombre con la altura de su línea más lo que añaden. */
   .persona-tile-clic{
     background:none; border:none; color:inherit; font:inherit; cursor:pointer; padding:0;
-    display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto var(--altura-nombre, calc(.95rem * 2.4));
+    display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto var(--altura-nombre, calc(.95rem * 1.2));
     justify-items:center; row-gap:10px; width:100%; min-width:0;
   }
   .persona-tile-clic > .nombre-persona{ align-self:start; }
@@ -492,7 +492,7 @@
   .aviso-caducidad-persona.caducado{ background:#E5342A; }
   .persona-tile .nombre-persona{
     font-size:.95rem; font-weight:600; text-align:center; max-width:100%; line-height:1.2;
-    overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+    overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1;
   }
   .persona-tile.arrastrando-tile{
     z-index:30; cursor:grabbing; transition:none; pointer-events:none;
@@ -1209,12 +1209,12 @@
   html[data-skin="bosque"] .campo input, html[data-skin="bosque"] .campo select, html[data-skin="bosque"] .input-busqueda{ padding-left:16px; }
 
   /* Altura del hueco del nombre en cada estilo (ver .persona-tile-clic) */
-  html[data-skin="pasaporte"] .persona-tile-clic{ --altura-nombre:calc(1.12rem * 2.4); }
-  html[data-skin="neon"] .persona-tile-clic{ --altura-nombre:calc(1.06rem * 2.4); }
-  html[data-skin="bosque"] .persona-tile-clic{ --altura-nombre:calc(1.02rem * 2.4); }
-  html[data-skin="pixeles"] .persona-tile-clic{ --altura-nombre:calc(1.05rem * 2.4); }
-  html[data-skin="chicle"] .persona-tile-clic{ --altura-nombre:calc(.95rem * 2.4 + 14px); }
-  html[data-skin="comic"] .persona-tile-clic{ --altura-nombre:calc(1.3rem * 2.4 + 16px); }
+  html[data-skin="pasaporte"] .persona-tile-clic{ --altura-nombre:calc(1.12rem * 1.2); }
+  html[data-skin="neon"] .persona-tile-clic{ --altura-nombre:calc(1.06rem * 1.2); }
+  html[data-skin="bosque"] .persona-tile-clic{ --altura-nombre:calc(1.02rem * 1.2); }
+  html[data-skin="pixeles"] .persona-tile-clic{ --altura-nombre:calc(1.05rem * 1.2); }
+  html[data-skin="chicle"] .persona-tile-clic{ --altura-nombre:calc(.95rem * 1.2 + 14px); }
+  html[data-skin="comic"] .persona-tile-clic{ --altura-nombre:calc(1.3rem * 1.2 + 16px); }
   /* ---- comic ----
      Blanco y negro de viñeta. Tema claro: hoja blanca con trama de puntos ("papel pintado" de
      tebeo) y tinta negra. Tema oscuro: el negativo — fondo negro y tinta blanca. Todo va con
@@ -1431,7 +1431,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.1.2';
+const VERSION_APP = '3.1.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1799,13 +1799,13 @@ mediaOscuro.addEventListener('change', () => {
 //   botones de 44 y la barra no crece). Los nombres de personas y categorías, que
 //   suelen ser cortos, se limitan a 26 px para que no resulten exagerados.
 // - Si un nombre es largo y en una línea quedaría pequeño, se reparte en DOS líneas
-//   (hasta 19,5 px, para que dos líneas tampoco hagan crecer la barra) cuando así la
+//   (hasta 18,3 px, para que dos líneas tampoco hagan crecer la barra) cuando así la
 //   letra puede ser claramente mayor. Solo un nombre larguísimo llega al tamaño
 //   mínimo y se recorta.
 const TITULO_TAM_MIN = 9;
 const TITULO_TAM_MAX_APP = 38;
 const TITULO_TAM_MAX_NOMBRE = 26;
-const TITULO_TAM_MAX_DOS_LINEAS = 19.5;
+const TITULO_TAM_MAX_DOS_LINEAS = 18.3;
 function ajustarTituloTopbar() {
   const t = $('#titulo-topbar');
   if (!t) return;
@@ -1826,12 +1826,15 @@ function ajustarTituloTopbar() {
     t.classList.add('dos-lineas');
     const cabe = (px) => {
       t.style.fontSize = px + 'px';
-      // dos líneas de altura 1,1 × tamaño, con unos píxeles de margen por los acentos y colas de las letras
-      return t.scrollWidth <= t.clientWidth + 0.5 && t.scrollHeight <= 2.2 * px + 4;
+      // dos líneas de altura 1,2 × tamaño, con unos píxeles de margen por los acentos y colas de las letras
+      return t.scrollWidth <= t.clientWidth + 0.5 && t.scrollHeight <= 2.4 * px + 9;
     };
     let bajo = TITULO_TAM_MIN; let alto = TITULO_TAM_MAX_DOS_LINEAS;
     for (let i = 0; i < 9; i++) { const medio = (bajo + alto) / 2; if (cabe(medio)) bajo = medio; else alto = medio; }
-    if (bajo > idealUna * 1.12) { t.style.fontSize = bajo.toFixed(2) + 'px'; return; }
+    // Se comprueba el tamaño final (al reducir la letra una palabra puede saltar de línea y sobrar una tercera)
+    // y se baja de a poco hasta que quepa; al fijarlo se redondea hacia abajo, no al más cercano.
+    while (bajo > TITULO_TAM_MIN && !cabe(bajo)) bajo -= 0.25;
+    if (cabe(bajo) && bajo > idealUna * 1.12) { t.style.fontSize = (Math.floor(bajo * 100) / 100) + 'px'; return; }
     t.classList.remove('dos-lineas');
   }
   t.style.fontSize = Math.max(TITULO_TAM_MIN, Math.min(tope, idealUna)).toFixed(2) + 'px';
@@ -7110,6 +7113,10 @@ function abrirAjustes(animar = true) {
           <span class="icono-accion morado"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           <span><strong>Importar copia</strong><small>Suma un archivo de copia a lo que ya tienes</small></span>
         </button>
+        <a class="fila-accion" id="op-privacidad" href="privacidad.html" target="_blank" rel="noopener" style="text-decoration:none">
+          <span class="icono-accion azul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7.5 3v5.5c0 4.6-3.1 8.2-7.5 9.5-4.4-1.3-7.5-4.9-7.5-9.5V6L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2.2 2.2L15.5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span><strong>Política de privacidad</strong><small>Qué datos usa la app y dónde se guardan</small></span>
+        </a>
       </div>
 
       <div class="grupo">
