@@ -1437,7 +1437,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.1.6';
+const VERSION_APP = '3.1.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1931,6 +1931,7 @@ $('#input-importar-bienvenida').addEventListener('change', (e) => {
 function mostrarPanelLogin(panel) {
   $('#login-inicio').classList.toggle('hidden', panel !== 'inicio');
   $('#login-nubes').classList.toggle('hidden', panel !== 'nubes');
+  $('#vista-login p.lead').classList.toggle('hidden', panel === 'nubes'); // la frase de presentación solo en la primera pantalla
 }
 $('#btn-ya-usaba').addEventListener('click', () => mostrarPanelLogin('nubes'));
 $('#btn-volver-login').addEventListener('click', () => mostrarPanelLogin('inicio'));
