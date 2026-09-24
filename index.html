@@ -1241,45 +1241,48 @@
   html[data-skin="comic"] .btn-icono-top{ border:3px solid var(--text-light); background:var(--ink-2); box-shadow:3px 3px 0 var(--text-light); }
   html[data-skin="comic"] .btn-icono-top:active{ transform:translate(3px,3px); box-shadow:none; }
   /* Personas: recuadro con su rótulo debajo, en gris (aunque la persona tenga color o foto) */
-  html[data-skin="comic"] .avatar-persona{ border:3px solid var(--text-light); filter:grayscale(1) contrast(1.1); }
+  html[data-skin="comic"] .avatar-persona{ border:3px solid var(--text-light); }
   html[data-skin="comic"] .persona-tile .avatar-persona{ border-width:4px; box-shadow:5px 5px 0 var(--text-light); }
   html[data-skin="comic"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin:9px auto 0; padding:1px 12px 0; background:var(--ink-2); color:var(--text-light); border:3px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1.3rem; }
   /* Rótulo de cada grupo de documentos: como el recuadro de texto de una viñeta */
   html[data-skin="comic"] .titulo-grupo{ display:inline-flex; width:fit-content; margin-bottom:14px; padding:3px 12px 1px; background:var(--ink-2); color:var(--text-light); border:3px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1.2rem; text-transform:none; letter-spacing:.06em; }
-  html[data-skin="comic"] .titulo-grupo .punto-grupo{ filter:grayscale(1); }
   /* Fichas: viñetas con contorno grueso y sombra dura. El color de la categoría pasa a un velo gris
      con trama, por detrás del contenido (isolation + z-index:-1 lo dejan sobre el fondo y bajo el texto). */
   html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); isolation:isolate; position:relative; }
-  html[data-skin="comic"] .doc-fila::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, #000 1.1px, transparent 1.6px) 0 0 / 6px 6px, var(--color-categoria, #888); filter:grayscale(1) contrast(1.05); opacity:.36; }
+  html[data-skin="comic"] .doc-fila{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border-radius:8px 14px 9px 13px / 13px 9px 14px 8px; }
+  /* Pintado a mano: pinceladas inclinadas (claras y oscuras) y una trama de puntos por encima del color de la categoría */
+  html[data-skin="comic"] .doc-fila::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.22) 1.1px, transparent 1.6px) 0 0 / 7px 7px, repeating-linear-gradient(103deg, rgba(255,255,255,.14) 0 4px, transparent 4px 11px, rgba(0,0,0,.10) 11px 13px, transparent 13px 23px); }
   html[data-skin="comic"] :is(.doc-fila, .galeria-pagina):active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
   html[data-skin="comic"] .lista-docs{ gap:11px; }
   html[data-skin="comic"] .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:13px; }
   html[data-skin="comic"] .doc-fila .miniatura, html[data-skin="comic"] .galeria-pagina .miniatura{ border:3px solid var(--text-light); margin:10px 10px 0; }
   html[data-skin="comic"] .doc-nombre{ font-size:1.25rem; }
-  html[data-skin="comic"] .doc-fila .badge-mini{ border:2px solid var(--text-light); background:var(--ink-3); color:var(--text-light); font-weight:700; border-radius:10px; }
+  html[data-skin="comic"] .doc-fila .badge-mini:not(.aviso):not(.caducado){ border:2px solid var(--text-light); background:var(--ink-3); color:var(--text-light); }
+  html[data-skin="comic"] .doc-fila .badge-mini{ font-weight:700; border-radius:10px; }
   /* Avisos de caducidad sin rojo ni naranja: "por caducar" = fondo rayado, "caducado" = fondo macizo */
-  html[data-skin="comic"] .doc-fila.aviso{ background:repeating-linear-gradient(135deg, var(--text-light) 0 2px, var(--ink-2) 2px 8px) !important; }
-  html[data-skin="comic"] .doc-fila.caducado{ background:var(--text-light) !important; }
-  html[data-skin="comic"] :is(.doc-fila.aviso, .doc-fila.caducado)::before{ display:none; }
-  html[data-skin="comic"] .doc-fila.aviso .info{ background:var(--ink-2); }
-  html[data-skin="comic"] .doc-fila.aviso .doc-nombre{ color:var(--text-light); }
-  html[data-skin="comic"] .doc-fila.caducado .doc-nombre{ color:var(--ink); }
-  html[data-skin="comic"] .doc-fila .badge-mini.aviso{ background:var(--text-light); color:var(--ink); }
-  html[data-skin="comic"] .doc-fila .badge-mini.caducado{ background:var(--ink); color:var(--text-light); border-color:var(--ink); }
-  html[data-skin="comic"] .aviso-caducidad-banner{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); background:var(--ink-2); color:var(--text-light); font-size:1.05rem; margin-bottom:18px; }
-  html[data-skin="comic"] .aviso-caducidad-banner.aviso{ background:repeating-linear-gradient(135deg, var(--text-light) 0 2px, var(--ink-2) 2px 8px); }
-  html[data-skin="comic"] .aviso-caducidad-banner.aviso span{ background:var(--ink-2); padding:1px 12px; }
-  html[data-skin="comic"] .aviso-caducidad-banner.caducado{ background:var(--text-light); color:var(--ink); }
+  html[data-skin="comic"] .aviso-caducidad-banner{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-size:1.05rem; margin-bottom:18px; }
   /* Barras de categoría de la portada: en gris, con trama que se desvanece hacia la izquierda */
-  html[data-skin="comic"] .categoria-barra{ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); filter:grayscale(1) contrast(1.15); font-size:1.5rem; letter-spacing:.06em; text-shadow:2px 2px 0 #000; position:relative; }
-  html[data-skin="comic"] .categoria-barra::before{ content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.34) 1.4px, transparent 1.9px) 0 0 / 7px 7px; -webkit-mask-image:linear-gradient(90deg, transparent 15%, #000); mask-image:linear-gradient(90deg, transparent 15%, #000); }
+  /* Barras de categoría: la pintura (color + pinceladas + contorno + sombra) va en ::before, que es lo que se
+     deforma con el filtro suave; el texto queda encima, nítido. El color llega por --color-categoria. */
+  html[data-skin="comic"] .categoria-barra{ background:transparent !important; box-shadow:none; border:none; isolation:isolate; position:relative; font-size:1.5rem; letter-spacing:.06em; text-shadow:2px 2px 0 #000; }
+  html[data-skin="comic"] .categoria-barra:nth-child(3n+2)::before{ filter:url(#trazo-b); }
+  html[data-skin="comic"] .categoria-barra:nth-child(3n+3)::before{ filter:url(#trazo-c); }
+  html[data-skin="comic"] .categoria-barra::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; border:3px solid var(--text-light); border-radius:10px 6px 12px 7px / 7px 12px 6px 10px; box-shadow:5px 5px 0 var(--text-light); filter:url(#trazo-a);
+    background:
+      radial-gradient(circle, rgba(0,0,0,.17) 1.3px, transparent 1.8px) 0 0 / 8px 8px,
+      repeating-linear-gradient(92deg, rgba(255,255,255,.15) 0 14px, transparent 14px 31px, rgba(0,0,0,.09) 31px 38px, transparent 38px 71px),
+      repeating-linear-gradient(88deg, transparent 0 23px, rgba(255,255,255,.08) 23px 34px, transparent 34px 59px),
+      linear-gradient(180deg, rgba(255,255,255,.10), transparent 45%, rgba(0,0,0,.10)),
+      var(--color-categoria, #888); }
   html[data-skin="comic"] .categoria-barra > *{ position:relative; }
-  html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
+  html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); }
+  html[data-skin="comic"] .categoria-barra:active::before{ box-shadow:2px 2px 0 var(--text-light); }
   /* Filtro de categorías: globitos de texto (los de categoría, en gris) */
   html[data-skin="comic"] .chips-categorias{ padding:3px 6px 9px; }
   html[data-skin="comic"] .chip{ border:3px solid var(--text-light); background:var(--ink-2); color:var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1rem; padding:4px 14px 2px; }
   html[data-skin="comic"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
-  html[data-skin="comic"] .chip.chip-categoria{ filter:grayscale(1) contrast(1.2); color:#fff; text-shadow:1px 1px 0 #000; opacity:.9; }
+  html[data-skin="comic"] .chip.chip-categoria{ filter:url(#trazo-chip-a); color:#fff; text-shadow:1px 1px 0 #000; opacity:.95; }
+  html[data-skin="comic"] .chip.chip-categoria:nth-child(even){ filter:url(#trazo-chip-b); }
   html[data-skin="comic"] .chip.chip-categoria.activo{ opacity:1; box-shadow:3px 3px 0 var(--text-light), inset 0 0 0 2px #fff; }
   /* Botones */
   html[data-skin="comic"] :is(.btn-primario, .btn-secundario){ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-size:1.2rem; padding:11px 12px 9px; }
@@ -1292,7 +1295,7 @@
   /* Ajustes y ventanas */
   html[data-skin="comic"] .ajustes .grupo{ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); margin-bottom:8px; }
   html[data-skin="comic"] .ajustes .grupo > * + *{ border-top:3px solid var(--text-light); }
-  html[data-skin="comic"] .fila-cat .icono-accion{ filter:grayscale(1); color:#fff; }
+  html[data-skin="comic"] .fila-cat .icono-accion{ color:#fff; }
   html[data-skin="comic"] .opcion-tema{ border:3px solid var(--text-light); }
   html[data-skin="comic"] .opcion-tema.activa{ box-shadow:5px 5px 0 var(--text-light); }
   html[data-skin="comic"] .modal{ border-top:5px solid var(--text-light); }
@@ -1308,8 +1311,6 @@
   html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong, .opcion-menu.peligro, .icon-btn-persona-tile:last-child){ color:var(--text-light); }
   html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong){ font-weight:700; text-decoration:underline; text-underline-offset:3px; }
   html[data-skin="comic"] .aviso-caducidad-persona{ border:2px solid var(--text-light); font-family:var(--serif); }
-  html[data-skin="comic"] .aviso-caducidad-persona.aviso{ background:var(--ink-2); color:var(--text-light); border-style:dashed; }
-  html[data-skin="comic"] .aviso-caducidad-persona.caducado{ background:var(--text-light); color:var(--ink); }
 
   /* Menús de opciones de documento, página y persona (mismo diseño que Ajustes) */
   html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
@@ -1320,6 +1321,13 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <filter id="trazo-a" x="-3%" y="-16%" width="106%" height="132%"><feTurbulence type="fractalNoise" baseFrequency="0.010 0.030" numOctaves="2" seed="2" result="ruido"/><feDisplacementMap in="SourceGraphic" in2="ruido" scale="5" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="trazo-b" x="-3%" y="-16%" width="106%" height="132%"><feTurbulence type="fractalNoise" baseFrequency="0.013 0.026" numOctaves="2" seed="4" result="ruido"/><feDisplacementMap in="SourceGraphic" in2="ruido" scale="6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="trazo-c" x="-3%" y="-16%" width="106%" height="132%"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.034" numOctaves="2" seed="8" result="ruido"/><feDisplacementMap in="SourceGraphic" in2="ruido" scale="5" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="trazo-chip-a" x="-8%" y="-24%" width="116%" height="148%"><feTurbulence type="fractalNoise" baseFrequency="0.045 0.09" numOctaves="2" seed="4" result="ruido"/><feDisplacementMap in="SourceGraphic" in2="ruido" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="trazo-chip-b" x="-8%" y="-24%" width="116%" height="148%"><feTurbulence type="fractalNoise" baseFrequency="0.055 0.08" numOctaves="2" seed="9" result="ruido"/><feDisplacementMap in="SourceGraphic" in2="ruido" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
 
 <div id="vista-idioma">
   <img class="icono-login" src="icono.png" alt="">
@@ -1425,7 +1433,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.9';
+const VERSION_APP = '3.1.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4008,6 +4016,7 @@ function crearBarraCategoriaHome(cat, editable) {
   fila.className = 'categoria-barra';
   fila.dataset.catId = cat.id;
   fila.style.background = cat.color;
+  fila.style.setProperty('--color-categoria', cat.color); // por si el estilo pinta el color en otra capa (Cómic)
   fila.innerHTML = `
     <button class="categoria-barra-nombre" type="button">${escapeHtml(cat.nombre)}</button>
     ${editable ? `
@@ -4117,7 +4126,7 @@ function abrirRuedaColorCategoria(cat, filaHome) {
     const color = hslAHex(hue, t * SATURACION_BORDE_RUEDA, 100 - t * (100 - LUMINOSIDAD_BORDE_RUEDA));
     colocarSelectorPx(r.width / 2 + dx, r.height / 2 + dy);
     muestra.style.background = color;
-    if (filaHome) filaHome.style.background = color;
+    if (filaHome) { filaHome.style.background = color; filaHome.style.setProperty('--color-categoria', color); }
     return color;
   }
 
