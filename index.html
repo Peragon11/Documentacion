@@ -160,7 +160,7 @@
   html[data-preguntar-idioma] #vista-login{ display:none; }
   html[data-hay-datos] #vista-login{ display:none; }
   #vista-idioma{
-    height:100dvh; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:fixed; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center; background:var(--fondo-login);
   }
   html:not([data-preguntar-idioma]) #vista-idioma{ display:none; }
@@ -173,7 +173,7 @@
   .bandera-idioma svg{ display:block; width:100%; height:100%; }
   .bandera-idioma-inicio{ width:30px; height:30px; }
   #vista-login{
-    height:100dvh; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:fixed; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:32px 24px; text-align:center;
     background:var(--fondo-login);
   }
@@ -1465,7 +1465,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.0';
+const VERSION_APP = '3.2.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1983,6 +1983,8 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarPan
 new MutationObserver(ajustarPantallasInicio).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin', 'data-preguntar-idioma', 'data-hay-datos', 'lang'] });
 ['#vista-idioma', '#vista-login'].forEach((sel) => new MutationObserver(ajustarPantallasInicio).observe($(sel), { childList: true, subtree: true, characterData: true }));
 setTimeout(ajustarPantallasInicio, 0);
+window.addEventListener('load', () => { ajustarPantallasInicio(); setTimeout(ajustarPantallasInicio, 400); setTimeout(ajustarPantallasInicio, 1200); }); // la ventana puede acabar de asentarse tras el arranque
+if (window.visualViewport) window.visualViewport.addEventListener('resize', ajustarPantallasInicio);
 $('#btn-ya-usaba').addEventListener('click', () => mostrarPanelLogin('nubes'));
 $('#btn-volver-login').addEventListener('click', () => mostrarPanelLogin('inicio'));
 $('#btn-empezar').addEventListener('click', () => {
@@ -3532,12 +3534,13 @@ function abrirCierreSesionTriple(sinNube, pendientes) {
       <h3 style="color:var(--stamp);">Aviso 3 de 3: último</h3>
       <p style="${rojo}"><strong>Esto no se puede deshacer.</strong></p>
       <p style="${normal}">Para confirmar, escribe <strong style="color:var(--text-light)">${palabraBorrar}</strong> en el recuadro.</p>
-      <div class="campo"><input type="text" id="triple-texto" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${palabraBorrar}"></div>
+      <div class="campo"><input type="search" id="triple-texto" name="q" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" readonly placeholder="${palabraBorrar}"></div>
       <div style="${columna}">
         <button class="btn-secundario" id="triple-atras">Cancelar</button>
         <button class="btn-secundario" id="triple-final" disabled>Borrar todo y cerrar sesión</button>
       </div>`);
     const texto = $('#triple-texto');
+    evitarBarraAutorrelleno(texto);
     const final = $('#triple-final');
     texto.addEventListener('input', () => {
       final.disabled = texto.value.trim().toUpperCase() !== palabraBorrar.toUpperCase();
