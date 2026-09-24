@@ -183,7 +183,7 @@
     border:none; border-radius:var(--r-pill); padding:14px 26px; font-size:1rem; font-weight:600;
     cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.25);
   }
-  .login-nota{ margin-top:20px; max-width:300px; font-size:.78rem; color:var(--text-dim); line-height:1.5; }
+  .login-nota{ margin-top:20px; max-width:320px; font-size:.9rem; color:var(--text-dim); line-height:1.5; }
   .login-nota strong{ color:var(--seal); font-weight:600; }
   /* ===== Ajustes ===== */
   .ajustes{ display:flex; flex-direction:column; gap:18px; }
@@ -1071,7 +1071,7 @@
   html[data-skin="pixeles"] h1, html[data-skin="pixeles"] h3{ font-weight:700; letter-spacing:0; }
   html[data-skin="pixeles"] .modal h3{ font-size:1.25rem; }
   html[data-skin="pixeles"] .doc-nombre, html[data-skin="pixeles"] .persona-tile .nombre-persona{ font-weight:700; font-size:1.05rem; }
-  html[data-skin="pixeles"] .marca-paginas, html[data-skin="pixeles"] #version-pie, html[data-skin="pixeles"] #version-debug-login, html[data-skin="pixeles"] .version-fila{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
+  html[data-skin="pixeles"] .marca-paginas, html[data-skin="pixeles"] #version-pie, html[data-skin="pixeles"] .version-fila{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
   /* La letra pixelada se lee mejor en peso normal: en negrita la C se cierra y parece una O */
   html[data-skin="pixeles"] *{ font-weight:400 !important; }
   html[data-skin="pixeles"] .modal{ border-top:4px solid var(--borde-px); }
@@ -1336,7 +1336,7 @@
 <div id="vista-login">
   <img class="icono-login" src="icono.png" alt="">
   <h1>Documentación</h1>
-  <p class="lead">El DNI, carnet de conducir, tarjeta de discapacidad y demás papeles de tu gente, siempre a mano. Tus documentos se guardan en este móvil.</p>
+  <p class="lead">El DNI, carnet de conducir, tarjeta de discapacidad y demás papeles de tu gente, siempre a mano.</p>
   <div id="login-inicio" class="login-bloque">
     <button class="btn-grande" id="btn-empezar"><strong>Empezar de nuevo</strong><span>Primera vez, sin nada guardado</span></button>
     <button class="btn-grande" id="btn-ya-usaba"><strong>Iniciar sesión en tus nubes</strong><span>Recuperar mi copia desde una nube</span></button>
@@ -1357,7 +1357,6 @@
   </button>
     <button class="btn-empezar" id="btn-volver-login">Volver</button>
   </div>
-  <p id="version-debug-login" style="margin-top:14px;font-size:.7rem;color:var(--text-dim);"></p>
 </div>
 
 <div id="vista-app" class="hidden">
@@ -1431,7 +1430,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.1.3';
+const VERSION_APP = '3.1.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1693,7 +1692,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   $('#btn-banner-cerrar')?.addEventListener('click', () => $('#banner-instalar').classList.add('hidden'));
 
-  $('#version-debug-login').textContent = 'v' + VERSION_APP;
   $('#version-pie').textContent = 'v' + VERSION_APP;
 
   if (appYaInstalada()) pedirPermisoNotificaciones();
