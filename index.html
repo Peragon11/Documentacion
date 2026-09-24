@@ -1250,8 +1250,8 @@
      con trama, por detrás del contenido (isolation + z-index:-1 lo dejan sobre el fondo y bajo el texto). */
   html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); isolation:isolate; position:relative; }
   html[data-skin="comic"] .doc-fila{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border-radius:8px 14px 9px 13px / 13px 9px 14px 8px; }
-  /* Pintado a mano: pinceladas inclinadas (claras y oscuras) y una trama de puntos por encima del color de la categoría */
-  html[data-skin="comic"] .doc-fila::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.22) 1.1px, transparent 1.6px) 0 0 / 7px 7px, repeating-linear-gradient(103deg, rgba(255,255,255,.14) 0 4px, transparent 4px 11px, rgba(0,0,0,.10) 11px 13px, transparent 13px 23px); }
+  /* Trama de puntos suave y un degradado apenas perceptible por encima del color de la categoría (el color se mantiene uniforme) */
+  html[data-skin="comic"] .doc-fila::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.13) 1.1px, transparent 1.6px) 0 0 / 7px 7px, linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)); }
   html[data-skin="comic"] :is(.doc-fila, .galeria-pagina):active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
   html[data-skin="comic"] .lista-docs{ gap:11px; }
   html[data-skin="comic"] .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:13px; }
@@ -1269,10 +1269,8 @@
   html[data-skin="comic"] .categoria-barra:nth-child(3n+3)::before{ filter:url(#trazo-c); }
   html[data-skin="comic"] .categoria-barra::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; border:3px solid var(--text-light); border-radius:10px 6px 12px 7px / 7px 12px 6px 10px; box-shadow:5px 5px 0 var(--text-light); filter:url(#trazo-a);
     background:
-      radial-gradient(circle, rgba(0,0,0,.17) 1.3px, transparent 1.8px) 0 0 / 8px 8px,
-      repeating-linear-gradient(92deg, rgba(255,255,255,.15) 0 14px, transparent 14px 31px, rgba(0,0,0,.09) 31px 38px, transparent 38px 71px),
-      repeating-linear-gradient(88deg, transparent 0 23px, rgba(255,255,255,.08) 23px 34px, transparent 34px 59px),
-      linear-gradient(180deg, rgba(255,255,255,.10), transparent 45%, rgba(0,0,0,.10)),
+      radial-gradient(circle, rgba(0,0,0,.13) 1.3px, transparent 1.8px) 0 0 / 8px 8px,
+      linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)),
       var(--color-categoria, #888); }
   html[data-skin="comic"] .categoria-barra > *{ position:relative; }
   html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); }
@@ -1433,7 +1431,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.1.0';
+const VERSION_APP = '3.1.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
