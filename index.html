@@ -56,7 +56,8 @@
     bosque: 'family=Fraunces:wght@600;700&family=Nunito:wght@500;700',
     pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P',
     neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700',
-    chicle: 'family=Fredoka:wght@500;600;700'
+    chicle: 'family=Fredoka:wght@500;600;700',
+    comic: 'family=Bangers&family=Comic+Neue:wght@400;700'
   };
   window.__cargarFuentesSkin = function (id) {
     var q = window.__fuentesSkin[id];
@@ -447,10 +448,16 @@
     -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
     display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px; width:100%; min-width:0;
   }
+  /* El hueco del nombre mide SIEMPRE dos líneas (--altura-nombre), tenga el nombre una o dos: así
+     todas las fichas de persona miden lo mismo y la separación de una a la siguiente no cambia
+     según cuánto ocupe el nombre. Los estilos que le cambian la letra o le ponen marco/relleno
+     al nombre redefinen --altura-nombre con la altura de sus dos líneas más lo que añaden. */
   .persona-tile-clic{
     background:none; border:none; color:inherit; font:inherit; cursor:pointer; padding:0;
-    display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; min-width:0;
+    display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto var(--altura-nombre, calc(.95rem * 2.4));
+    justify-items:center; row-gap:10px; width:100%; min-width:0;
   }
+  .persona-tile-clic > .nombre-persona{ align-self:start; }
   .acciones-persona-tile{ display:flex; gap:8px; }
   .icon-btn-persona-tile{
     width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
@@ -878,6 +885,12 @@
   .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
   .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
   .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
+  .mq-skin[data-skin="comic"]{ border:2px solid var(--text-light); background-image:radial-gradient(circle, var(--trama) 1.2px, transparent 1.7px), radial-gradient(circle, var(--trama) 1.2px, transparent 1.7px); background-size:9px 9px; background-position:0 0, 4.5px 4.5px; }
+  .mq-skin[data-skin="comic"] .mqs-barra{ border-bottom:3px solid var(--text-light); }
+  .mq-skin[data-skin="comic"] .mqs-barra b{ font-weight:400; letter-spacing:.06em; font-size:1rem; }
+  .mq-skin[data-skin="comic"] .mqs-doc, .mq-skin[data-skin="comic"] .mqs-ficha i{ border:2px solid var(--text-light); box-shadow:2px 2px 0 var(--text-light); }
+  .mq-skin[data-skin="comic"] .mqs-doc{ margin:0 3px 3px 0; }
+  .mq-skin[data-skin="comic"] .mqs-ficha b, .mq-skin[data-skin="comic"] .mqs-nom{ font-weight:400; letter-spacing:.05em; font-size:.9rem; }
   .icono-accion.idioma{ background:linear-gradient(135deg, var(--azul), var(--morado)); }
   .icono-accion.sigla{ overflow:hidden; padding:0; }
   .icono-accion.sigla .bandera-idioma{ width:100%; height:100%; border-radius:0; box-shadow:none; }
@@ -1195,6 +1208,109 @@
   html[data-skin="bosque"] .modal{ border-top:1px solid var(--borde); }
   html[data-skin="bosque"] .campo input, html[data-skin="bosque"] .campo select, html[data-skin="bosque"] .input-busqueda{ padding-left:16px; }
 
+  /* Altura del hueco del nombre en cada estilo (ver .persona-tile-clic) */
+  html[data-skin="pasaporte"] .persona-tile-clic{ --altura-nombre:calc(1.12rem * 2.4); }
+  html[data-skin="neon"] .persona-tile-clic{ --altura-nombre:calc(1.06rem * 2.4); }
+  html[data-skin="bosque"] .persona-tile-clic{ --altura-nombre:calc(1.02rem * 2.4); }
+  html[data-skin="pixeles"] .persona-tile-clic{ --altura-nombre:calc(1.05rem * 2.4); }
+  html[data-skin="chicle"] .persona-tile-clic{ --altura-nombre:calc(.95rem * 2.4 + 14px); }
+  html[data-skin="comic"] .persona-tile-clic{ --altura-nombre:calc(1.3rem * 2.4 + 16px); }
+  /* ---- comic ----
+     Blanco y negro de viñeta. Tema claro: hoja blanca con trama de puntos ("papel pintado" de
+     tebeo) y tinta negra. Tema oscuro: el negativo — fondo negro y tinta blanca. Todo va con
+     contorno grueso y sombra dura, y lo que en la app es de colores (categorías, personas, avisos)
+     se pasa a grises/rayado para que no se cuele ningún color. Solo las fotos de los documentos
+     conservan el suyo, porque hay que poder leerlas. --trama es el color de los puntitos. */
+  [data-skin="comic"]{ --ink:#0A0A0A; --ink-2:#121212; --ink-3:#2A2A2A; --paper:#FFFFFF; --text-ink:#000000; --stamp:#FFFFFF; --sobre-acento:#000000; --text-light:#FFFFFF; --text-dim:#C8C8C8; --seal:#FFFFFF; --amber:#B5B5B5; --azul:#DADADA; --morado:#8F8F8F; --stamp-dark:#D0D0D0; --borde-sutil:rgba(255,255,255,.30); --borde:#FFFFFF; --borde-fuerte:#FFFFFF; --topbar-fondo:#0A0A0A; --trama:rgba(255,255,255,.17);
+    --serif:'Bangers', 'Comic Sans MS', 'Marker Felt', cursive;
+    --sans:'Comic Neue', 'Comic Sans MS', 'Marker Felt', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --fuente-marca:'Bangers', 'Comic Sans MS', 'Marker Felt', cursive;
+    --r-pill:14px; --r-chip:18px; --r-avatar:8px; --r-avatar-mini:6px; --r-tarjeta:6px; --r-miniatura:3px;
+    --r-boton:8px; --r-campo:6px; --r-grupo:6px; --r-modal:8px; --r-caja:6px; --r-marca:6px; --r-app-login:10px; --r-redondo:50%;
+    --sombra-ficha:5px 5px 0 var(--text-light);
+  }
+  html[data-tema="claro"] [data-skin="comic"], html[data-tema="claro"][data-skin="comic"]{ --ink:#FFFFFF; --ink-2:#FFFFFF; --ink-3:#E4E4E4; --paper:#FFFFFF; --text-ink:#000000; --stamp:#000000; --sobre-acento:#FFFFFF; --text-light:#000000; --text-dim:#3A3A3A; --seal:#000000; --amber:#5C5C5C; --azul:#2E2E2E; --morado:#7A7A7A; --stamp-dark:#000000; --borde-sutil:rgba(0,0,0,.30); --borde:#000000; --borde-fuerte:#000000; --topbar-fondo:#FFFFFF; --trama:rgba(0,0,0,.21); }
+  html[data-skin="comic"]{ --fondo-login:radial-gradient(circle, var(--trama) 2px, transparent 2.6px) 0 0 / 18px 18px, radial-gradient(circle, var(--trama) 2px, transparent 2.6px) 9px 9px / 18px 18px, var(--ink); }
+  /* El papel pintado: dos capas de puntos desplazadas media casilla forman una red en rombo */
+  html[data-skin="comic"] body{ background-image:radial-gradient(circle, var(--trama) 1.7px, transparent 2.2px), radial-gradient(circle, var(--trama) 1.7px, transparent 2.2px); background-size:16px 16px; background-position:0 0, 8px 8px; }
+  /* Letra de tebeo: Bangers solo trae un peso, así que nada de negritas falsas */
+  html[data-skin="comic"] :is(h1, h2, h3, .serif, .topbar .marca, .categoria-barra, .persona-tile .nombre-persona, .titulo-grupo, .doc-nombre, .chip, .btn-primario, .btn-secundario, .btn-grande, .titular-sello, .ajustes-titulo, .aviso-caducidad-banner, .mqs-barra b, .mqs-ficha b, .mqs-nom){ font-family:var(--serif); font-weight:400; letter-spacing:.05em; }
+  html[data-skin="comic"] .topbar{ background-image:radial-gradient(circle, var(--trama) 1.1px, transparent 1.6px); background-size:6px 6px; border-bottom:4px solid var(--text-light); backdrop-filter:none; }
+  html[data-skin="comic"] .topbar .marca{ font-size:1.4rem; }
+  html[data-skin="comic"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.07em; }
+  html[data-skin="comic"] .btn-icono-top{ border:3px solid var(--text-light); background:var(--ink-2); box-shadow:3px 3px 0 var(--text-light); }
+  html[data-skin="comic"] .btn-icono-top:active{ transform:translate(3px,3px); box-shadow:none; }
+  /* Personas: recuadro con su rótulo debajo, en gris (aunque la persona tenga color o foto) */
+  html[data-skin="comic"] .avatar-persona{ border:3px solid var(--text-light); filter:grayscale(1) contrast(1.1); }
+  html[data-skin="comic"] .persona-tile .avatar-persona{ border-width:4px; box-shadow:5px 5px 0 var(--text-light); }
+  html[data-skin="comic"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin:9px auto 0; padding:1px 12px 0; background:var(--ink-2); color:var(--text-light); border:3px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1.3rem; }
+  /* Rótulo de cada grupo de documentos: como el recuadro de texto de una viñeta */
+  html[data-skin="comic"] .titulo-grupo{ display:inline-flex; width:fit-content; margin-bottom:14px; padding:3px 12px 1px; background:var(--ink-2); color:var(--text-light); border:3px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1.2rem; text-transform:none; letter-spacing:.06em; }
+  html[data-skin="comic"] .titulo-grupo .punto-grupo{ filter:grayscale(1); }
+  /* Fichas: viñetas con contorno grueso y sombra dura. El color de la categoría pasa a un velo gris
+     con trama, por detrás del contenido (isolation + z-index:-1 lo dejan sobre el fondo y bajo el texto). */
+  html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); isolation:isolate; position:relative; }
+  html[data-skin="comic"] .doc-fila::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, #000 1.1px, transparent 1.6px) 0 0 / 6px 6px, var(--color-categoria, #888); filter:grayscale(1) contrast(1.05); opacity:.36; }
+  html[data-skin="comic"] :is(.doc-fila, .galeria-pagina):active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
+  html[data-skin="comic"] .lista-docs{ gap:11px; }
+  html[data-skin="comic"] .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:13px; }
+  html[data-skin="comic"] .doc-fila .miniatura, html[data-skin="comic"] .galeria-pagina .miniatura{ border:3px solid var(--text-light); margin:10px 10px 0; }
+  html[data-skin="comic"] .doc-nombre{ font-size:1.25rem; }
+  html[data-skin="comic"] .doc-fila .badge-mini{ border:2px solid var(--text-light); background:var(--ink-3); color:var(--text-light); font-weight:700; border-radius:10px; }
+  /* Avisos de caducidad sin rojo ni naranja: "por caducar" = fondo rayado, "caducado" = fondo macizo */
+  html[data-skin="comic"] .doc-fila.aviso{ background:repeating-linear-gradient(135deg, var(--text-light) 0 2px, var(--ink-2) 2px 8px) !important; }
+  html[data-skin="comic"] .doc-fila.caducado{ background:var(--text-light) !important; }
+  html[data-skin="comic"] :is(.doc-fila.aviso, .doc-fila.caducado)::before{ display:none; }
+  html[data-skin="comic"] .doc-fila.aviso .info{ background:var(--ink-2); }
+  html[data-skin="comic"] .doc-fila.aviso .doc-nombre{ color:var(--text-light); }
+  html[data-skin="comic"] .doc-fila.caducado .doc-nombre{ color:var(--ink); }
+  html[data-skin="comic"] .doc-fila .badge-mini.aviso{ background:var(--text-light); color:var(--ink); }
+  html[data-skin="comic"] .doc-fila .badge-mini.caducado{ background:var(--ink); color:var(--text-light); border-color:var(--ink); }
+  html[data-skin="comic"] .aviso-caducidad-banner{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); background:var(--ink-2); color:var(--text-light); font-size:1.05rem; margin-bottom:18px; }
+  html[data-skin="comic"] .aviso-caducidad-banner.aviso{ background:repeating-linear-gradient(135deg, var(--text-light) 0 2px, var(--ink-2) 2px 8px); }
+  html[data-skin="comic"] .aviso-caducidad-banner.aviso span{ background:var(--ink-2); padding:1px 12px; }
+  html[data-skin="comic"] .aviso-caducidad-banner.caducado{ background:var(--text-light); color:var(--ink); }
+  /* Barras de categoría de la portada: en gris, con trama que se desvanece hacia la izquierda */
+  html[data-skin="comic"] .categoria-barra{ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); filter:grayscale(1) contrast(1.15); font-size:1.5rem; letter-spacing:.06em; text-shadow:2px 2px 0 #000; position:relative; }
+  html[data-skin="comic"] .categoria-barra::before{ content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.34) 1.4px, transparent 1.9px) 0 0 / 7px 7px; -webkit-mask-image:linear-gradient(90deg, transparent 15%, #000); mask-image:linear-gradient(90deg, transparent 15%, #000); }
+  html[data-skin="comic"] .categoria-barra > *{ position:relative; }
+  html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
+  /* Filtro de categorías: globitos de texto (los de categoría, en gris) */
+  html[data-skin="comic"] .chips-categorias{ padding:3px 6px 9px; }
+  html[data-skin="comic"] .chip{ border:3px solid var(--text-light); background:var(--ink-2); color:var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1rem; padding:4px 14px 2px; }
+  html[data-skin="comic"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
+  html[data-skin="comic"] .chip.chip-categoria{ filter:grayscale(1) contrast(1.2); color:#fff; text-shadow:1px 1px 0 #000; opacity:.9; }
+  html[data-skin="comic"] .chip.chip-categoria.activo{ opacity:1; box-shadow:3px 3px 0 var(--text-light), inset 0 0 0 2px #fff; }
+  /* Botones */
+  html[data-skin="comic"] :is(.btn-primario, .btn-secundario){ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-size:1.2rem; padding:11px 12px 9px; }
+  html[data-skin="comic"] .btn-primario{ background:var(--stamp); color:var(--sobre-acento); }
+  html[data-skin="comic"] .btn-secundario{ background:var(--ink-2); color:var(--text-light); }
+  html[data-skin="comic"] :is(.btn-primario, .btn-secundario):active{ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--text-light); }
+  html[data-skin="comic"] :is(.btn-grande, .btn-google){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); }
+  html[data-skin="comic"] .btn-prov{ border:3px solid var(--text-light); background:var(--ink-2); color:var(--text-light); font-weight:700; box-shadow:2px 2px 0 var(--text-light); }
+  html[data-skin="comic"] .btn-prov.primario{ background:var(--stamp); color:var(--sobre-acento); }
+  /* Ajustes y ventanas */
+  html[data-skin="comic"] .ajustes .grupo{ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); margin-bottom:8px; }
+  html[data-skin="comic"] .ajustes .grupo > * + *{ border-top:3px solid var(--text-light); }
+  html[data-skin="comic"] .fila-cat .icono-accion{ filter:grayscale(1); color:#fff; }
+  html[data-skin="comic"] .opcion-tema{ border:3px solid var(--text-light); }
+  html[data-skin="comic"] .opcion-tema.activa{ box-shadow:5px 5px 0 var(--text-light); }
+  html[data-skin="comic"] .modal{ border-top:5px solid var(--text-light); }
+  html[data-skin="comic"] .barra-seleccion{ border-top:4px solid var(--text-light); background:var(--ink-2); }
+  html[data-skin="comic"] :is(.campo input, .campo select, .input-busqueda){ border:3px solid var(--text-light); background:var(--ink-2); font-weight:700; }
+  /* Texto suelto sobre el papel pintado: un halo del color del fondo para que los puntitos no lo estorben */
+  html[data-skin="comic"] :is(#vista-login p, .estado-vacio p){ font-weight:700; text-shadow:0 0 3px var(--ink), 0 0 6px var(--ink), 0 0 9px var(--ink); }
+  html[data-skin="comic"] .icono-login{ border:4px solid var(--text-light); box-shadow:6px 6px 0 var(--text-light); }
+  html[data-skin="comic"] .toast{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-family:var(--sans); font-weight:700; }
+  /* Nada de color suelto: logos y marcas en gris, y los rojos/naranjas fijos pasan a negro/blanco */
+  html[data-skin="comic"] :is(.icono-marca, .icono-login, .marca-prov, .icono-accion.tema){ filter:grayscale(1) contrast(1.1); }
+  html[data-skin="comic"] .icono-accion:not(.sigla):not(.tema){ background:var(--stamp); color:var(--sobre-acento); border:2px solid var(--text-light); }
+  html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong, .opcion-menu.peligro, .icon-btn-persona-tile:last-child){ color:var(--text-light); }
+  html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong){ font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+  html[data-skin="comic"] .aviso-caducidad-persona{ border:2px solid var(--text-light); font-family:var(--serif); }
+  html[data-skin="comic"] .aviso-caducidad-persona.aviso{ background:var(--ink-2); color:var(--text-light); border-style:dashed; }
+  html[data-skin="comic"] .aviso-caducidad-persona.caducado{ background:var(--text-light); color:var(--ink); }
+
   /* Menús de opciones de documento, página y persona (mismo diseño que Ajustes) */
   html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
   .ajustes .texto-menu{ margin:-8px 0 0; color:var(--text-dim); font-size:.85rem; line-height:1.45; }
@@ -1309,7 +1425,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.0.8';
+const VERSION_APP = '3.0.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1621,6 +1737,7 @@ const SKINS = {
   pixeles:   { nombre: 'Píxeles',   descripcion: 'Videojuego de 8 bits: esquinas escalonadas, letra pixelada y colores retro (en claro, pantalla de Game Boy)', color: { oscuro: '#29366F', claro: '#9BBC0F' } },
   neon:      { nombre: 'Neón',      descripcion: 'Rótulos luminosos: contornos que brillan en rosa y turquesa sobre la noche', color: { oscuro: '#150D24', claro: '#E4D9FF' } },
   chicle:    { nombre: 'Chicle',    descripcion: 'Rosa chicle, menta, limón y celeste: todo redondo, gordito y de colorines', color: { oscuro: '#FF6BBA', claro: '#FF5DAF' } },
+  comic:     { nombre: 'Cómic',     descripcion: 'Blanco y negro de cómic: tinta gruesa, trama de puntitos y sombras duras', color: { oscuro: '#0A0A0A', claro: '#FFFFFF' } },
 };
 function obtenerSkinGuardado() {
   const s = localStorage.getItem(SKIN_STORAGE_KEY);
