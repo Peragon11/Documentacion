@@ -376,13 +376,13 @@
 
   #pantalla-personas{ display:flex; flex-direction:column; min-height:100%; }
   .grid-personas{
-    display:grid; grid-template-columns:repeat(2, 1fr); gap:26px 18px; position:relative;
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:12px 18px; position:relative;
   }
   @media (orientation:landscape){
     .grid-personas{ grid-template-columns:repeat(4, 1fr); }
   }
   .grid-personas.pocas{
-    display:flex; flex-direction:column; align-items:center; gap:26px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
     width:100%; max-width:260px; margin:auto;
   }
   .grid-personas.centrado{ margin:auto 0; }
@@ -1431,7 +1431,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.1.1';
+const VERSION_APP = '3.1.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
