@@ -718,7 +718,7 @@
     .galeria-pagina .miniatura img{ object-position:top; }
   }
   .galeria-pagina{
-    display:flex; flex-direction:column; width:100%; background:var(--ink-2);
+    display:flex; flex-direction:column; width:100%; background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2));
     border:none; border-radius:var(--r-tarjeta); overflow:hidden; cursor:pointer; text-align:left;
   }
   .galeria-pagina .miniatura{
@@ -958,7 +958,7 @@
   html[data-skin="pasaporte"] .ajustes .ajustes-titulo{ font-size:2rem; }
   html[data-skin="pasaporte"] .titulo-grupo{ font-family:var(--serif); font-size:1rem; letter-spacing:.18em; font-weight:700; }
   html[data-skin="pasaporte"] .doc-fila{ border:1px solid var(--borde); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
-  html[data-skin="pasaporte"] .galeria-pagina{ border:1px solid var(--borde); background:var(--ink-2); }
+  html[data-skin="pasaporte"] .galeria-pagina{ border:1px solid var(--borde); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
   html[data-skin="pasaporte"] .doc-fila .miniatura, html[data-skin="pasaporte"] .galeria-pagina .miniatura{ outline:1px solid color-mix(in srgb, var(--stamp) 55%, transparent); outline-offset:-4px; }
   html[data-skin="pasaporte"] .doc-nombre, html[data-skin="pasaporte"] .persona-tile .nombre-persona{ font-family:var(--serif); font-size:1.12rem; font-weight:700; letter-spacing:.02em; }
   html[data-skin="pasaporte"] .categoria-barra{ font-family:var(--serif); font-size:1.25rem; font-weight:700; letter-spacing:.04em; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35), 0 6px 14px rgba(0,0,0,.25); }
@@ -990,7 +990,7 @@
   html[data-skin="carpeta"] .chip.activo{ background:var(--ink-2); border-color:var(--text-light); }
   html[data-skin="carpeta"] .chips-categorias{ border-bottom:1.5px solid var(--text-light); padding-bottom:0; }
   html[data-skin="carpeta"] .doc-fila{ border:2px dashed var(--borde-fuerte); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); box-shadow:2px 3px 0 var(--borde); }
-  html[data-skin="carpeta"] .galeria-pagina{ border:2px dashed var(--borde-fuerte); background:var(--ink-2); box-shadow:2px 3px 0 var(--borde); }
+  html[data-skin="carpeta"] .galeria-pagina{ border:2px dashed var(--borde-fuerte); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); box-shadow:2px 3px 0 var(--borde); }
   html[data-skin="carpeta"] .doc-nombre, html[data-skin="carpeta"] .persona-tile .nombre-persona{ font-family:var(--serif); font-weight:700; }
   html[data-skin="carpeta"] .avatar-persona{ border:2px solid var(--text-light); }
   html[data-skin="carpeta"] .categoria-barra{ font-family:var(--serif); font-weight:700; border:2px dashed rgba(255,255,255,.55); box-shadow:2px 3px 0 var(--borde-fuerte); }
@@ -1184,7 +1184,7 @@
   html[data-skin="chicle"] .titulo-grupo{ display:inline-flex; width:fit-content; padding:5px 14px 5px 11px; border-radius:999px; background:var(--caramelo, var(--c1)); color:var(--sobre-acento); font-size:.82rem; font-weight:700; letter-spacing:.05em; box-shadow:0 3px 0 rgba(0,0,0,.16); }
   html[data-skin="chicle"] .titulo-grupo .punto-grupo{ background:var(--sobre-acento); }
   html[data-skin="chicle"] .doc-fila{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
-  html[data-skin="chicle"] .galeria-pagina{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:var(--ink-2); }
+  html[data-skin="chicle"] .galeria-pagina{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
   html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina):active{ transform:translateY(4px); box-shadow:0 2px 0 var(--caramelo, var(--c1)); }
   html[data-skin="chicle"] .lista-docs, html[data-skin="chicle"] .galeria-paginas{ gap:16px; }
   html[data-skin="chicle"] .categoria-barra{ border:3px solid #fff; box-shadow:0 6px 0 rgba(0,0,0,.20); font-weight:700; }
@@ -1228,7 +1228,7 @@
   html[data-skin="bosque"] h1, html[data-skin="bosque"] h3{ font-weight:700; letter-spacing:-.01em; }
   html[data-skin="bosque"] .titulo-grupo{ font-family:var(--serif); text-transform:none; font-style:italic; font-weight:600; letter-spacing:0; font-size:1.05rem; }
   html[data-skin="bosque"] .doc-fila{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border:1px solid var(--borde); }
-  html[data-skin="bosque"] .galeria-pagina{ background:var(--ink-2); border:1px solid var(--borde); }
+  html[data-skin="bosque"] .galeria-pagina{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border:1px solid var(--borde); }
   html[data-skin="bosque"] .doc-nombre, html[data-skin="bosque"] .persona-tile .nombre-persona{ font-family:var(--serif); font-weight:600; font-size:1.02rem; }
   html[data-skin="bosque"] .categoria-barra{ font-family:var(--serif); font-weight:600; box-shadow:0 10px 22px rgba(0,0,0,.24); }
   html[data-skin="bosque"] .btn-primario, html[data-skin="bosque"] .btn-secundario{ padding:14px; font-weight:700; }
@@ -1279,9 +1279,9 @@
   /* Fichas: viñetas con contorno grueso y sombra dura. El color de la categoría pasa a un velo gris
      con trama, por detrás del contenido (isolation + z-index:-1 lo dejan sobre el fondo y bajo el texto). */
   html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); isolation:isolate; position:relative; }
-  html[data-skin="comic"] .doc-fila{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border-radius:8px 14px 9px 13px / 13px 9px 14px 8px; }
+  html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border-radius:8px 14px 9px 13px / 13px 9px 14px 8px; }
   /* Trama de puntos suave y un degradado apenas perceptible por encima del color de la categoría (el color se mantiene uniforme) */
-  html[data-skin="comic"] .doc-fila::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.13) 1.1px, transparent 1.6px) 0 0 / 7px 7px, linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)); }
+  html[data-skin="comic"] :is(.doc-fila, .galeria-pagina)::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.13) 1.1px, transparent 1.6px) 0 0 / 7px 7px, linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)); }
   html[data-skin="comic"] :is(.doc-fila, .galeria-pagina):active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
   html[data-skin="comic"] .lista-docs{ gap:11px; }
   html[data-skin="comic"] .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:13px; }
@@ -1465,7 +1465,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.3';
+const VERSION_APP = '3.2.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -5958,7 +5958,7 @@ $('#btn-compartir-seleccion').addEventListener('click', () => {
     <div class="ajustes">
       ${cabeceraMenu(titulo)}
       <div class="grupo">
-        ${filaMenu('op-compartir-sel', 'azul', ICONOS_MENU.compartir, 'Compartir', 'Envía los archivos por WhatsApp, correo…')}
+        ${filaMenu('op-compartir-sel', 'azul', ICONOS_MENU.compartir, 'Compartir', 'Envía los archivos por correo, etc.')}
         ${filaMenu('op-compartir-sel-pdf', 'morado', ICONOS_MENU.pdf, 'Compartir como PDF', paginas.length === 1 ? 'Un PDF con este documento' : 'Un solo PDF con todo lo elegido')}
       </div>
     </div>
@@ -5972,7 +5972,7 @@ $('#btn-compartir-seleccion').addEventListener('click', () => {
   $('#op-compartir-sel-pdf').addEventListener('click', () => cerrarYCompartir(() => compartirPaginasComoPdf(paginas, titulo)));
 });
 
-// Al compartir (WhatsApp, correo…) el archivo lleva EXACTAMENTE el mismo nombre que tiene en la nube.
+// Al compartir (correo, etc.) el archivo lleva EXACTAMENTE el mismo nombre que tiene en la nube.
 function nombreArchivoParaCompartir(pagina) {
   return nombreArchivoRemoto(pagina, documentoDePagina(pagina));
 }
@@ -6391,6 +6391,7 @@ function abrirGaleriaDocumento(doc) {
     const esImagen = (pagina.mimeType || '').startsWith('image/');
     const btn = document.createElement('button');
     btn.className = 'galeria-pagina';
+    btn.style.setProperty('--color-categoria', (datos.categorias.find((cat) => cat.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR).color);
     btn.innerHTML = `
       <div class="miniatura">${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}</div>
       <p class="galeria-pagina-nombre">${escapeHtml(pagina.nombre || trad('Página {n}', { n: indice + 1 }))}</p>`;
@@ -6511,10 +6512,6 @@ function filaMenu(id, tinte, icono, titulo, detalle, salir = false) {
 function textoCaducidadMenu(doc) {
   return doc.fechaCaducidad ? trad('Caduca el {fecha}', { fecha: doc.fechaCaducidad.split('-').reverse().join('/') }) : 'Sin fecha de caducidad';
 }
-function textoCategoriaMenu(doc) {
-  const cat = datos.categorias.find((c) => c.id === doc.categoria);
-  return cat ? escapeHtml(cat.nombre) : 'Sin categoría';
-}
 
 function abrirMenuPagina(doc, indicePagina) {
   const pagina = doc.paginas[indicePagina];
@@ -6523,12 +6520,12 @@ function abrirMenuPagina(doc, indicePagina) {
     <div class="ajustes">
       ${cabeceraMenu(pagina.nombre || doc.nombre)}
       <div class="grupo">
-        ${filaMenu('op-compartir-doc', 'azul', ICONOS_MENU.compartir, variasPaginas ? 'Compartir esta página' : 'Compartir', 'Envía la imagen por WhatsApp, correo…')}
+        ${filaMenu('op-compartir-doc', 'azul', ICONOS_MENU.compartir, variasPaginas ? 'Compartir esta página' : 'Compartir', 'Envía la imagen por correo, etc.')}
         ${filaMenu('op-compartir-pdf-doc', 'morado', ICONOS_MENU.pdf, 'Compartir como PDF', variasPaginas ? 'Un PDF solo con esta página' : 'Un PDF con este documento')}
       </div>
       <div class="grupo">
-        ${filaMenu('op-renombrar-doc', 'verde', ICONOS_MENU.editar, variasPaginas ? 'Cambiar nombre de esta página' : 'Cambiar nombre', 'Se cambia también en las nubes')}
-        ${filaMenu('op-categoria-doc', 'azul', ICONOS_MENU.carpeta, datos.categorias.some((c) => c.id === doc.categoria) ? 'Cambiar categoría' : 'Añadir categoría', textoCategoriaMenu(doc))}
+        ${filaMenu('op-renombrar-doc', 'verde', ICONOS_MENU.editar, variasPaginas ? 'Cambiar nombre de esta página' : 'Cambiar nombre', '')}
+        ${filaMenu('op-categoria-doc', 'azul', ICONOS_MENU.carpeta, datos.categorias.some((c) => c.id === doc.categoria) ? 'Cambiar categoría' : 'Añadir categoría', '')}
         ${filaMenu('op-caducidad-doc', 'ambar', ICONOS_MENU.calendario, doc.fechaCaducidad ? 'Cambiar fecha de caducidad' : 'Añadir fecha de caducidad', textoCaducidadMenu(doc))}
         ${filaMenu('op-anadir-pagina-doc', 'verde', ICONOS_MENU.mas, 'Añadir página', 'Otra foto o PDF para este documento')}
       </div>
@@ -6575,12 +6572,12 @@ function abrirMenuGaleria(doc) {
     <div class="ajustes">
       ${cabeceraMenu(doc.nombre)}
       <div class="grupo">
-        ${filaMenu('op-compartir-todas', 'azul', ICONOS_MENU.compartir, 'Compartir todas las páginas', 'Envía las imágenes por WhatsApp, correo…')}
+        ${filaMenu('op-compartir-todas', 'azul', ICONOS_MENU.compartir, 'Compartir todas las páginas', 'Envía las imágenes por correo, etc.')}
         ${filaMenu('op-compartir-pdf-todas', 'morado', ICONOS_MENU.pdf, 'Compartir como PDF', doc.paginas.length > 1 ? 'Un solo PDF con todas las páginas' : 'Un PDF con este documento')}
       </div>
       <div class="grupo">
-        ${filaMenu('op-renombrar-doc-galeria', 'verde', ICONOS_MENU.editar, 'Cambiar nombre', 'Se cambia también en las nubes')}
-        ${filaMenu('op-categoria-doc-galeria', 'azul', ICONOS_MENU.carpeta, datos.categorias.some((c) => c.id === doc.categoria) ? 'Cambiar categoría' : 'Añadir categoría', textoCategoriaMenu(doc))}
+        ${filaMenu('op-renombrar-doc-galeria', 'verde', ICONOS_MENU.editar, 'Cambiar nombre', '')}
+        ${filaMenu('op-categoria-doc-galeria', 'azul', ICONOS_MENU.carpeta, datos.categorias.some((c) => c.id === doc.categoria) ? 'Cambiar categoría' : 'Añadir categoría', '')}
         ${filaMenu('op-caducidad-doc-galeria', 'ambar', ICONOS_MENU.calendario, doc.fechaCaducidad ? 'Cambiar fecha de caducidad' : 'Añadir fecha de caducidad', textoCaducidadMenu(doc))}
       </div>
       <div class="grupo">
@@ -6818,7 +6815,7 @@ function abrirModalSubida() {
       return `
         <div class="pagina-subida-fila">
           <div class="pagina-subida-miniatura">${esImagen ? `<img src="${URL.createObjectURL(pagina.archivo)}">` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}</div>
-          <input type="search" class="input-nombre-pagina-subida" name="q" value="${escapeHtml(pagina.nombre)}" data-indice="${i}" placeholder="Nombre de esta página" autocomplete="off" autocapitalize="sentences" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+          <input type="search" class="input-nombre-pagina-subida" name="q" enterkeyhint="enter" value="${escapeHtml(pagina.nombre)}" data-indice="${i}" placeholder="Nombre de esta página" autocomplete="off" autocapitalize="sentences" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
           <button type="button" class="btn-quitar-pagina-subida" data-indice="${i}" aria-label="Quitar página">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
@@ -6968,6 +6965,21 @@ function cerrarCapas(n) {
   }
 }
 function cerrarTodasLasCapas() { cerrarCapas(pilaNavegacion.length); }
+
+// Tecla Enter del teclado en los campos de texto: si el cuadro tiene un botón principal de guardar activo, lo
+// pulsa; si no (o si la acción es de borrar, que exige pulsar el botón a propósito, o es el nombre de una
+// página al subir), solo cierra el teclado. El de renombrar ya lo gestiona por su cuenta.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  const campo = e.target;
+  if (!campo || campo.tagName !== 'INPUT' || campo.id === 'input-renombrar') return;
+  const enModal = !!campo.closest('#raiz-modal');
+  if (!enModal && campo.id !== 'input-busqueda') return;
+  e.preventDefault();
+  const guardar = enModal && !campo.classList.contains('input-nombre-pagina-subida')
+    ? $('#raiz-modal .modal-acciones .btn-primario:not(.btn-peligro):not(:disabled)') : null;
+  if (guardar) guardar.click(); else campo.blur();
+});
 
 function evitarBarraAutorrelleno(input) {
   const activar = () => { input.readOnly = false; };
