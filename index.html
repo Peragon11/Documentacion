@@ -327,7 +327,7 @@
     .btn-grande{ padding:clamp(10px, 3.4vh, 20px) 16px; margin-bottom:clamp(8px, 2.2vh, 14px); }
     .login-nota{ margin-top:8px; max-width:none; }
   }
-  #btn-ajustes.sin-nube::after{ content:''; position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; background:var(--stamp); border:2px solid var(--ink-2); }
+  #btn-ajustes.aviso-nube::after{ content:''; position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; background:var(--stamp); border:2px solid var(--ink-2); }
 
   #vista-app{ height:100dvh; overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
   @media (orientation:landscape){
@@ -1465,7 +1465,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.2';
+const VERSION_APP = '3.2.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2062,9 +2062,12 @@ function volverALogin(panel = 'nubes') {
 }
 
 // Punto discreto sobre el engranaje mientras no haya ninguna nube conectada.
+// El punto rojo del botón de Ajustes solo sale si hay un problema real con una nube que SÍ está conectada
+// (hay que reconectarla, falla o está llena). Quien no usa nubes no ve ningún aviso.
 function actualizarPuntoAjustes() {
   const boton = $('#btn-ajustes');
-  if (boton) boton.classList.toggle('sin-nube', !hayProveedores());
+  const problema = Object.values(PROVEEDORES).some((p) => p.conectado() && ['reconectar', 'error', 'llena'].includes(estadoProv[p.id]));
+  if (boton) boton.classList.toggle('aviso-nube', problema);
 }
 
 function entrarEnLaApp() {
@@ -2332,13 +2335,23 @@ async function guardarMetadatos() {
   programarRespaldo();
 }
 
+// Si una subida falla porque la nube no tiene espacio, se lanza un error propio (nube-llena) para poder avisar
+// con claridad en vez del "no se pudo copiar" genérico. Google devuelve 403 storageQuotaExceeded y Dropbox
+// 409 insufficient_space.
+async function comprobarNubeLlena(res, proveedor) {
+  let texto = '';
+  try { texto = await res.clone().text(); } catch (e) { return; }
+  if (proveedor === 'google' && res.status === 403 && /storageQuotaExceeded/i.test(texto)) throw new Error('nube-llena');
+  if (proveedor === 'dropbox' && res.status === 409 && /insufficient_space/i.test(texto)) throw new Error('nube-llena');
+}
+
 async function subirArchivoADrive(file, nombreArchivo, carpetaDestinoId) {
   const metadata = { name: nombreArchivo, parents: [carpetaDestinoId] };
   const form = new FormData();
   form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
   form.append('file', file);
   const res = await llamarGoogle('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', body: form }, 180000);
-  if (!res.ok) throw new Error('subir');
+  if (!res.ok) { await comprobarNubeLlena(res, 'google'); throw new Error('subir'); }
   const info = await res.json();
   return info.id;
 }
@@ -2623,13 +2636,13 @@ const PROVEEDORES = {
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
         form.append('file', blob);
         const res = await llamarGoogle('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', body: form }, 60000);
-        if (!res.ok) throw new Error('escribir');
+        if (!res.ok) { await comprobarNubeLlena(res, 'google'); throw new Error('escribir'); }
         archivoMetadatosId = (await res.json()).id;
       } else {
         const res = await llamarGoogle(`https://www.googleapis.com/upload/drive/v3/files/${archivoMetadatosId}?uploadType=media`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: blob,
         }, 60000);
-        if (!res.ok) throw new Error('escribir');
+        if (!res.ok) { await comprobarNubeLlena(res, 'google'); throw new Error('escribir'); }
       }
     },
     // De estas referencias (ids de archivo), devuelve las que YA NO están en Drive: borradas
@@ -2731,7 +2744,7 @@ const PROVEEDORES = {
         headers: { 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': argDropbox({ path: ruta, mode: modo, autorename: modo === 'add', mute: true }) },
         body: blob,
       }, 180000);
-      if (!res.ok) throw new Error('subir');
+      if (!res.ok) { await comprobarNubeLlena(res, 'dropbox'); throw new Error('subir'); }
       return (await res.json()).path_display;
     },
     async subir(ctx, blob, nombreArchivo) {
@@ -2838,8 +2851,9 @@ const PROVEEDORES = {
 
 // ---- Copia en segundo plano ----
 
-const estadoProv = {}; // id → 'ok' | 'copiando' | 'reconectar' | 'error'
+const estadoProv = {}; // id → 'ok' | 'copiando' | 'reconectar' | 'llena' | 'error'
 const avisadoReconectar = {};
+const avisadoLlena = {};
 let respaldoEnCurso = false;
 let respaldoPendiente = false;
 let temporizadorRespaldo = null;
@@ -3230,11 +3244,15 @@ async function respaldarEn(id, forzar = false) {
     }
     estadoProv[id] = 'ok';
     avisadoReconectar[id] = false;
+    avisadoLlena[id] = false;
   } catch (e) {
     console.error(e);
     if (e.message === 'reconectar' || e.message === 'token-caducado') {
       estadoProv[id] = 'reconectar';
       if (!avisadoReconectar[id]) { avisadoReconectar[id] = true; mostrarToast(trad('Hay que volver a conectar {nube} (en Ajustes).', { nube: prov.nombre }), true); }
+    } else if (e.message === 'nube-llena') {
+      estadoProv[id] = 'llena';
+      if (!avisadoLlena[id]) { avisadoLlena[id] = true; mostrarToast(trad('{nube} está llena: libera espacio para seguir copiando.', { nube: prov.nombre }), true); }
     } else {
       estadoProv[id] = 'error';
     }
@@ -3391,6 +3409,7 @@ function textoEstadoProv(id) {
   const est = estadoProv[id];
   if (est === 'copiando') return 'Copiando…';
   if (est === 'reconectar') return 'Hay que volver a conectar';
+  if (est === 'llena') return 'Sin espacio: libera espacio para seguir copiando';
   if (est === 'error') return 'No se pudo copiar; se reintentará';
   const n = pendientesProv(id);
   return n > 0 ? trad(n === 1 ? '{n} pendiente de copiar' : '{n} pendientes de copiar', { n }) : 'Sincronizado';
@@ -3406,7 +3425,7 @@ function htmlFilasProveedores() {
   return Object.values(PROVEEDORES).filter((p) => p.configurado()).map((p) => {
     const con = p.conectado();
     const est = estadoProv[p.id];
-    const tono = !con ? 'off' : (est === 'reconectar' || est === 'error') ? 'aviso' : (est === 'copiando' || pendientesProv(p.id) > 0) ? 'copiando' : 'ok';
+    const tono = !con ? 'off' : (est === 'reconectar' || est === 'error' || est === 'llena') ? 'aviso' : (est === 'copiando' || pendientesProv(p.id) > 0) ? 'copiando' : 'ok';
     const accion = !con ? 'conectar' : est === 'reconectar' ? 'reconectar' : 'desconectar';
     const etiqueta = { conectar: 'Conectar', reconectar: 'Reconectar', desconectar: 'Desconectar' }[accion];
     return `<div class="fila-prov">
@@ -3428,7 +3447,7 @@ function htmlFilasProveedores() {
 function estadoGeneralCopias() {
   const conectadas = Object.values(PROVEEDORES).filter((p) => p.conectado());
   if (!conectadas.length) return { tono: 'sin', titulo: 'Solo en este móvil', detalle: 'Conecta una nube para tener copia de seguridad.' };
-  const flojas = conectadas.filter((p) => estadoProv[p.id] === 'reconectar' || estadoProv[p.id] === 'error');
+  const flojas = conectadas.filter((p) => estadoProv[p.id] === 'reconectar' || estadoProv[p.id] === 'error' || estadoProv[p.id] === 'llena');
   if (flojas.length) {
     return { tono: 'aviso', titulo: 'Revisa tus copias', detalle: trad(flojas.length === 1 ? '{nubes} necesita atención.' : '{nubes} necesitan atención.', { nubes: unirConY(flojas.map((p) => p.nombre)) }) };
   }
