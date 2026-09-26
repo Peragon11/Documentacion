@@ -364,7 +364,6 @@
     [`Tiene {n} documentos caducados`, `You have {n} expired documents`, `Tens {n} documents caducats`, `Hai {n} documenti scaduti`, `Vous avez {n} documents expirés`, `Du hast {n} abgelaufene Dokumente`],
     [`Tiene {n} documento a punto de caducar`, `You have {n} document about to expire`, `Tens {n} document a punt de caducar`, `Hai {n} documento in scadenza`, `Vous avez {n} document bientôt expiré`, `Du hast {n} bald ablaufendes Dokument`],
     [`Tiene {n} documentos a punto de caducar`, `You have {n} documents about to expire`, `Tens {n} documents a punt de caducar`, `Hai {n} documenti in scadenza`, `Vous avez {n} documents bientôt expirés`, `Du hast {n} bald ablaufende Dokumente`],
-    [`Documento a punto de caducar`, `Document about to expire`, `Document a punt de caducar`, `Documento in scadenza`, `Document bientôt expiré`, `Dokument läuft bald ab`],
     [`{doc} de {persona} ha caducado.`, `{doc} of {persona} has expired.`, `{doc} de {persona} ha caducat.`, `{doc} di {persona} è scaduto.`, `{doc} de {persona} a expiré.`, `{doc} von {persona} ist abgelaufen.`],
     [`{doc} de {persona} caduca hoy.`, `{doc} of {persona} expires today.`, `{doc} de {persona} caduca avui.`, `{doc} di {persona} scade oggi.`, `{doc} de {persona} expire aujourd'hui.`, `{doc} von {persona} läuft heute ab.`],
     [`{doc} de {persona} caduca mañana.`, `{doc} of {persona} expires tomorrow.`, `{doc} de {persona} caduca demà.`, `{doc} di {persona} scade domani.`, `{doc} de {persona} expire demain.`, `{doc} von {persona} läuft morgen ab.`],

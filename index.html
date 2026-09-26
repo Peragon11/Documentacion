@@ -1472,7 +1472,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.6';
+const VERSION_APP = '3.2.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6402,7 +6402,8 @@ async function notificarCaducidad(doc, dias) {
   const categoria = datos.categorias.find((c) => c.id === doc.categoria);
   const que = categoria ? categoria.nombre : doc.nombre;
   const estado = dias < 0 ? 'ha caducado' : dias === 0 ? 'caduca hoy' : dias === 1 ? 'caduca mañana' : 'caduca en {n} días';
-  const titulo = trad('Documento a punto de caducar');
+  // Título cortito: en el móvil comparte la línea con el nombre de la app y la hora, y solo caben unas 12 letras.
+  const titulo = trad(dias < 0 ? 'Caducado' : 'Por caducar');
   // "Carnet de Ana ha caducado.": con o sin la persona, en el idioma de la interfaz
   const cuerpo = persona ? trad('{doc} de {persona} ' + estado + '.', { doc: que, persona: persona.nombre, n: dias }) : trad('{doc} ' + estado + '.', { doc: que, n: dias });
   const opciones = {
