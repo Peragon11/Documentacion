@@ -526,6 +526,10 @@
   .tutorial-modo .tuto-cerrar{ flex:none; background:none; border:none; color:var(--stamp); font-weight:700; font-size:.88rem; padding:8px 4px; cursor:pointer; }
   .estado-vacio{ text-align:center; padding:60px 20px; color:var(--text-dim); }
   .estado-vacio svg{ opacity:.4; margin-bottom:14px; }
+  /* Dibujo del botón dentro de una frase (mismo aspecto que el botón de la barra de arriba) */
+  .estado-vacio .icono-boton-inline{ border:none; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; margin:2px 4px; border-radius:var(--r-redondo); background:var(--ink-2); color:var(--text-light); vertical-align:middle; }
+  .estado-vacio .icono-boton-inline:active{ background:var(--ink-3); }
+  .estado-vacio .icono-boton-inline svg{ opacity:1; margin:0; }
   .estado-vacio p{ margin:0 0 18px; font-size:.9rem; line-height:1.5; }
   .estado-vacio .btn-primario{ display:inline-block; width:auto; padding:11px 22px; }
   /* Primer botón de "añadir" cuando aún no hay nada: la ficha de persona o el botón de categoría, centrados bajo el texto */
@@ -1478,7 +1482,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.9';
+const VERSION_APP = '3.3.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -5720,6 +5724,16 @@ function guardarVistaDocs(modo) {
   renderizarDocumentos();
 }
 
+// Frase "Usa el botón [subir] para añadir el primero." con el dibujo del botón de la barra de arriba, que también
+// funciona como botón (activarBotonSubirInline le pone la acción).
+function htmlFraseSubirPrimero() {
+  return `<span>Usa el botón</span> <button type="button" class="icono-boton-inline" aria-label="Subir documento"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0-12l-4 4m4-4l4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button> <span>para añadir el primero.</span>`;
+}
+function activarBotonSubirInline(cont) {
+  const boton = cont.querySelector('.icono-boton-inline');
+  if (boton) boton.addEventListener('click', abrirModalSubida);
+}
+
 function renderizarDocumentos() {
   if (categoriaGlobalActivaId !== null) { renderizarDocumentosPorCategoria(); return; }
 
@@ -5734,8 +5748,9 @@ function renderizarDocumentos() {
     cont.innerHTML = `
       <div class="estado-vacio">
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4"/><path d="M14 4v5h5" stroke="currentColor" stroke-width="1.4"/></svg>
-        <p>Todavía no hay documentos aquí.<br>Usa el botón de subir archivo, arriba, para añadir el primero.</p>
+        <p>No hay documentos aquí.<br>${htmlFraseSubirPrimero()}</p>
       </div>`;
+    activarBotonSubirInline(cont);
     return;
   }
 
@@ -5789,8 +5804,9 @@ function renderizarDocumentosPorCategoria() {
     cont.innerHTML = `
       <div class="estado-vacio">
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M4 4h11l5 5v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4"/><path d="M14 4v5h5" stroke="currentColor" stroke-width="1.4"/></svg>
-        <p>Todavía no hay documentos de esta categoría.</p>
+        <p>No hay documentos en esta categoría.<br>${htmlFraseSubirPrimero()}</p>
       </div>`;
+    activarBotonSubirInline(cont);
     return;
   }
 
