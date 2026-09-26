@@ -904,7 +904,14 @@
   .btn-primario, .btn-secundario{ border:none; border-radius:var(--r-boton); padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
   .modal-acciones .btn-primario, .modal-acciones .btn-secundario{ flex:1; width:auto; }
   .btn-primario{ background:var(--stamp); color:var(--sobre-acento); }
-  .btn-primario:disabled{ opacity:.5; cursor:default; }
+  .btn-primario:disabled, .btn-primario.inactivo{ opacity:.5; cursor:default; }
+  /* Campo que falta por rellenar al intentar guardar: parpadea en rojo */
+  .parpadeo-falta{ animation:parpadeo-falta 1.4s ease-in-out; }
+  @keyframes parpadeo-falta{
+    0%, 40%, 80%, 100%{ box-shadow:0 0 0 0 rgba(229,52,42,0); }
+    15%, 55%, 95%{ box-shadow:0 0 0 3px #E5342A, 0 0 16px rgba(229,52,42,.65); }
+  }
+  @media (prefers-reduced-motion:reduce){ .parpadeo-falta{ animation:none; box-shadow:0 0 0 3px #E5342A; } }
   .btn-secundario{ background:transparent; color:var(--text-dim); border:1px solid var(--borde); }
   .btn-peligro{ background:var(--stamp); color:var(--sobre-acento); }
   /* Botón final de "Borrar todo y cerrar sesión": apagado hasta escribir la palabra, y al escribirla se rellena en rojo */
@@ -1523,7 +1530,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.3';
+const VERSION_APP = '3.3.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -7050,7 +7057,8 @@ function activarSelectorFila(selector, valorInicial) {
   flechaIzq.addEventListener('click', () => fila.scrollBy({ left: -fila.clientWidth * 0.7, behavior: 'smooth' }));
   flechaDer.addEventListener('click', () => fila.scrollBy({ left: fila.clientWidth * 0.7, behavior: 'smooth' }));
   window.addEventListener('resize', actualizarFlechas);
-  elegir(opciones.some((b) => b.dataset.valor === valorInicial) ? valorInicial : (opciones[0] || {}).dataset?.valor);
+  // valorInicial null = sin nada marcado (hay que elegir)
+  elegir(valorInicial == null ? null : (opciones.some((b) => b.dataset.valor === valorInicial) ? valorInicial : null));
   const activa = selector.querySelector('[data-valor].activa');
   if (activa) fila.scrollLeft = Math.max(0, activa.offsetLeft - fila.clientWidth / 2 + activa.offsetWidth / 2);
   setTimeout(actualizarFlechas, 0);
@@ -7084,14 +7092,11 @@ function abrirModalSubida(previo) {
     abrirModalNuevaPersona(abrirModalSubida);
     return;
   }
-  // Preselección: desde una persona, esa persona y la categoría que estuviera filtrada (o la primera); desde una
-  // categoría, esa categoría y la persona que estuviera filtrada (o la primera). Se pueden cambiar las dos.
-  const personaPreseleccionada = previo && previo.personaId ? previo.personaId : enCategoria
-    ? (personaFiltroActiva !== 'todos' ? personaFiltroActiva : (datos.personas[0] ? datos.personas[0].id : null))
-    : personaActivaId;
-  const catPreseleccionada = previo ? previo.categoriaId : enCategoria
-    ? categoriaGlobalActivaId
-    : (categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : ''));
+  // Preselección: solo lo que ya viene fijado por la pantalla de la que se viene. Desde una persona, esa persona
+  // (y ninguna categoría marcada); desde una categoría, esa categoría (y ninguna persona marcada). Lo otro hay
+  // que elegirlo. Al volver de crear una persona/categoría, se recupera lo que había y la nueva queda elegida.
+  const personaPreseleccionada = previo ? previo.personaId : (enCategoria ? null : personaActivaId);
+  const catPreseleccionada = previo ? previo.categoriaId : (enCategoria ? categoriaGlobalActivaId : null);
 
   abrirModal(`
     <h3>Subir documento</h3>
@@ -7117,7 +7122,7 @@ function abrirModalSubida(previo) {
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
-        <button class="btn-primario" id="modal-guardar" disabled>Guardar</button>
+        <button class="btn-primario inactivo" id="modal-guardar" aria-disabled="true">Guardar</button>
       </div>
     </div>
     <div id="zona-recorte-subida" class="hidden"></div>
@@ -7213,7 +7218,7 @@ function abrirModalSubida(previo) {
   });
   evitarBarraAutorrelleno($('#input-nombre'));
   $('#modal-cancelar').addEventListener('click', volverAtras);
-  $('#modal-guardar').addEventListener('click', guardarDocumentoNuevo);
+  $('#modal-guardar').addEventListener('click', intentarGuardarDocumento);
 
   if (previo) {
     $('#input-nombre').value = previo.nombre;
@@ -7241,7 +7246,31 @@ function actualizarBotonGuardar() {
   if (!btn) return;
   const faltaPersona = !valorSelectorFila($('#input-persona')); // sin ninguna persona creada / elegida
   const faltaCategoria = !valorSelectorFila($('#input-categoria')); // hay que elegir (o crear) una categoría
-  btn.disabled = faltaPersona || faltaCategoria || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
+  const incompleto = faltaPersona || faltaCategoria || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
+  // No se usa "disabled" para que el botón siga recibiendo el toque y pueda avisar de lo que falta
+  btn.classList.toggle('inactivo', incompleto);
+  btn.setAttribute('aria-disabled', incompleto ? 'true' : 'false');
+}
+
+// Campos de "Subir documento" que aún faltan, en el orden en que salen.
+function camposQueFaltanSubida() {
+  const faltan = [];
+  if (!paginasSubidaPendientes.length) faltan.push($('#btn-anadir-pagina-subida'));
+  if (!$('#input-nombre').value.trim()) faltan.push($('#input-nombre'));
+  if (!valorSelectorFila($('#input-persona'))) faltan.push($('#input-persona') || $('#seccion-normal-subida'));
+  if (!valorSelectorFila($('#input-categoria'))) faltan.push($('#input-categoria'));
+  return faltan;
+}
+function intentarGuardarDocumento() {
+  const faltan = camposQueFaltanSubida();
+  if (!faltan.length) { guardarDocumentoNuevo(); return; }
+  faltan.forEach((el) => {
+    el.classList.remove('parpadeo-falta');
+    void el.offsetWidth; // reinicia la animación si ya estaba parpadeando
+    el.classList.add('parpadeo-falta');
+    setTimeout(() => el.classList.remove('parpadeo-falta'), 1500);
+  });
+  faltan[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function guardarDocumentoNuevo() {
