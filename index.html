@@ -796,6 +796,42 @@
   .btn-quitar-pagina-subida{ flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer; }
   #btn-anadir-pagina-subida{ margin-bottom:16px; }
 
+  /* Selector de persona al subir desde una categoría */
+  .selector-personas{ position:relative; }
+  .selector-personas .fila-personas{
+    display:flex; gap:10px; overflow-x:auto; padding:4px 2px 6px; scroll-snap-type:x proximity;
+    -ms-overflow-style:none; scrollbar-width:none; overscroll-behavior-x:contain;
+  }
+  .selector-personas .fila-personas::-webkit-scrollbar{ display:none; }
+  .opcion-persona{
+    flex:none; width:68px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 2px 4px;
+    background:none; border:2px solid transparent; border-radius:14px; color:var(--text-dim); cursor:pointer; scroll-snap-align:center;
+  }
+  .opcion-persona .avatar-persona{ width:50px; height:50px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
+  .opcion-persona .op-nombre{ font-size:.7rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .opcion-persona.activa{ border-color:var(--stamp); color:var(--text-light); background:color-mix(in srgb, var(--stamp) 12%, transparent); }
+  .opcion-persona.activa .op-nombre{ font-weight:700; }
+  .opcion-categoria{
+    flex:none; max-width:170px; padding:9px 16px; border-radius:999px; border:2px solid transparent; cursor:pointer;
+    background:var(--color-categoria, var(--ink-3)); color:#fff; font-size:.85rem; font-weight:600; opacity:.55;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; scroll-snap-align:center;
+  }
+  .opcion-categoria.activa{ opacity:1; border-color:var(--text-light); box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4px var(--stamp); }
+  .selector-categorias .flecha-personas{ top:6px; }
+  /* Avisos de que se puede desplazar: flechas y un degradado en el borde por el que hay más personas */
+  .flecha-personas{
+    position:absolute; top:22px; z-index:2; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--ink-3); color:var(--text-light); font-size:1.35rem; line-height:1; padding:0 0 3px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.4);
+  }
+  .flecha-personas.izq{ left:-6px; }
+  .flecha-personas.der{ right:-6px; }
+  .selector-personas::before, .selector-personas::after{
+    content:''; position:absolute; top:0; bottom:0; width:34px; z-index:1; pointer-events:none; opacity:0; transition:opacity .15s;
+  }
+  .selector-personas::before{ left:0; background:linear-gradient(90deg, var(--ink-2), transparent); }
+  .selector-personas::after{ right:0; background:linear-gradient(270deg, var(--ink-2), transparent); }
+  .selector-personas.mas-izq::before, .selector-personas.mas-der::after{ opacity:1; }
   .selector-foto{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
   .selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; border-radius:var(--r-avatar-mini); }
   .selector-foto .btn-secundario{ flex:none; width:auto; padding:9px 16px; font-size:.82rem; }
@@ -1482,7 +1518,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.0';
+const VERSION_APP = '3.3.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6940,6 +6976,62 @@ function confirmarBorrado(doc, indicePagina = null) {
 
 $('#btn-subir').addEventListener('click', abrirModalSubida);
 
+// Selectores de fila para "Subir documento" (persona y categoría). Cada opción lleva su valor en data-valor.
+// Si hay más opciones de las que caben, salen flechas a los lados y un degradado en el borde por donde hay más.
+function htmlSelectorFila(id, tipo, opcionesHtml) {
+  return `<div class="selector-personas selector-${tipo}" id="${id}">
+    <button type="button" class="flecha-personas izq hidden" aria-label="Anteriores">‹</button>
+    <div class="fila-personas" role="radiogroup">${opcionesHtml}</div>
+    <button type="button" class="flecha-personas der hidden" aria-label="Siguientes">›</button>
+  </div>`;
+}
+function htmlSelectorPersonas(personas) {
+  return htmlSelectorFila('input-persona', 'personas', personas.map((p) => `
+      <button type="button" class="opcion-persona" role="radio" aria-checked="false" data-valor="${p.id}">
+        <span class="avatar-persona" style="${estiloAvatar(p)}">${contenidoAvatar(p)}</span>
+        <span class="op-nombre">${escapeHtml(p.nombre)}</span>
+      </button>`).join(''));
+}
+// "Sin categoría" siempre está disponible: al empezar no hay ninguna categoría creada, y aun teniéndolas
+// puede que un documento no encaje en ninguna.
+function htmlSelectorCategorias(categorias) {
+  const pastilla = (valor, color, nombre) => `
+      <button type="button" class="opcion-categoria" role="radio" aria-checked="false" data-valor="${valor}" style="--color-categoria:${color}">${escapeHtml(nombre)}</button>`;
+  return htmlSelectorFila('input-categoria', 'categorias',
+    categorias.map((cat) => pastilla(cat.id, cat.color, cat.nombre)).join('') + pastilla('', 'var(--ink-3)', trad('Sin categoría')));
+}
+function valorSelectorFila(selector) {
+  const activa = selector && selector.querySelector('[data-valor].activa');
+  return activa ? activa.dataset.valor : null;
+}
+function activarSelectorFila(selector, valorInicial) {
+  const fila = selector.querySelector('.fila-personas');
+  const flechaIzq = selector.querySelector('.flecha-personas.izq');
+  const flechaDer = selector.querySelector('.flecha-personas.der');
+  const opciones = [...selector.querySelectorAll('[data-valor]')];
+  const elegir = (valor) => opciones.forEach((b) => {
+    const activa = b.dataset.valor === valor;
+    b.classList.toggle('activa', activa);
+    b.setAttribute('aria-checked', activa ? 'true' : 'false');
+  });
+  const actualizarFlechas = () => {
+    const max = fila.scrollWidth - fila.clientWidth;
+    flechaIzq.classList.toggle('hidden', fila.scrollLeft < 4);
+    flechaDer.classList.toggle('hidden', max < 4 || fila.scrollLeft > max - 4);
+    selector.classList.toggle('mas-izq', fila.scrollLeft >= 4);
+    selector.classList.toggle('mas-der', max >= 4 && fila.scrollLeft <= max - 4);
+  };
+  fila.addEventListener('click', (e) => { const b = e.target.closest('[data-valor]'); if (b) { elegir(b.dataset.valor); actualizarBotonGuardar(); } });
+  fila.addEventListener('scroll', actualizarFlechas, { passive: true });
+  flechaIzq.addEventListener('click', () => fila.scrollBy({ left: -fila.clientWidth * 0.7, behavior: 'smooth' }));
+  flechaDer.addEventListener('click', () => fila.scrollBy({ left: fila.clientWidth * 0.7, behavior: 'smooth' }));
+  window.addEventListener('resize', actualizarFlechas);
+  elegir(opciones.some((b) => b.dataset.valor === valorInicial) ? valorInicial : (opciones[0] || {}).dataset?.valor);
+  const activa = selector.querySelector('[data-valor].activa');
+  if (activa) fila.scrollLeft = Math.max(0, activa.offsetLeft - fila.clientWidth / 2 + activa.offsetWidth / 2);
+  setTimeout(actualizarFlechas, 0);
+}
+
 function abrirModalSubida() {
   paginasSubidaPendientes = [];
   // Desde una persona, la categoría se elige (la persona ya está fija). Desde la vista de
@@ -6953,13 +7045,14 @@ function abrirModalSubida() {
     abrirModalNuevaPersona(abrirModalSubida);
     return;
   }
-  // "Sin categoría" siempre está disponible: al empezar no hay ninguna categoría creada, y
-  // aun teniéndolas puede que un documento no encaje en ninguna.
-  const opcionesCat = datos.categorias.map((c) => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join('')
-    + `<option value="">${trad('Sin categoría')}</option>`;
-  const catPreseleccionada = categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : '');
-  const opcionesPersona = datos.personas.map((p) => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
-  const personaPreseleccionada = personaFiltroActiva !== 'todos' ? personaFiltroActiva : (datos.personas[0] ? datos.personas[0].id : null);
+  // Preselección: desde una persona, esa persona y la categoría que estuviera filtrada (o la primera); desde una
+  // categoría, esa categoría y la persona que estuviera filtrada (o la primera). Se pueden cambiar las dos.
+  const personaPreseleccionada = enCategoria
+    ? (personaFiltroActiva !== 'todos' ? personaFiltroActiva : (datos.personas[0] ? datos.personas[0].id : null))
+    : personaActivaId;
+  const catPreseleccionada = enCategoria
+    ? categoriaGlobalActivaId
+    : (categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : ''));
 
   abrirModal(`
     <h3>Subir documento</h3>
@@ -6970,15 +7063,14 @@ function abrirModalSubida() {
         <label for="input-nombre">Nombre del documento</label>
         <input type="search" id="input-nombre" name="q" placeholder="Ej: DNI" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
-      ${enCategoria ? `
       <div class="campo">
-        <label for="input-persona">Persona</label>
-        ${datos.personas.length ? `<select id="input-persona">${opcionesPersona}</select>` : `<p style="color:var(--text-dim);font-size:.85rem;margin:0;">Todavía no tienes a nadie añadido.</p>`}
-      </div>` : `
+        <label>Persona</label>
+        ${datos.personas.length ? htmlSelectorPersonas(datos.personas) : `<p style="color:var(--text-dim);font-size:.85rem;margin:0;">Todavía no tienes a nadie añadido.</p>`}
+      </div>
       <div class="campo">
-        <label for="input-categoria">Categoría</label>
-        <select id="input-categoria">${opcionesCat}</select>
-      </div>`}
+        <label>Categoría</label>
+        ${htmlSelectorCategorias(datos.categorias)}
+      </div>
       <div class="campo">
         <label for="input-caducidad">Fecha de caducidad (opcional)</label>
         <input type="date" id="input-caducidad" autocomplete="off">
@@ -6992,8 +7084,8 @@ function abrirModalSubida() {
     <input type="file" id="input-archivo" accept="image/*,application/pdf" capture="environment" class="visually-hidden">
   `);
 
-  if (enCategoria) { if ($('#input-persona')) $('#input-persona').value = personaPreseleccionada; }
-  else $('#input-categoria').value = catPreseleccionada;
+  if ($('#input-persona')) activarSelectorFila($('#input-persona'), personaPreseleccionada);
+  activarSelectorFila($('#input-categoria'), catPreseleccionada);
   const seccionNormal = $('#seccion-normal-subida');
   const zonaRecorte = $('#zona-recorte-subida');
   const inputArchivo = $('#input-archivo');
@@ -7087,8 +7179,7 @@ function abrirModalSubida() {
 function actualizarBotonGuardar() {
   const btn = $('#modal-guardar');
   if (!btn) return;
-  const enCategoria = categoriaGlobalActivaId !== null;
-  const faltaPersona = enCategoria && !$('#input-persona'); // vista de categoría sin ninguna persona creada todavía
+  const faltaPersona = !valorSelectorFila($('#input-persona')); // sin ninguna persona creada / elegida
   btn.disabled = faltaPersona || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
 }
 
@@ -7098,8 +7189,8 @@ async function guardarDocumentoNuevo() {
 
   const enCategoria = categoriaGlobalActivaId !== null;
   const nombre = $('#input-nombre').value.trim();
-  const categoriaId = enCategoria ? categoriaGlobalActivaId : $('#input-categoria').value;
-  const personaId = enCategoria ? $('#input-persona').value : personaActivaId;
+  const categoriaId = valorSelectorFila($('#input-categoria')) || '';
+  const personaId = valorSelectorFila($('#input-persona'));
   const caducidad = $('#input-caducidad').value || null;
   const persona = datos.personas.find((p) => p.id === personaId);
   const categoriaObj = datos.categorias.find((c) => c.id === categoriaId);
