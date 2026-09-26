@@ -804,11 +804,11 @@
   }
   .selector-personas .fila-personas::-webkit-scrollbar{ display:none; }
   .opcion-persona{
-    flex:none; width:78px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 2px 4px;
+    flex:none; width:88px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 2px 4px;
     background:none; border:2px solid transparent; border-radius:14px; color:var(--text-dim); cursor:pointer; scroll-snap-align:center;
   }
-  .opcion-persona .avatar-persona{ width:58px; height:58px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
-  .opcion-persona .op-nombre{ font-size:.74rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .opcion-persona .avatar-persona{ width:68px; height:68px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
+  .opcion-persona .op-nombre{ font-size:.78rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .opcion-persona.activa{ border-color:var(--stamp); color:var(--text-light); background:color-mix(in srgb, var(--stamp) 12%, transparent); }
   .opcion-persona.activa .op-nombre{ font-weight:700; }
   .opcion-categoria{
@@ -818,14 +818,14 @@
   }
   .opcion-categoria.activa{ opacity:1; border-color:var(--text-light); box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4px var(--stamp); }
   .selector-categorias .flecha-personas{ top:12px; }
-  .selector-personas .flecha-personas{ top:28px; }
+  .selector-personas .flecha-personas{ top:34px; }
   .selector-categorias .flecha-personas{ top:12px; }
   /* Opción "Nueva" al final de cada fila: trazo discontinuo y un "+" */
   .opcion-persona.opcion-nueva .avatar-persona{ background:none !important; border:2px dashed var(--borde-fuerte); color:var(--text-dim); }
   .opcion-categoria.opcion-nueva{ background:none; border:2px dashed var(--borde-fuerte); color:var(--text-dim); opacity:1; }
   /* Avisos de que se puede desplazar: flechas y un degradado en el borde por el que hay más personas */
   .flecha-personas{
-    position:absolute; top:28px; z-index:2; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+    position:absolute; top:34px; z-index:2; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
     background:var(--ink-3); color:var(--text-light); font-size:1.35rem; line-height:1; padding:0 0 3px;
     display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.4);
   }
@@ -1530,7 +1530,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.4';
+const VERSION_APP = '3.3.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4311,23 +4311,20 @@ function hexAHS(hex) {
   return { h, s: s * 100 };
 }
 
-function abrirRuedaColorCategoria(cat, filaHome) {
-  abrirModal(`
-    <h3>Color de la categoría</h3>
-    <div class="rueda-color-muestra" id="rueda-color-muestra" style="background:${cat.color}"></div>
+// La rueda de color, reutilizable (cambiar el color de una categoría y crear una nueva). htmlRuedaColor da su HTML
+// (muestra del color + rueda) y montarRuedaColor le pone el comportamiento dentro de "contenedor".
+// alElegir(color) se llama mientras se arrastra; alSoltar(color), al levantar el dedo.
+function htmlRuedaColor(color) {
+  return `<div class="rueda-color-muestra" style="background:${color}"></div>
     <div class="rueda-color-cont">
-      <div class="rueda-color" id="rueda-color"></div>
-      <div class="rueda-color-selector" id="rueda-color-selector"></div>
-    </div>
-    <div class="modal-acciones">
-      <button class="btn-secundario" id="modal-cancelar">Cerrar</button>
-    </div>
-  `);
-  $('#modal-cancelar').addEventListener('click', volverAtras);
-
-  const rueda = $('#rueda-color');
-  const selector = $('#rueda-color-selector');
-  const muestra = $('#rueda-color-muestra');
+      <div class="rueda-color"></div>
+      <div class="rueda-color-selector"></div>
+    </div>`;
+}
+function montarRuedaColor(contenedor, colorInicial, alElegir, alSoltar) {
+  const rueda = contenedor.querySelector('.rueda-color');
+  const selector = contenedor.querySelector('.rueda-color-selector');
+  const muestra = contenedor.querySelector('.rueda-color-muestra');
 
   // El punto se coloca en el mismo píxel donde está el dedo (limitado al borde si se sale del
   // círculo) — NO directo al radio fijo solo según el ángulo, que es lo que hacía que un
@@ -4348,7 +4345,7 @@ function abrirRuedaColorCategoria(cat, filaHome) {
     const anguloRad = h * Math.PI / 180;
     colocarSelectorPx(radioPx + radioPx * t * Math.sin(anguloRad), radioPx - radioPx * t * Math.cos(anguloRad));
   }
-  colocarSelectorPorColor(cat.color, rueda.clientWidth / 2);
+  colocarSelectorPorColor(colorInicial, rueda.clientWidth / 2);
 
   function elegirDesdeEvento(clientX, clientY) {
     const r = rueda.getBoundingClientRect();
@@ -4363,7 +4360,7 @@ function abrirRuedaColorCategoria(cat, filaHome) {
     const color = hslAHex(hue, t * SATURACION_BORDE_RUEDA, 100 - t * (100 - LUMINOSIDAD_BORDE_RUEDA));
     colocarSelectorPx(r.width / 2 + dx, r.height / 2 + dy);
     muestra.style.background = color;
-    if (filaHome) { filaHome.style.background = color; filaHome.style.setProperty('--color-categoria', color); }
+    if (alElegir) alElegir(color);
     return color;
   }
 
@@ -4372,7 +4369,7 @@ function abrirRuedaColorCategoria(cat, filaHome) {
   // círculo para cancelar nada, todo lo contrario — se quiere seguir el gesto aunque el dedo se
   // vaya fuera del borde mientras se arrastra, y pointer capture ya lo hace sin más código.
   // preventDefault, además, para que el navegador no intente hacer scroll con el mismo gesto.
-  let colorElegido = cat.color;
+  let colorElegido = colorInicial;
   rueda.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     try { rueda.setPointerCapture(e.pointerId); } catch (err) { /* algunos navegadores no lo permiten; se sigue igualmente */ }
@@ -4380,15 +4377,26 @@ function abrirRuedaColorCategoria(cat, filaHome) {
     const mover = (ev) => { ev.preventDefault(); colorElegido = elegirDesdeEvento(ev.clientX, ev.clientY); };
     const soltar = () => {
       rueda.removeEventListener('pointermove', mover);
-      if (colorElegido !== cat.color) {
-        cat.color = colorElegido;
-        guardarMetadatos();
-      }
+      if (alSoltar) alSoltar(colorElegido);
     };
     rueda.addEventListener('pointermove', mover);
     rueda.addEventListener('pointerup', soltar, { once: true });
     rueda.addEventListener('pointercancel', soltar, { once: true });
   });
+}
+
+function abrirRuedaColorCategoria(cat, filaHome) {
+  abrirModal(`
+    <h3>Color de la categoría</h3>
+    <div id="rueda-color-bloque">${htmlRuedaColor(cat.color)}</div>
+    <div class="modal-acciones">
+      <button class="btn-secundario" id="modal-cancelar">Cerrar</button>
+    </div>
+  `);
+  $('#modal-cancelar').addEventListener('click', volverAtras);
+  montarRuedaColor($('#rueda-color-bloque'), cat.color,
+    (color) => { if (filaHome) { filaHome.style.background = color; filaHome.style.setProperty('--color-categoria', color); } },
+    (color) => { if (color !== cat.color) { cat.color = color; guardarMetadatos(); } });
 }
 
 function abrirRenombrarCategoria(cat) {
@@ -4408,13 +4416,15 @@ function abrirRenombrarCategoria(cat) {
 }
 
 function abrirNuevaCategoria(alCrear, alCancelar) {
-  abrirModalRenombrar('Nueva categoría', '', (nombre) => {
+  // El color de salida es uno de la paleta, pero se puede cambiar con la misma rueda que para editar el color
+  const colorPorDefecto = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
+  abrirModalRenombrar('Nueva categoría', '', (nombre, colorElegido) => {
     if (nombre.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
       mostrarToast(trad('"{nombre}" es un nombre reservado, elige otro.', { nombre: trad(CATEGORIA_SIN_ASIGNAR.nombre) }), true);
       return;
     }
     const id = 'cat-' + Date.now();
-    const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
+    const color = colorElegido || colorPorDefecto;
     datos.categorias.push({ id, nombre, color });
     guardarMetadatos().then(() => {
       if (typeof alCrear === 'function') { refrescarPantallaActual(); mostrarToast('Categoría creada'); alCrear(id); return; } // (desde "Subir documento")
@@ -4422,7 +4432,7 @@ function abrirNuevaCategoria(alCrear, alCancelar) {
       renderizarCategoriasHome();
       mostrarToast('Categoría creada');
     });
-  }, LIMITE_NOMBRE, typeof alCancelar === 'function' ? alCancelar : null);
+  }, LIMITE_NOMBRE, typeof alCancelar === 'function' ? alCancelar : null, colorPorDefecto);
 }
 
 function confirmarEliminarCategoria(cat) {
@@ -7358,13 +7368,14 @@ function evitarBarraAutorrelleno(input) {
   input.addEventListener('touchstart', activar, { once: true });
 }
 
-function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alCancelar = null) {
+function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alCancelar = null, colorInicial = null) {
   abrirModal(`
     <h3>${escapeHtml(titulo)}</h3>
     <div class="campo">
       <label for="input-renombrar">Nombre</label>
       <input type="search" id="input-renombrar" name="q" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
     </div>
+    ${colorInicial ? `<div class="campo" id="renombrar-color"><label>Color</label>${htmlRuedaColor(colorInicial)}</div>` : ''}
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
       <button class="btn-primario" id="modal-guardar-renombrar">Guardar</button>
@@ -7376,10 +7387,12 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alC
   input.focus();
   input.select();
   const btnGuardar = $('#modal-guardar-renombrar');
+  let colorElegido = colorInicial;
+  if (colorInicial) montarRuedaColor($('#renombrar-color'), colorInicial, (color) => { colorElegido = color; }, null);
   const intentarGuardar = () => {
     const nuevo = input.value.trim();
     if (!nuevo) return;
-    alGuardar(nuevo);
+    alGuardar(nuevo, colorElegido);
   };
   btnGuardar.addEventListener('click', intentarGuardar);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarGuardar(); });
