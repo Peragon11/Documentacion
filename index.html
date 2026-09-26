@@ -799,16 +799,16 @@
   /* Selector de persona al subir desde una categoría */
   .selector-personas{ position:relative; }
   .selector-personas .fila-personas{
-    display:flex; gap:10px; overflow-x:auto; padding:4px 2px 6px; scroll-snap-type:x proximity;
+    display:flex; gap:10px; overflow-x:auto; padding:8px 10px 10px; scroll-snap-type:x proximity;
     -ms-overflow-style:none; scrollbar-width:none; overscroll-behavior-x:contain;
   }
   .selector-personas .fila-personas::-webkit-scrollbar{ display:none; }
   .opcion-persona{
-    flex:none; width:68px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 2px 4px;
+    flex:none; width:78px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 2px 4px;
     background:none; border:2px solid transparent; border-radius:14px; color:var(--text-dim); cursor:pointer; scroll-snap-align:center;
   }
-  .opcion-persona .avatar-persona{ width:50px; height:50px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
-  .opcion-persona .op-nombre{ font-size:.7rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .opcion-persona .avatar-persona{ width:58px; height:58px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
+  .opcion-persona .op-nombre{ font-size:.74rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .opcion-persona.activa{ border-color:var(--stamp); color:var(--text-light); background:color-mix(in srgb, var(--stamp) 12%, transparent); }
   .opcion-persona.activa .op-nombre{ font-weight:700; }
   .opcion-categoria{
@@ -817,10 +817,15 @@
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; scroll-snap-align:center;
   }
   .opcion-categoria.activa{ opacity:1; border-color:var(--text-light); box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4px var(--stamp); }
-  .selector-categorias .flecha-personas{ top:6px; }
+  .selector-categorias .flecha-personas{ top:12px; }
+  .selector-personas .flecha-personas{ top:28px; }
+  .selector-categorias .flecha-personas{ top:12px; }
+  /* Opción "Nueva" al final de cada fila: trazo discontinuo y un "+" */
+  .opcion-persona.opcion-nueva .avatar-persona{ background:none !important; border:2px dashed var(--borde-fuerte); color:var(--text-dim); }
+  .opcion-categoria.opcion-nueva{ background:none; border:2px dashed var(--borde-fuerte); color:var(--text-dim); opacity:1; }
   /* Avisos de que se puede desplazar: flechas y un degradado en el borde por el que hay más personas */
   .flecha-personas{
-    position:absolute; top:22px; z-index:2; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+    position:absolute; top:28px; z-index:2; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
     background:var(--ink-3); color:var(--text-light); font-size:1.35rem; line-height:1; padding:0 0 3px;
     display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.4);
   }
@@ -1518,7 +1523,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.1';
+const VERSION_APP = '3.3.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4384,7 +4389,7 @@ function abrirRenombrarCategoria(cat) {
   }, LIMITE_NOMBRE);
 }
 
-function abrirNuevaCategoria() {
+function abrirNuevaCategoria(alCrear, alCancelar) {
   abrirModalRenombrar('Nueva categoría', '', (nombre) => {
     if (nombre.toLowerCase() === CATEGORIA_SIN_ASIGNAR.nombre.toLowerCase()) {
       mostrarToast(trad('"{nombre}" es un nombre reservado, elige otro.', { nombre: trad(CATEGORIA_SIN_ASIGNAR.nombre) }), true);
@@ -4394,11 +4399,12 @@ function abrirNuevaCategoria() {
     const color = COLORES_AVATAR[datos.categorias.length % COLORES_AVATAR.length];
     datos.categorias.push({ id, nombre, color });
     guardarMetadatos().then(() => {
+      if (typeof alCrear === 'function') { refrescarPantallaActual(); mostrarToast('Categoría creada'); alCrear(id); return; } // (desde "Subir documento")
       volverAtras();
       renderizarCategoriasHome();
       mostrarToast('Categoría creada');
     });
-  }, LIMITE_NOMBRE);
+  }, LIMITE_NOMBRE, typeof alCancelar === 'function' ? alCancelar : null);
 }
 
 function confirmarEliminarCategoria(cat) {
@@ -4680,7 +4686,7 @@ function renderizarCabeceraPersona() {
   $('#titulo-topbar').textContent = persona.nombre;
 }
 
-function abrirModalNuevaPersona(despuesDeAnadir) {
+function abrirModalNuevaPersona(despuesDeAnadir, alCancelar) {
   fotoPendienteDataUrl = null;
   iconoPendienteId = null;
   abrirModal(`
@@ -4759,20 +4765,22 @@ function abrirModalNuevaPersona(despuesDeAnadir) {
   const revisar = () => { $('#modal-guardar-persona').disabled = !$('#input-nombre-persona').value.trim(); };
   $('#input-nombre-persona').addEventListener('input', revisar);
   evitarBarraAutorrelleno($('#input-nombre-persona'));
-  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#modal-cancelar').addEventListener('click', typeof alCancelar === 'function' ? alCancelar : volverAtras);
   $('#modal-guardar-persona').addEventListener('click', async () => {
     const nombre = $('#input-nombre-persona').value.trim();
     if (!nombre) return;
     const btn = $('#modal-guardar-persona');
     if (btn.disabled) return; // evita doble toque -> doble persona
     btn.disabled = true;
-    datos.personas.push({ id: 'p-' + Date.now(), nombre, foto: fotoPendienteDataUrl, icono: iconoPendienteId });
+    const nueva = { id: 'p-' + Date.now(), nombre, foto: fotoPendienteDataUrl, icono: iconoPendienteId };
+    datos.personas.push(nueva);
     await guardarMetadatos();
     renderizarPantallaInicio();
+    if (typeof despuesDeAnadir === 'function') refrescarPantallaActual(); // que los botones de la pantalla de detrás incluyan a la nueva
     mostrarToast('Persona añadida');
     // Si se llegó desde otra acción (p. ej. subir un documento sin personas), se continúa con ella en la misma
     // capa; si no, se cierra el modal.
-    if (despuesDeAnadir) despuesDeAnadir(); else volverAtras();
+    if (typeof despuesDeAnadir === 'function') despuesDeAnadir(nueva); else volverAtras();
   });
 }
 
@@ -6990,15 +6998,20 @@ function htmlSelectorPersonas(personas) {
       <button type="button" class="opcion-persona" role="radio" aria-checked="false" data-valor="${p.id}">
         <span class="avatar-persona" style="${estiloAvatar(p)}">${contenidoAvatar(p)}</span>
         <span class="op-nombre">${escapeHtml(p.nombre)}</span>
-      </button>`).join(''));
+      </button>`).join('') + `
+      <button type="button" class="opcion-persona opcion-nueva" data-nueva="persona" aria-label="Añadir persona">
+        <span class="avatar-persona avatar-nueva-persona"><svg width="45%" height="45%" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+        <span class="op-nombre">Nueva</span>
+      </button>`);
 }
-// "Sin categoría" siempre está disponible: al empezar no hay ninguna categoría creada, y aun teniéndolas
-// puede que un documento no encaje en ninguna.
+// Al subir un documento hay que elegir una categoría (o crear una con "Nueva"): "Sin categoría" queda solo para los
+// documentos que se quedan huérfanos al borrar su categoría.
 function htmlSelectorCategorias(categorias) {
   const pastilla = (valor, color, nombre) => `
       <button type="button" class="opcion-categoria" role="radio" aria-checked="false" data-valor="${valor}" style="--color-categoria:${color}">${escapeHtml(nombre)}</button>`;
   return htmlSelectorFila('input-categoria', 'categorias',
-    categorias.map((cat) => pastilla(cat.id, cat.color, cat.nombre)).join('') + pastilla('', 'var(--ink-3)', trad('Sin categoría')));
+    categorias.map((cat) => pastilla(cat.id, cat.color, cat.nombre)).join('')
+      + '<button type="button" class="opcion-categoria opcion-nueva" data-nueva="categoria" aria-label="Añadir categoría">+ Nueva</button>');
 }
 function valorSelectorFila(selector) {
   const activa = selector && selector.querySelector('[data-valor].activa');
@@ -7032,8 +7045,22 @@ function activarSelectorFila(selector, valorInicial) {
   setTimeout(actualizarFlechas, 0);
 }
 
-function abrirModalSubida() {
-  paginasSubidaPendientes = [];
+// Lo escrito en "Subir documento" (las páginas ya están en paginasSubidaPendientes), para poder ir a crear una persona
+// o una categoría y volver sin perderlo.
+function capturarEstadoSubida() {
+  return {
+    esEstadoSubida: true,
+    nombre: $('#input-nombre').value,
+    caducidad: $('#input-caducidad').value,
+    personaId: valorSelectorFila($('#input-persona')),
+    categoriaId: valorSelectorFila($('#input-categoria')),
+  };
+}
+
+function abrirModalSubida(previo) {
+  // (Como escuchador de un botón recibe el evento del clic: solo cuenta si es un estado guardado.)
+  previo = previo && previo.esEstadoSubida ? previo : null;
+  if (!previo) paginasSubidaPendientes = [];
   // Desde una persona, la categoría se elige (la persona ya está fija). Desde la vista de
   // una categoría (todas las personas a la vez), es al revés: la categoría ya está fija y
   // lo que hace falta elegir es de quién es el documento.
@@ -7047,10 +7074,10 @@ function abrirModalSubida() {
   }
   // Preselección: desde una persona, esa persona y la categoría que estuviera filtrada (o la primera); desde una
   // categoría, esa categoría y la persona que estuviera filtrada (o la primera). Se pueden cambiar las dos.
-  const personaPreseleccionada = enCategoria
+  const personaPreseleccionada = previo && previo.personaId ? previo.personaId : enCategoria
     ? (personaFiltroActiva !== 'todos' ? personaFiltroActiva : (datos.personas[0] ? datos.personas[0].id : null))
     : personaActivaId;
-  const catPreseleccionada = enCategoria
+  const catPreseleccionada = previo ? previo.categoriaId : enCategoria
     ? categoriaGlobalActivaId
     : (categoriaActiva !== 'todos' ? categoriaActiva : (datos.categorias[0] ? datos.categorias[0].id : ''));
 
@@ -7070,6 +7097,7 @@ function abrirModalSubida() {
       <div class="campo">
         <label>Categoría</label>
         ${htmlSelectorCategorias(datos.categorias)}
+        ${datos.categorias.length ? '' : '<p style="color:var(--text-dim);font-size:.8rem;margin:4px 0 0;">Crea una categoría con «Nueva» para poder guardar el documento.</p>'}
       </div>
       <div class="campo">
         <label for="input-caducidad">Fecha de caducidad (opcional)</label>
@@ -7174,13 +7202,32 @@ function abrirModalSubida() {
   evitarBarraAutorrelleno($('#input-nombre'));
   $('#modal-cancelar').addEventListener('click', volverAtras);
   $('#modal-guardar').addEventListener('click', guardarDocumentoNuevo);
+
+  if (previo) {
+    $('#input-nombre').value = previo.nombre;
+    $('#input-caducidad').value = previo.caducidad;
+    renderizarListaPaginasSubida();
+    actualizarBotonGuardar();
+  }
+  // "Nueva" persona / categoría: se abre su formulario y, al guardar (o cancelar), se vuelve aquí con todo lo escrito
+  const conservar = () => capturarEstadoSubida();
+  const botonNuevaPersona = $('#input-persona') && $('#input-persona').querySelector('[data-nueva="persona"]');
+  if (botonNuevaPersona) botonNuevaPersona.addEventListener('click', () => {
+    const estado = conservar();
+    abrirModalNuevaPersona((nueva) => abrirModalSubida({ ...estado, personaId: nueva.id }), () => abrirModalSubida(estado));
+  });
+  $('#input-categoria').querySelector('[data-nueva="categoria"]').addEventListener('click', () => {
+    const estado = conservar();
+    abrirNuevaCategoria((idNueva) => abrirModalSubida({ ...estado, categoriaId: idNueva }), () => abrirModalSubida(estado));
+  });
 }
 
 function actualizarBotonGuardar() {
   const btn = $('#modal-guardar');
   if (!btn) return;
   const faltaPersona = !valorSelectorFila($('#input-persona')); // sin ninguna persona creada / elegida
-  btn.disabled = faltaPersona || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
+  const faltaCategoria = !valorSelectorFila($('#input-categoria')); // hay que elegir (o crear) una categoría
+  btn.disabled = faltaPersona || faltaCategoria || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
 }
 
 async function guardarDocumentoNuevo() {
@@ -7268,7 +7315,7 @@ function evitarBarraAutorrelleno(input) {
   input.addEventListener('touchstart', activar, { once: true });
 }
 
-function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
+function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alCancelar = null) {
   abrirModal(`
     <h3>${escapeHtml(titulo)}</h3>
     <div class="campo">
@@ -7280,7 +7327,7 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60) {
       <button class="btn-primario" id="modal-guardar-renombrar">Guardar</button>
     </div>
   `);
-  $('#modal-cancelar').addEventListener('click', volverAtras);
+  $('#modal-cancelar').addEventListener('click', alCancelar || volverAtras);
   const input = $('#input-renombrar');
   evitarBarraAutorrelleno(input);
   input.focus();
