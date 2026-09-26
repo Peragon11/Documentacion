@@ -143,7 +143,7 @@
     -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
   }
   input, textarea, [contenteditable]{ -webkit-touch-callout:default; user-select:text; -webkit-user-select:text; }
-  html,body{ height:100%; overscroll-behavior-y:contain; background:var(--ink); touch-action:pan-x pan-y; }
+  html,body{ height:100%; overscroll-behavior-x:contain; overscroll-behavior-y:contain; background:var(--ink); touch-action:pan-x pan-y; }
   html.zoom-doc, html.zoom-doc body{ touch-action:auto; }
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
@@ -545,6 +545,12 @@
     -ms-overflow-style:none; scrollbar-width:none;
   }
   .chips-categorias::-webkit-scrollbar{ display:none; }
+  /* Al deslizar a otra persona/categoría el contenido entra desde el lado hacia el que se ha deslizado */
+  #pantalla-persona.desliza-der{ animation:entra-der .26s ease-out; }
+  #pantalla-persona.desliza-izq{ animation:entra-izq .26s ease-out; }
+  @keyframes entra-der{ from{ transform:translateX(44px); opacity:0; } to{ transform:none; opacity:1; } }
+  @keyframes entra-izq{ from{ transform:translateX(-44px); opacity:0; } to{ transform:none; opacity:1; } }
+  @media (prefers-reduced-motion:reduce){ #pantalla-persona.desliza-der, #pantalla-persona.desliza-izq{ animation:none; } }
 
   .aviso-caducidad-banner{
     display:flex; align-items:center; justify-content:center; padding:11px 14px; margin:-4px 0 16px;
@@ -1472,7 +1478,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.8';
+const VERSION_APP = '3.2.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -3717,7 +3723,7 @@ function mostrarPantallaPersonas() {
   renderizarPantallaInicio();
 }
 
-function abrirPersona(personaId) {
+function abrirPersona(personaId, sinNavegacion = false) {
   personaActivaId = personaId;
   categoriaGlobalActivaId = null;
   categoriaActiva = 'todos';
@@ -3735,7 +3741,7 @@ function abrirPersona(personaId) {
   renderizarChipsCategorias();
   renderizarAvisoCaducidadPersona();
   renderizarDocumentos();
-  pushNavegacion(mostrarPantallaPersonas);
+  if (!sinNavegacion) pushNavegacion(mostrarPantallaPersonas);
 }
 
 // Vista transversal: todos los documentos de una categoría, de todas las
@@ -3743,7 +3749,7 @@ function abrirPersona(personaId) {
 // sola persona). Reutiliza la misma sección #pantalla-persona, pero con
 // la barra de chips mostrando personas en vez de categorías (al revés
 // que en abrirPersona) y sin avisos de caducidad por persona.
-function abrirCategoriaGlobal(categoriaId) {
+function abrirCategoriaGlobal(categoriaId, sinNavegacion = false) {
   personaActivaId = null;
   categoriaGlobalActivaId = categoriaId;
   personaFiltroActiva = 'todos';
@@ -3765,8 +3771,54 @@ function abrirCategoriaGlobal(categoriaId) {
   $('#titulo-topbar').textContent = cat ? cat.nombre : 'Categoría';
   renderizarChipsPersonas();
   renderizarDocumentos();
-  pushNavegacion(mostrarPantallaPersonas);
+  if (!sinNavegacion) pushNavegacion(mostrarPantallaPersonas);
 }
+
+// ---- Deslizar de lado a lado ----
+// Dentro de una persona (o de una categoría), un gesto horizontal pasa a la siguiente / anterior, en el orden en que
+// salen en la pantalla de inicio. No da la vuelta: en la primera o la última no hace nada. No actúa sobre la
+// fila de botones de filtro (que se desplaza sola), ni en modo selección, ni con una ventana abierta, ni si el dedo
+// empieza pegado al borde de la pantalla (ahí Android tiene su propio gesto de "atrás").
+function cambiarVentanaLateral(direccion) {
+  const lista = personaActivaId ? datos.personas : (categoriaGlobalActivaId !== null ? datos.categorias : null);
+  if (!lista) return false;
+  const actual = lista.findIndex((x) => x.id === (personaActivaId || categoriaGlobalActivaId));
+  const destino = lista[actual + direccion];
+  if (actual < 0 || !destino) return false;
+  if (personaActivaId) abrirPersona(destino.id, true); else abrirCategoriaGlobal(destino.id, true);
+  const pantalla = $('#pantalla-persona');
+  pantalla.classList.remove('desliza-izq', 'desliza-der');
+  void pantalla.offsetWidth; // reinicia la animación
+  pantalla.classList.add(direccion > 0 ? 'desliza-der' : 'desliza-izq');
+  window.scrollTo(0, 0);
+  return true;
+}
+(function activarDeslizarLateral() {
+  let inicio = null;
+  const puedeDeslizar = (e) => {
+    if ($('#pantalla-persona').classList.contains('hidden')) return false;
+    if (!$('#visor-completo').classList.contains('hidden') || $('#raiz-modal').querySelector('.modal-fondo')) return false;
+    if (typeof modoSeleccionDocs !== 'undefined' && modoSeleccionDocs) return false;
+    if (e.target.closest('.chips-categorias, input, select, textarea')) return false;
+    return true;
+  };
+  document.addEventListener('touchstart', (e) => {
+    inicio = null;
+    if (e.touches.length !== 1 || !puedeDeslizar(e)) return;
+    const t = e.touches[0];
+    if (t.clientX < 24 || t.clientX > window.innerWidth - 24) return;
+    inicio = { x: t.clientX, y: t.clientY, t: Date.now() };
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!inicio) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - inicio.x, dy = t.clientY - inicio.y, dt = Date.now() - inicio.t;
+    inicio = null;
+    if (dt > 800 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+    cambiarVentanaLateral(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  document.addEventListener('touchcancel', () => { inicio = null; }, { passive: true });
+})();
 
 $('#btn-volver').addEventListener('click', volverAtras);
 // Cierra el modo administrar (categorías o personas) y vuelve a la vista
