@@ -551,6 +551,8 @@
     border-radius:var(--r-boton); font-size:.85rem; font-weight:600; color:#fff; text-align:center;
   }
   .aviso-caducidad-banner{ cursor:pointer; gap:8px; }
+  .aviso-caducidad-banner .banner-placa{ display:inline-flex; align-items:center; gap:8px; }
+  .categoria-barra .aviso-caducidad-persona{ position:static; flex:none; width:32px; height:32px; min-width:0; min-height:0; max-width:none; max-height:none; margin-left:8px; }
   .aviso-caducidad-banner:active{ filter:brightness(.92); }
   .aviso-caducidad-banner .banner-flecha{ font-size:1.3em; line-height:1; margin-top:-2px; }
   .aviso-caducidad-banner.aviso{ background:#C77B22; }
@@ -606,13 +608,16 @@
     box-shadow:0 5px 12px rgba(0,0,0,.24);
     cursor:pointer; text-align:left;
   }
-  /* !important: en varios skins (Pasaporte, Carpeta, Chicle, Bosque) la regla de fondo de
-     .doc-fila lleva el selector "html[data-skin=...] .doc-fila", que por llevar también el
-     tipo "html" es más específica que estas dos clases juntas y, sin el !important, ganaba
-     ella — dejando el aviso de caducidad invisible en esos skins. */
-  .doc-fila.aviso{ background:#C77B22 !important; }
-  .doc-fila.caducado{ background:#E5342A !important; }
-  .doc-fila.aviso .doc-nombre, .doc-fila.caducado .doc-nombre{ color:#fff; }
+  /* Aviso de caducidad: como cada ficha ya lleva el color de su categoría, el aviso no puede ser un color de
+     fondo. Es una cinta diagonal en la esquina de la miniatura con la palabra: roja "CADUCADO" o ámbar
+     "POR CADUCAR". La ficha conserva el color de su categoría. */
+  .cinta-caducidad{
+    position:absolute; top:22px; left:-44px; width:160px; padding:3px 0; z-index:2; pointer-events:none;
+    transform:rotate(-45deg); text-align:center; font-family:var(--sans); font-size:.66rem; font-weight:800; letter-spacing:.07em;
+    text-transform:uppercase; box-shadow:0 2px 6px rgba(0,0,0,.4);
+  }
+  .cinta-caducidad.caducado{ background:#E5342A; color:#fff; }
+  .cinta-caducidad.aviso{ background:#F2A100; color:#1B1B1B; letter-spacing:.03em; font-size:.6rem; }
   .doc-fila .miniatura{
     width:auto; margin:8px 8px 0; aspect-ratio:16/10; position:relative;
     background:var(--ink-3); overflow:hidden; display:flex; align-items:center; justify-content:center;
@@ -674,9 +679,8 @@
     display:inline-block; flex:none; font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:var(--r-chip);
     background:var(--ink-3); color:var(--text-dim);
   }
-  /* Cuando la ficha entera ya está coloreada (aviso/caducado), la
-     etiqueta pasa a un fondo oscuro semitransparente para que se siga
-     leyendo bien encima, en vez de mezclarse con el mismo color. */
+
+  /* Días que faltan / desde cuándo caducó: fondo oscuro semitransparente para leerse sobre el color de la categoría */
   .doc-fila .badge-mini.aviso, .doc-fila .badge-mini.caducado{ background:rgba(0,0,0,.3); color:#fff; }
 
   #visor-completo{
@@ -1468,7 +1472,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.2.5';
+const VERSION_APP = '3.2.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4136,6 +4140,7 @@ function crearBarraCategoriaHome(cat, editable) {
   fila.style.setProperty('--color-categoria', cat.color); // por si el estilo pinta el color en otra capa (Cómic)
   fila.innerHTML = `
     <button class="categoria-barra-nombre" type="button">${escapeHtml(cat.nombre)}</button>
+    ${!editable && estadoCaducidadCategoria(cat.id) ? `<span class="aviso-caducidad-persona ${estadoCaducidadCategoria(cat.id)}" aria-label="Tiene documentos caducados o a punto de caducar">${svgAvisoCaducidad('80%')}</span>` : ''}
     ${editable ? `
     <button class="icon-btn-cat-bar" type="button" aria-label="Renombrar categoría">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
@@ -5721,6 +5726,7 @@ function renderizarDocumentos() {
 // categoría (ya está fija, sería redundante), agrupa por persona, con su
 // nombre y avatar encabezando cada grupo.
 function renderizarDocumentosPorCategoria() {
+  renderizarAvisoCaducidadCategoria();
   const lista = datos.documentos.filter((d) => {
     if (d.categoria !== categoriaGlobalActivaId) return false;
     if (personaFiltroActiva !== 'todos' && d.personaId !== personaFiltroActiva) return false;
@@ -5809,6 +5815,7 @@ function crearTarjetaDocUnica(doc, indicePagina) {
       ${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}
       <span class="check-seleccion"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       ${!modoExpandido && variasPaginas ? `<span class="marca-paginas">${doc.paginas.length}</span>` : ''}
+      ${badge ? `<span class="cinta-caducidad ${badge.estado}">${trad(badge.estado === 'caducado' ? 'Caducado' : 'Por caducar')}</span>` : ''}
     </div>
     <div class="info">
       <p class="doc-nombre">${escapeHtml(doc.nombre)}</p>
@@ -6166,7 +6173,8 @@ async function compartirPaginasComoPdf(paginas, titulo) {
 function calcularBadgeCaducidad(fecha) {
   if (!fecha) return null;
   const dias = diasHastaCaducidad(fecha);
-  if (dias <= 0) return { estado: 'caducado', texto: 'Caducado' };
+  if (dias === 0) return { estado: 'caducado', texto: trad('Caducó hoy') };
+  if (dias < 0) return { estado: 'caducado', texto: trad(dias === -1 ? 'Caducó hace {n} día' : 'Caducó hace {n} días', { n: -dias }) };
   if (dias <= 60) return { estado: 'aviso', texto: trad(dias === 1 ? '{n} día' : '{n} días', { n: dias }) };
   return null;
 }
@@ -6199,27 +6207,49 @@ function htmlAvisoCaducidadPersona(personaId) {
     ? `<span class="aviso-caducidad-persona ${estado}" aria-label="Tiene documentos caducados o a punto de caducar">${svgAvisoCaducidad('80%')}</span>`
     : '';
 }
-function renderizarAvisoCaducidadPersona() {
-  const { caducados, avisos } = contarCaducidadesPersona(personaActivaId);
-
+// Pinta los dos avisos de arriba (caducados / a punto de caducar) con los recuentos dados. Son los mismos
+// elementos en la pantalla de una persona y en la de una categoría.
+function pintarAvisosCaducidad(caducados, avisos) {
+  const placa = (texto) => `<span class="banner-placa"><span>${texto}</span><span class="banner-flecha" aria-hidden="true">›</span></span>`;
   const bannerCaducado = $('#aviso-caducado-persona');
   bannerCaducado.classList.toggle('hidden', caducados === 0);
-  if (caducados > 0) {
-    bannerCaducado.innerHTML = `<span>${trad(caducados === 1 ? 'Tiene {n} documento caducado' : 'Tiene {n} documentos caducados', { n: caducados })}</span><span class="banner-flecha" aria-hidden="true">›</span>`;
-  }
-
+  if (caducados > 0) bannerCaducado.innerHTML = placa(trad(caducados === 1 ? 'Tiene {n} documento caducado' : 'Tiene {n} documentos caducados', { n: caducados }));
   const bannerAviso = $('#aviso-porcaducar-persona');
   bannerAviso.classList.toggle('hidden', avisos === 0);
-  if (avisos > 0) {
-    bannerAviso.innerHTML = `<span>${trad(avisos === 1 ? 'Tiene {n} documento a punto de caducar' : 'Tiene {n} documentos a punto de caducar', { n: avisos })}</span><span class="banner-flecha" aria-hidden="true">›</span>`;
-  }
+  if (avisos > 0) bannerAviso.innerHTML = placa(trad(avisos === 1 ? 'Tiene {n} documento a punto de caducar' : 'Tiene {n} documentos a punto de caducar', { n: avisos }));
+}
+function renderizarAvisoCaducidadPersona() {
+  const { caducados, avisos } = contarCaducidadesPersona(personaActivaId);
+  pintarAvisosCaducidad(caducados, avisos);
+}
+// En la pantalla de una categoría: los documentos de esa categoría (de la persona elegida en los chips, si hay).
+function renderizarAvisoCaducidadCategoria() {
+  pintarAvisosCaducidad(documentosConAviso('caducado').length, documentosConAviso('aviso').length);
+}
+// Estado de caducidad de una categoría entera (para la marca de su barra): el peor de sus documentos.
+function estadoCaducidadCategoria(catId) {
+  let estado = null;
+  datos.documentos.forEach((d) => {
+    if (d.categoria !== catId) return;
+    const b = calcularBadgeCaducidad(d.fechaCaducidad);
+    if (!b) return;
+    if (b.estado === 'caducado') estado = 'caducado';
+    else if (!estado) estado = 'aviso';
+  });
+  return estado;
 }
 // Al pulsar un aviso de la pantalla de una persona: con un solo documento en ese estado se abre directamente;
 // con varios se abre una ventana nueva que los enseña juntos (del que antes caduca al que después), aunque
 // también estén en su sitio de siempre. Para salir, atrás.
 function documentosConAviso(estado) {
   return datos.documentos
-    .filter((d) => d.personaId === personaActivaId && (calcularBadgeCaducidad(d.fechaCaducidad) || {}).estado === estado)
+    .filter((d) => {
+      if (categoriaGlobalActivaId !== null) {
+        if (d.categoria !== categoriaGlobalActivaId) return false;
+        if (personaFiltroActiva !== 'todos' && d.personaId !== personaFiltroActiva) return false;
+      } else if (d.personaId !== personaActivaId) return false;
+      return (calcularBadgeCaducidad(d.fechaCaducidad) || {}).estado === estado;
+    })
     .sort((a, b) => a.fechaCaducidad.localeCompare(b.fechaCaducidad));
 }
 function irADocumentosConAviso(estado) {
@@ -6247,7 +6277,19 @@ function abrirListaCaducidad(estado, docs) {
   pushNavegacion(() => visor.classList.add('hidden'));
   $('#lista-caducidad-cerrar').addEventListener('click', volverAtras);
   const lista = $('#lista-caducidad');
-  docs.forEach((doc) => lista.appendChild(crearTarjetaDoc(doc)));
+  if (categoriaGlobalActivaId === null) { docs.forEach((doc) => lista.appendChild(crearTarjetaDoc(doc))); return; }
+  // Desde una categoría hay documentos de varias personas: se agrupan por persona (como en la propia categoría)
+  lista.classList.remove('lista-docs');
+  datos.personas.forEach((persona) => {
+    const suyos = docs.filter((d) => d.personaId === persona.id);
+    if (!suyos.length) return;
+    const grupo = document.createElement('div');
+    grupo.className = 'grupo-documentos';
+    grupo.innerHTML = `<h3 class="titulo-grupo"><span class="avatar-persona avatar-mini-grupo" style="${estiloAvatar(persona)}">${contenidoAvatar(persona)}</span>${escapeHtml(persona.nombre)}</h3><div class="lista-docs"></div>`;
+    const listaEl = grupo.querySelector('.lista-docs');
+    suyos.forEach((doc) => listaEl.appendChild(crearTarjetaDoc(doc)));
+    lista.appendChild(grupo);
+  });
 }
 ['caducado', 'aviso'].forEach((estado) => {
   const banner = $(estado === 'caducado' ? '#aviso-caducado-persona' : '#aviso-porcaducar-persona');
@@ -6321,7 +6363,41 @@ function comprobarCaducidadesYNotificar() {
   if (cambiado) guardarAvisosCaducidad(avisos);
 }
 
-function notificarCaducidad(doc, dias) {
+// Imagen de la persona para la notificación (cuadrada, 192 px): su foto, o su icono sobre su color, o la inicial
+// de su nombre. Así la notificación no repite dos veces el icono de la app (el pequeño ya lo pone el sistema).
+async function imagenPersonaParaNotificacion(persona) {
+  if (!persona) return 'icono.png';
+  try {
+    const T = 192;
+    const lienzo = document.createElement('canvas');
+    lienzo.width = lienzo.height = T;
+    const ctx = lienzo.getContext('2d');
+    const cargar = (src) => new Promise((ok, ko) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ko; im.src = src; });
+    if (persona.foto) {
+      const im = await cargar(persona.foto);
+      const lado = Math.min(im.width, im.height);
+      ctx.drawImage(im, (im.width - lado) / 2, (im.height - lado) / 2, lado, lado, 0, 0, T, T);
+    } else {
+      ctx.fillStyle = colorParaPersona(persona);
+      ctx.fillRect(0, 0, T, T);
+      const ic = ICONOS_AVATAR.find((i) => i.id === persona.icono);
+      if (ic) {
+        const im = await cargar('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${T}" height="${T}" fill="#F2EEE3">${ic.svg}</svg>`));
+        const margen = T * 0.19;
+        ctx.drawImage(im, margen, margen, T - 2 * margen, T - 2 * margen);
+      } else {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 110px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText((persona.nombre || '?').trim().charAt(0).toUpperCase(), T / 2, T / 2 + 6);
+      }
+    }
+    return lienzo.toDataURL('image/png');
+  } catch (e) { return 'icono.png'; }
+}
+
+async function notificarCaducidad(doc, dias) {
   const persona = datos.personas.find((p) => p.id === doc.personaId);
   const categoria = datos.categorias.find((c) => c.id === doc.categoria);
   const que = categoria ? categoria.nombre : doc.nombre;
@@ -6330,7 +6406,7 @@ function notificarCaducidad(doc, dias) {
   // "Carnet de Ana ha caducado.": con o sin la persona, en el idioma de la interfaz
   const cuerpo = persona ? trad('{doc} de {persona} ' + estado + '.', { doc: que, persona: persona.nombre, n: dias }) : trad('{doc} ' + estado + '.', { doc: que, n: dias });
   const opciones = {
-    body: cuerpo, icon: 'icono.png', badge: 'icono_notificacion.png',
+    body: cuerpo, icon: await imagenPersonaParaNotificacion(persona), badge: 'icono_notificacion.png',
     tag: 'caducidad-' + doc.id, data: { personaId: doc.personaId },
   };
   if (navigator.serviceWorker) {
