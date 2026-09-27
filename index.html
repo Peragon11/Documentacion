@@ -350,7 +350,11 @@
   body:has(#pantalla-personas:not(.hidden)) .toast{ bottom:calc(122px + var(--safe-b)); }
   #btn-ajustes.aviso-nube::after, #bar-ajustes.aviso-nube::after{ content:''; position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; background:var(--stamp); border:2px solid var(--ink-2); }
 
-  #vista-app{ height:100dvh; overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
+  /* Alto de la app: 100dvh, pero sin pasarse nunca del alto real medido por JS (--alto-app, ver
+     ajustarAltoApp). En la app instalada en Android la ventana cambia de tamaño justo después de
+     abrir (barras del sistema) y en algunos móviles 100dvh se queda con el valor de antes: la app
+     medía más que la pantalla y la barra de abajo quedaba metida detrás de la de navegación. */
+  #vista-app{ height:100dvh; height:min(100dvh, var(--alto-app, 100dvh)); overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
   @media (orientation:landscape){
     #vista-app{ max-width:100%; }
   }
@@ -1501,10 +1505,18 @@
   html[data-skin="metalico"] .btn-icono-top > svg{ filter:var(--filtro-grabado); }
   html[data-skin="metalico"] .btn-icono-top.btn-barra{ width:auto; gap:2px; font-size:.66rem; font-weight:700; letter-spacing:.02em; line-height:1; text-shadow:var(--sombra-grabado); }
   html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:20px; height:20px; }
+  /* En apaisado el panel entero (con su proporción casi cuadrada) hace la barra altísima y tapa los
+     nombres: los botones pasan a la placa alargada de metal (la de los botones secundarios, con su
+     chaflán), repartidos a todo el ancho, con el icono AL LADO del texto, grabados los dos. */
   @media (orientation:landscape) and (max-height:520px){
-    html[data-skin="metalico"] .barra-botones{ justify-content:center; }
-    html[data-skin="metalico"] .btn-icono-top.btn-barra{ flex:none; width:84px; flex-direction:column; gap:1px; padding:0; font-size:.6rem; }
+    html[data-skin="metalico"] .barra-botones{ gap:8px; }
+    html[data-skin="metalico"] .btn-icono-top.btn-barra{
+      flex:1; width:auto; height:40px; aspect-ratio:auto; flex-direction:row; justify-content:center; gap:8px; padding:0 8px;
+      background:none; border-style:solid; border-width:9px; border-image:var(--placa-metal) 34 fill / 9px stretch;
+      font-size:.8rem;
+    }
     html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:18px; height:18px; }
+    html[data-skin="metalico"] .barra-inferior.barra-inferior::before{ margin-bottom:5px; } /* clase doble: la regla general de la cinta va más abajo */
   }
 
   /* Avatares grandes de la portada: el marco con el pozo hueco por encima (::after) y la foto o
@@ -1745,7 +1757,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.3';
+const VERSION_APP = '3.4.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2347,6 +2359,18 @@ function ajustarPantallasInicio() {
 }
 window.addEventListener('resize', ajustarPantallasInicio);
 window.addEventListener('orientationchange', () => setTimeout(ajustarPantallasInicio, 150));
+
+// Alto real de la ventana para #vista-app (ver el CSS de #vista-app). innerHeight y no el de
+// visualViewport: así el teclado sigue sin encoger la app, igual que con 100dvh.
+function ajustarAltoApp() {
+  document.documentElement.style.setProperty('--alto-app', window.innerHeight + 'px');
+}
+ajustarAltoApp();
+window.addEventListener('resize', ajustarAltoApp);
+window.addEventListener('orientationchange', () => setTimeout(ajustarAltoApp, 150));
+window.addEventListener('pageshow', ajustarAltoApp);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ajustarAltoApp(); });
+window.addEventListener('load', () => { ajustarAltoApp(); setTimeout(ajustarAltoApp, 400); setTimeout(ajustarAltoApp, 1200); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarPantallasInicio);
 new MutationObserver(ajustarPantallasInicio).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin', 'data-preguntar-idioma', 'data-hay-datos', 'lang'] });
 ['#vista-idioma', '#vista-login'].forEach((sel) => new MutationObserver(ajustarPantallasInicio).observe($(sel), { childList: true, subtree: true, characterData: true }));
