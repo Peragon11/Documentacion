@@ -1472,7 +1472,13 @@
     --borde-sutil:rgba(26,28,31,.12); --borde:#7D848C; --borde-fuerte:#1A1C1F; --topbar-fondo:rgba(203,207,211,.92);
   }
   html[data-skin="metalico"]{ --fondo-login:var(--ink); --r-avatar:6px; --r-avatar-mini:6px; }
-  html[data-skin="metalico"] .topbar{ border-bottom:1px solid var(--borde-fuerte); backdrop-filter:none; }
+  html[data-skin="metalico"] .topbar{ border-bottom:none; backdrop-filter:none; }
+  /* Misma cinta de aviso amarilla/negra que la barra de abajo, pegada al borde inferior (el sitio
+     donde estaba el border-bottom), dentro del propio padding de la topbar. */
+  html[data-skin="metalico"] .topbar::after{
+    content:''; position:absolute; left:0; right:0; bottom:0; height:6px;
+    background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px);
+  }
   html[data-skin="metalico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.03em; text-shadow:1px 1px 0 rgba(0,0,0,.35); }
   /* ===== El panel de metal (dibujo vectorial propio, en archivos SVG aparte) =====
      - skin-metalico-panel.svg: panel entero con el pozo central relleno de metal → botones de
@@ -1759,7 +1765,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.5';
+const VERSION_APP = '3.4.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
