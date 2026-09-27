@@ -419,6 +419,8 @@
     [`Rosa chicle, menta, limón y celeste: todo redondo, gordito y de colorines`, `Bubblegum pink, mint, lemon and sky blue: all round, chubby and colourful`, `Rosa xiclet, menta, llimona i cel: tot rodó, rodonet i de colors`, `Rosa chewing-gum, menta, limone e azzurro: tutto rotondo, paffuto e colorato`, `Rose chewing-gum, menthe, citron et bleu ciel : tout rond, dodu et coloré`, `Kaugummi-Pink, Minze, Zitrone und Himmelblau: alles rund, pummelig und bunt`],
     [`Cómic`, `Comic`, `Còmic`, `Fumetto`, `Bande dessinée`, `Comic`],
     [`Blanco y negro de cómic: tinta gruesa, trama de puntitos y sombras duras`, `Black-and-white comic book: thick ink, halftone dots and hard shadows`, `Blanc i negre de còmic: tinta gruixuda, trama de puntets i ombres dures`, `Fumetto in bianco e nero: inchiostro spesso, retino a puntini e ombre nette`, `Bande dessinée en noir et blanc : encre épaisse, trame de points et ombres dures`, `Schwarz-Weiß-Comic: dicke Tusche, Rasterpunkte und harte Schatten`],
+    [`Metálico`, `Metallic`, `Metàl·lic`, `Metallico`, `Métallique`, `Metallisch`],
+    [`Paneles de nave espacial: metal remachado, esquinas cortadas y placas con tornillos`, `Spaceship panels: riveted metal, cut corners and screwed nameplates`, `Panells de nau espacial: metall reblonat, cantonades tallades i plaques amb cargols`, `Pannelli da astronave: metallo rivettato, angoli tagliati e targhette con viti`, `Panneaux de vaisseau spatial : métal riveté, coins coupés et plaques à vis`, `Raumschiff-Paneele: genietetes Metall, abgeschrägte Ecken und verschraubte Namensschilder`],
   ];
 
   function construir(lista, indice) {

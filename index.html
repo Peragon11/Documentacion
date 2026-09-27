@@ -57,7 +57,8 @@
     pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P&family=Silkscreen:wght@400;700',
     neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=Yellowtail',
     chicle: 'family=Fredoka:wght@500;600;700&family=Bagel+Fat+One',
-    comic: 'family=Bangers&family=Comic+Neue:wght@400;700&family=Luckiest+Guy'
+    comic: 'family=Bangers&family=Comic+Neue:wght@400;700&family=Luckiest+Guy',
+    metalico: 'family=Orbitron:wght@700;800&family=Share+Tech+Mono'
   };
   window.__cargarFuentesSkin = function (id) {
     var q = window.__fuentesSkin[id];
@@ -1444,6 +1445,143 @@
   html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong){ font-weight:700; text-decoration:underline; text-underline-offset:3px; }
   html[data-skin="comic"] .aviso-caducidad-persona{ border:2px solid var(--text-light); font-family:var(--serif); }
 
+  /* ---- metálico ----
+     Paneles de nave espacial: metal remachado, una sola esquina cortada (con su propio marco,
+     no un canto desnudo) en botones y fichas, placas de nombre con "tornillos" a los lados,
+     avatares como portillas y letra técnica (Share Tech Mono / Orbitron para el título). */
+  html[data-skin="metalico"] .persona-tile-clic{ --altura-nombre:calc(.78rem * 1.2 + 16px); }
+  [data-skin="metalico"]{
+    --ink:#24272B; --ink-2:#2F3236; --ink-3:#3A3E43; --paper:#E7E9EC; --text-ink:#1A1C1F;
+    --stamp:#E8B923; --sobre-acento:#1A1C1F; --text-light:#DDE1E5; --text-dim:#8A9099;
+    --seal:#4FD8B8; --amber:#E8B923; --azul:#5B8DEF; --morado:#9C6FE0; --stamp-dark:#B38A13;
+    --borde-sutil:rgba(255,255,255,.08); --borde:#565C62; --borde-fuerte:#C3C9CF; --topbar-fondo:rgba(47,50,54,.92);
+    --serif:'Share Tech Mono', ui-monospace, 'Courier New', monospace;
+    --sans:'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --fuente-marca:'Orbitron', var(--sans);
+    --r-pill:6px; --r-chip:6px; --r-avatar:50%; --r-avatar-mini:50%; --r-tarjeta:6px; --r-miniatura:4px;
+    --r-boton:6px; --r-campo:5px; --r-grupo:8px; --r-modal:10px; --r-caja:6px; --r-marca:6px; --r-app-login:14px; --r-redondo:50%;
+  }
+  html[data-tema="claro"] [data-skin="metalico"], html[data-tema="claro"][data-skin="metalico"]{
+    --ink:#D9DCDF; --ink-2:#CBCFD3; --ink-3:#BDC1C6; --paper:#F2F3F5; --text-ink:#1A1C1F;
+    --stamp:#C9891B; --text-light:#1A1C1F; --text-dim:#5A6066;
+    --seal:#0E7A5F; --amber:#C9891B; --azul:#2F5FC0; --morado:#6A3FC0; --stamp-dark:#8A6212;
+    --borde-sutil:rgba(26,28,31,.12); --borde:#7D848C; --borde-fuerte:#1A1C1F; --topbar-fondo:rgba(203,207,211,.92);
+  }
+  html[data-skin="metalico"]{ --fondo-login:var(--ink); --r-avatar:6px; --r-avatar-mini:6px; }
+  html[data-skin="metalico"] .topbar{ border-bottom:1px solid var(--borde-fuerte); backdrop-filter:none; }
+  html[data-skin="metalico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.03em; text-shadow:1px 1px 0 rgba(0,0,0,.35); }
+  /* ===== El panel de metal (dibujo vectorial propio, en archivos SVG aparte) =====
+     - skin-metalico-panel.svg: panel entero con el pozo central relleno de metal → botones de
+       icono (barra de abajo y los de arriba). El icono y el texto van GRABADOS en ese pozo.
+     - skin-metalico-marco.svg: el mismo panel con el pozo HUECO → avatares: la foto o el color
+       de la persona se ve por el hueco, como una pantalla metida en el metal.
+     - skin-metalico-placa(-marco).svg: versión sencilla de 120×120 para border-image a 9 trozos
+       (esquinas fijas, lados estirados) → fichas anchas, chips y botones de texto, que no tienen
+       la proporción del panel. La "-marco" deja el centro hueco para que se vea el color propio
+       de la ficha (categoría, documento, botón principal).
+     Proporción del panel: 900×720 (alto = 0,8 del ancho). El pozo ocupa del 16,7% al 83,3% en
+     horizontal y del 17,5% al 77% en vertical, y está centrado: en los botones basta con
+     centrar el icono y el texto. */
+  html[data-skin="metalico"]{
+    --panel-metal:url('skin-metalico-panel.svg'); --marco-metal:url('skin-metalico-marco.svg');
+    --placa-metal:url('skin-metalico-placa.svg'); --placa-hueca:url('skin-metalico-placa-marco.svg');
+    --grabado:#40454b;
+    --sombra-grabado:-1px -1px 0 rgba(0,0,0,.5), 1px 1px 0 rgba(255,255,255,.75);
+    --filtro-grabado:drop-shadow(-1px -1px 0 rgba(0,0,0,.5)) drop-shadow(1px 1px 0 rgba(255,255,255,.75));
+  }
+  /* Botones de icono: el panel entero, con el icono (y el texto) grabados en el pozo */
+  html[data-skin="metalico"] .btn-icono-top{
+    background:var(--panel-metal) center/100% 100% no-repeat; border:none; border-radius:0; box-shadow:none;
+    width:56px; height:auto; aspect-ratio:900/720; padding:0; color:var(--grabado);
+  }
+  html[data-skin="metalico"] .btn-icono-top > svg{ filter:var(--filtro-grabado); }
+  html[data-skin="metalico"] .btn-icono-top.btn-barra{ width:auto; gap:1px; font-size:.6rem; font-weight:700; line-height:1; text-shadow:var(--sombra-grabado); }
+  html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:20px; height:20px; }
+  @media (orientation:landscape) and (max-height:520px){
+    html[data-skin="metalico"] .barra-botones{ justify-content:center; }
+    html[data-skin="metalico"] .btn-icono-top.btn-barra{ flex:none; width:84px; flex-direction:column; gap:1px; padding:0; font-size:.6rem; }
+    html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:18px; height:18px; }
+  }
+
+  /* Avatares grandes de la portada: el marco con el pozo hueco por encima (::after) y la foto o
+     el color de la persona recortado al hueco (content-box). El color va en línea con el atajo
+     "background:", que vuelve a poner el recorte por defecto: por eso el !important.
+     El relleno en % se calcularía sobre el contenedor, no sobre el avatar: --av es el ancho real
+     del avatar (100% del hueco, con su tope de 210px, o 150px cuando hay tres personas). El
+     hueco del pozo va un poco por dentro del canto del marco para que no quede franja vacía. */
+  html[data-skin="metalico"] .avatar-persona{ border:2px solid var(--borde-fuerte); }
+  html[data-skin="metalico"] .persona-tile .avatar-persona{
+    --av:min(100%, 210px);
+    border:none; border-radius:0; box-shadow:none; aspect-ratio:900/720;
+    padding:calc(var(--av) * .125) calc(var(--av) * .155) calc(var(--av) * .17) calc(var(--av) * .155);
+    background-clip:content-box !important; background-origin:content-box !important;
+    /* el hueco para la foto es un rectángulo y el chaflán grande se come su esquina de arriba a
+       la derecha: con esta máscara (el propio marco + la forma del pozo) no asoma nada fuera */
+    -webkit-mask:var(--marco-metal) center/100% 100% no-repeat, url('skin-metalico-pozo.svg') center/100% 100% no-repeat;
+    mask:var(--marco-metal) center/100% 100% no-repeat, url('skin-metalico-pozo.svg') center/100% 100% no-repeat;
+  }
+  html[data-skin="metalico"] .grid-personas.pocas.tres .persona-tile .avatar-persona{ --av:min(100%, 150px); }
+  html[data-skin="metalico"] .persona-tile .avatar-persona::after{
+    content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:var(--marco-metal) center/100% 100% no-repeat;
+  }
+  html[data-skin="metalico"] .persona-tile .avatar-persona > :not(.aviso-caducidad-persona){ position:relative; z-index:2; }
+  html[data-skin="metalico"] .persona-tile .avatar-persona .aviso-caducidad-persona{ z-index:3; }
+
+  /* Fichas anchas, chips y botones de texto: placa a 9 trozos. --bm es el grosor del marco; el
+     recorte (clip-path) quita las esquinas que quedan fuera del canto —la grande arriba a la
+     derecha mide 30/34 del marco, las pequeñas 6/34— para que el color propio no asome por ahí. */
+  html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-secundario, .btn-grande, .btn-google, .chip){
+    border-style:solid; border-width:var(--bm); border-radius:0; box-shadow:none;
+    clip-path:polygon(calc(var(--bm) * .18) 0, calc(100% - var(--bm) * .88) 0, 100% calc(var(--bm) * .88), 100% calc(100% - var(--bm) * .18),
+      calc(100% - var(--bm) * .18) 100%, calc(var(--bm) * .18) 100%, 0 calc(100% - var(--bm) * .18), 0 calc(var(--bm) * .18));
+  }
+  html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina){ --bm:14px; }
+  html[data-skin="metalico"] .categoria-barra{ --bm:12px; padding:4px 10px; }
+  html[data-skin="metalico"] :is(.btn-primario, .btn-secundario){ --bm:11px; padding:2px 6px; }
+  html[data-skin="metalico"] :is(.btn-grande, .btn-google){ --bm:14px; }
+  html[data-skin="metalico"] .chip{ --bm:8px; padding:0 6px; }
+  /* Con su propio color dentro (la placa hueca): categorías, documentos, el botón principal
+     (ámbar), el chip activo y los chips de categoría */
+  html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-grande, .btn-google, .chip.activo, .chip.chip-categoria){
+    border-image:var(--placa-hueca) 34 / var(--bm) stretch;
+  }
+  /* Metal por dentro, con el texto grabado: botón secundario y chips sin seleccionar */
+  html[data-skin="metalico"] :is(.btn-secundario, .chip:not(.activo):not(.chip-categoria)){
+    border-image:var(--placa-metal) 34 fill / var(--bm) stretch; background:none;
+    color:var(--grabado); text-shadow:var(--sombra-grabado); font-weight:700;
+  }
+  html[data-skin="metalico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
+  html[data-skin="metalico"] .categoria-barra{ font-weight:700; letter-spacing:.04em; text-transform:uppercase; font-size:.98rem; text-shadow:1px 1px 0 rgba(0,0,0,.4); }
+  html[data-skin="metalico"] .doc-nombre, html[data-skin="metalico"] .titulo-grupo, html[data-skin="metalico"] .ajustes-titulo{ font-weight:700; letter-spacing:.02em; }
+
+  /* Placa de nombre remachada: un "tornillo" a cada lado, como una etiqueta atornillada */
+  html[data-skin="metalico"] .persona-tile .nombre-persona{
+    position:relative; display:inline-block; max-width:100%; font-size:.78rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.04em; padding:4px 16px; border-radius:3px; -webkit-line-clamp:1;
+    background:linear-gradient(165deg, var(--ink-3), var(--ink-2) 60%, var(--ink) 100%);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.18), inset -1px -1px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.35);
+  }
+  html[data-skin="metalico"] .persona-tile .nombre-persona::before, html[data-skin="metalico"] .persona-tile .nombre-persona::after{
+    content:''; position:absolute; top:50%; transform:translateY(-50%); width:5px; height:5px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #cfd4d9, #4a4f55 60%, #1c1e21 100%); box-shadow:inset 0 0 1px #000, 0 1px 1px rgba(0,0,0,.5);
+  }
+  html[data-skin="metalico"] .persona-tile .nombre-persona::before{ left:4px; }
+  html[data-skin="metalico"] .persona-tile .nombre-persona::after{ right:4px; }
+
+  html[data-skin="metalico"] .ajustes .grupo{ border:1px solid var(--borde-fuerte); box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
+  html[data-skin="metalico"] .modal{ border-top:2px solid var(--borde-fuerte); }
+  html[data-skin="metalico"] .campo input, html[data-skin="metalico"] .campo select, html[data-skin="metalico"] .input-busqueda{ background:var(--ink); border:1px solid var(--borde); }
+  html[data-skin="metalico"] .btn-prov{ border:1px solid var(--borde-fuerte); }
+  html[data-skin="metalico"] .toast{ border:1px solid var(--borde-fuerte); }
+  /* Cinta de aviso (amarillo/negro) sobre la barra inferior, como en una escotilla de acceso */
+  html[data-skin="metalico"] .barra-inferior{ background:linear-gradient(180deg, var(--ink-3), var(--ink-2) 45%, var(--ink) 100%); border-top:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
+  html[data-skin="metalico"] .barra-inferior::before{ content:''; display:block; height:6px; margin:-8px -10px 8px; background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px); }
+  .mq-skin[data-skin="metalico"]{ border:1px solid var(--borde-fuerte); }
+  .mq-skin[data-skin="metalico"] .mqs-barra{ border-bottom:1px solid var(--borde-fuerte); }
+  .mq-skin[data-skin="metalico"] .mqs-barra b, .mq-skin[data-skin="metalico"] .mqs-nom{ font-family:var(--fuente-marca); letter-spacing:.02em; }
+  .mq-skin[data-skin="metalico"] .mqs-doc, .mq-skin[data-skin="metalico"] .mqs-ficha i{ border:1px solid var(--borde-fuerte); }
+
   /* Menús de opciones de documento, página y persona (mismo diseño que Ajustes) */
   html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
   .ajustes .texto-menu{ margin:-8px 0 0; color:var(--text-dim); font-size:.85rem; line-height:1.45; }
@@ -1588,7 +1726,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.1';
+const VERSION_APP = '3.4.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1900,6 +2038,7 @@ const SKINS = {
   neon:      { nombre: 'Neón',      descripcion: 'Rótulos luminosos: contornos que brillan en rosa y turquesa sobre la noche', color: { oscuro: '#150D24', claro: '#E4D9FF' } },
   chicle:    { nombre: 'Chicle',    descripcion: 'Rosa chicle, menta, limón y celeste: todo redondo, gordito y de colorines', color: { oscuro: '#FF6BBA', claro: '#FF5DAF' } },
   comic:     { nombre: 'Cómic',     descripcion: 'Blanco y negro de cómic: tinta gruesa, trama de puntitos y sombras duras', color: { oscuro: '#0A0A0A', claro: '#FFFFFF' } },
+  metalico:  { nombre: 'Metálico',  descripcion: 'Paneles de nave espacial: metal remachado, esquinas cortadas y placas con tornillos', color: { oscuro: '#24272B', claro: '#D7DADD' } },
 };
 function obtenerSkinGuardado() {
   const s = localStorage.getItem(SKIN_STORAGE_KEY);
