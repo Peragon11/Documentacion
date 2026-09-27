@@ -1485,9 +1485,13 @@
   html[data-skin="metalico"]{
     --panel-metal:url('skin-metalico-panel.svg'); --marco-metal:url('skin-metalico-marco.svg');
     --placa-metal:url('skin-metalico-placa.svg'); --placa-hueca:url('skin-metalico-placa-marco.svg');
-    --grabado:#40454b;
-    --sombra-grabado:-1px -1px 0 rgba(0,0,0,.5), 1px 1px 0 rgba(255,255,255,.75);
-    --filtro-grabado:drop-shadow(-1px -1px 0 rgba(0,0,0,.5)) drop-shadow(1px 1px 0 rgba(255,255,255,.75));
+    /* Grabado: letra oscura y, con la luz viniendo de arriba, solo un filo fino de sombra encima
+       (medio píxel: en el móvil es un único píxel real) y el filo de abajo cogiendo brillo, todo en
+       vertical. Con desplazamientos en diagonal de 1px la letra pequeña se desdoblaba y se veía
+       borrosa. */
+    --grabado:#2b2f33;
+    --sombra-grabado:0 -.5px 0 rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.6);
+    --filtro-grabado:drop-shadow(0 -.5px 0 rgba(0,0,0,.35)) drop-shadow(0 1px 0 rgba(255,255,255,.6));
   }
   /* Botones de icono: el panel entero, con el icono (y el texto) grabados en el pozo */
   html[data-skin="metalico"] .btn-icono-top{
@@ -1495,7 +1499,7 @@
     width:56px; height:auto; aspect-ratio:900/720; padding:0; color:var(--grabado);
   }
   html[data-skin="metalico"] .btn-icono-top > svg{ filter:var(--filtro-grabado); }
-  html[data-skin="metalico"] .btn-icono-top.btn-barra{ width:auto; gap:1px; font-size:.6rem; font-weight:700; line-height:1; text-shadow:var(--sombra-grabado); }
+  html[data-skin="metalico"] .btn-icono-top.btn-barra{ width:auto; gap:2px; font-size:.66rem; font-weight:700; letter-spacing:.02em; line-height:1; text-shadow:var(--sombra-grabado); }
   html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:20px; height:20px; }
   @media (orientation:landscape) and (max-height:520px){
     html[data-skin="metalico"] .barra-botones{ justify-content:center; }
@@ -1508,12 +1512,15 @@
      "background:", que vuelve a poner el recorte por defecto: por eso el !important.
      El relleno en % se calcularía sobre el contenedor, no sobre el avatar: --av es el ancho real
      del avatar (100% del hueco, con su tope de 210px, o 150px cuando hay tres personas). El
-     hueco del pozo va un poco por dentro del canto del marco para que no quede franja vacía. */
+     relleno deja la zona de la foto EXACTAMENTE del tamaño del pozo, que es CUADRADO (600×600
+     del dibujo de 900×891 de skin-metalico-marco.svg): las fotos de persona son cuadradas en
+     todos los estilos, así que la misma foto encaja entera aquí y en cualquier otro estilo. Solo
+     el chaflán de adorno tapa su esquina de arriba a la derecha. */
   html[data-skin="metalico"] .avatar-persona{ border:2px solid var(--borde-fuerte); }
   html[data-skin="metalico"] .persona-tile .avatar-persona{
     --av:min(100%, 210px);
-    border:none; border-radius:0; box-shadow:none; aspect-ratio:900/720;
-    padding:calc(var(--av) * .125) calc(var(--av) * .155) calc(var(--av) * .17) calc(var(--av) * .155);
+    border:none; border-radius:0; box-shadow:none; aspect-ratio:900/891;
+    padding:calc(var(--av) * .14) calc(var(--av) * .1667) calc(var(--av) * .1833) calc(var(--av) * .1667);
     background-clip:content-box !important; background-origin:content-box !important;
     /* el hueco para la foto es un rectángulo y el chaflán grande se come su esquina de arriba a
        la derecha: con esta máscara (el propio marco + la forma del pozo) no asoma nada fuera */
@@ -1550,6 +1557,18 @@
   html[data-skin="metalico"] :is(.btn-secundario, .chip:not(.activo):not(.chip-categoria)){
     border-image:var(--placa-metal) 34 fill / var(--bm) stretch; background:none;
     color:var(--grabado); text-shadow:var(--sombra-grabado); font-weight:700;
+  }
+  /* Barras de categoría: chaflán más hondo, con su propia placa (skin-metalico-placa-cat.svg,
+     160×160, chaflán de 60 y hueco achaflanado en paralelo). A 0,36 px por unidad: rebanadas de
+     74 → 26,6px (arriba y dcha., donde cabe el chaflán) y 34 → 12,2px (abajo e izq.); el recorte
+     quita la esquina que queda fuera: 60 → 21,6px, y las pequeñas 6 → 2,2px. El grosor real del
+     marco (--bm, 12px) no cambia: la parte de más de arriba y la dcha. es hueco y deja ver el color.
+     (Clase repetida a propósito: la regla general de las placas con color es un :is() que incluye
+     .chip.activo, y :is() toma la especificidad de su argumento más fuerte — dos clases —, así
+     que con una sola clase esta regla perdía aunque vaya después.) */
+  html[data-skin="metalico"] .categoria-barra.categoria-barra{
+    border-image:url('skin-metalico-placa-cat.svg') 74 74 34 34 / 26.6px 26.6px 12.2px 12.2px stretch;
+    clip-path:polygon(2.2px 0, calc(100% - 21.6px) 0, 100% 21.6px, 100% calc(100% - 2.2px), calc(100% - 2.2px) 100%, 2.2px 100%, 0 calc(100% - 2.2px), 0 2.2px);
   }
   html[data-skin="metalico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
   html[data-skin="metalico"] .categoria-barra{ font-weight:700; letter-spacing:.04em; text-transform:uppercase; font-size:.98rem; text-shadow:1px 1px 0 rgba(0,0,0,.4); }
@@ -1726,7 +1745,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.2';
+const VERSION_APP = '3.4.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -5107,11 +5126,12 @@ function montarRecortador(contenedor, file, opciones) {
     generarSalida, onConfirmar, onCancelar,
     giro = false,   // añade la barra de giro fino y los botones de 90°
     marcoMax = null, // { ancho, alto }: con giro, el marco se adapta a la foto (y se intercambia al girar 90°)
+    formaMarco = '', // clip-path opcional: el marco enseña exactamente la forma en la que se verá la foto
   } = opciones;
   let { anchoMarco, altoMarco } = opciones;
 
   contenedor.innerHTML = `
-    <div class="recorte-marco" id="recorte-marco" style="width:${anchoMarco}px;height:${altoMarco}px;border-radius:${radioMarco}px;"></div>
+    <div class="recorte-marco" id="recorte-marco" style="width:${anchoMarco}px;height:${altoMarco}px;border-radius:${radioMarco}px;${formaMarco ? `clip-path:${formaMarco};` : ''}"></div>
     ${giro ? `
     <div class="recorte-controles">
       <div class="recorte-giro">
@@ -5345,11 +5365,19 @@ function montarRecortador(contenedor, file, opciones) {
   });
 }
 
+// Forma del pozo cuadrado del avatar en el estilo Metálico (600×600 del dibujo, con el chaflán
+// de adorno arriba a la derecha y los pequeños en las otras esquinas). La foto se guarda siempre
+// cuadrada (sirve igual en todos los estilos); con este estilo el marco de encuadre solo enseña,
+// además, la esquina que tapará el chaflán.
+const FORMA_POZO_METALICO = 'polygon(3.33% 0, 61.33% 0, 100% 34.33%, 100% 96.67%, 96.67% 100%, 3.33% 100%, 0 96.67%, 0 3.33%)';
+
 function montarAjustePosicionFoto(contenedor, file, { onConfirmar, onCancelar }) {
+  const metal = obtenerSkinGuardado() === 'metalico';
   const TAMANO_MARCO = 220;
   const TAMANO_SALIDA = 240;
   montarRecortador(contenedor, file, {
-    anchoMarco: TAMANO_MARCO, altoMarco: TAMANO_MARCO, radioMarco: 32,
+    anchoMarco: TAMANO_MARCO, altoMarco: TAMANO_MARCO, radioMarco: metal ? 0 : 32,
+    formaMarco: metal ? FORMA_POZO_METALICO : '',
     giro: true,
     onCancelar, onConfirmar,
     generarSalida: ({ img, cx, cy, escala, rotacion }) => {

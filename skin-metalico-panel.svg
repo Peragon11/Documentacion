@@ -86,10 +86,10 @@
         <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
         <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#23262a" stroke-width="13"/>
         <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#3fd6ff" stroke-width="5" filter="url(#brillo)"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#23262a" stroke-width="15"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#23262a" stroke-width="13"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#ff8a3a" stroke-width="5" filter="url(#brillo)"/>
+        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,344" stroke="#23262a" stroke-width="15"/>
+        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,344" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
+        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,344" stroke="#23262a" stroke-width="13"/>
+        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,344" stroke="#ff8a3a" stroke-width="5" filter="url(#brillo)"/>
       </g>
       <!-- detalles grabados de las esquinas de abajo (paneles, rejillas, pilotos) -->
       <g fill="none" stroke="#50555a" stroke-width="3" stroke-linejoin="round">

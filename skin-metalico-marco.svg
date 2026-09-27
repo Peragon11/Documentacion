@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -30 900 720" preserveAspectRatio="none"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -30 900 891" preserveAspectRatio="none"><defs>
   <!-- Metal cepillado: grano horizontal muy fino, poco contraste, pegado a la forma -->
   <filter id="cepillado" x="0" y="0" width="100%" height="100%">
     <feTurbulence type="fractalNoise" baseFrequency="0.0025 0.55" numOctaves="2" seed="4" result="n"/>
@@ -51,8 +51,8 @@
   </linearGradient>
 
 
-  <mask id="hueco" maskUnits="userSpaceOnUse" x="-40" y="-30" width="900" height="720"><rect x="-40" y="-30" width="900" height="720" fill="#fff"/><path d="M130,96 L478,96 L710,302 L710,505 L690,525 L130,525 L110,505 L110,116 Z" fill="#000"/></mask>
-  <clipPath id="clipPozo"><path d="M130,96 L478,96 L710,302 L710,505 L690,525 L130,525 L110,505 L110,116 Z"/></clipPath>
+  <mask id="hueco" maskUnits="userSpaceOnUse" x="-40" y="-30" width="900" height="891"><rect x="-40" y="-30" width="900" height="891" fill="#fff"/><path d="M 130,96 L 478,96 L 710,302 L 710,676 L 690,696 L 130,696 L 110,676 L 110,116 Z" fill="#000"/></mask>
+  <clipPath id="clipPozo"><path d="M 130,96 L 478,96 L 710,302 L 710,676 L 690,696 L 130,696 L 110,676 L 110,116 Z"/></clipPath>
   <filter id="desenfoque" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="9"/></filter>
 </defs>
 <g mask="url(#hueco)"><g filter="url(#sombra)">
@@ -65,54 +65,54 @@
         <g fill="url(#gEstria)"><rect x="808" y="328" width="22" height="8" rx="2"/><rect x="808" y="344" width="22" height="8" rx="2"/><rect x="808" y="360" width="22" height="8" rx="2"/><rect x="808" y="376" width="22" height="8" rx="2"/><rect x="808" y="392" width="22" height="8" rx="2"/></g>
         <rect x="818" y="404" width="6" height="4" fill="#ff8a3a" filter="url(#brillo)"/>
         <!-- bisagras abajo -->
-        <rect x="95" y="612" width="120" height="26" rx="8" fill="url(#gCanto)"/><rect x="600" y="612" width="120" height="26" rx="8" fill="url(#gCanto)"/>
-        <rect x="690" y="618" width="4" height="14" fill="#ff8a3a" filter="url(#brillo)"/><rect x="700" y="618" width="4" height="14" fill="#ff8a3a" filter="url(#brillo)"/>
+        <rect x="95" y="783" width="120" height="26" rx="8" fill="url(#gCanto)"/><rect x="600" y="783" width="120" height="26" rx="8" fill="url(#gCanto)"/>
+        <rect x="690" y="789" width="4" height="14" fill="#ff8a3a" filter="url(#brillo)"/><rect x="700" y="789" width="4" height="14" fill="#ff8a3a" filter="url(#brillo)"/>
         <!-- pestaña arriba -->
         <rect x="170" y="-4" width="130" height="28" rx="7" fill="url(#gCanto)"/>
       </g>
 
       <!-- canto exterior (el grosor de la placa, oscuro) -->
-      <path d="M72,14 L515,14 L535,22 L806,252 L812,270 L812,548 L798,566 L798,602 L764,634 L470,634 L456,622 L364,622 L350,634 L58,634 L22,600 L22,566 L8,548 L8,112 L22,92 Z" fill="url(#gCanto)"/>
+      <path d="M 72,14 L 515,14 L 535,22 L 806,252 L 812,270 L 812,719 L 798,737 L 798,773 L 764,805 L 470,805 L 456,793 L 364,793 L 350,805 L 58,805 L 22,771 L 22,737 L 8,719 L 8,112 L 22,92 Z" fill="url(#gCanto)"/>
       <!-- placa principal con metal cepillado -->
-      <path id="placa" d="M78,22 L512,22 L530,30 L798,258 L803,272 L803,544 L790,560 L790,598 L760,626 L472,626 L458,614 L362,614 L348,626 L62,626 L30,596 L30,562 L16,546 L16,116 L30,98 Z" fill="url(#gPlaca)" filter="url(#cepillado)"/>
+      <path id="placa" d="M 78,22 L 512,22 L 530,30 L 798,258 L 803,272 L 803,715 L 790,731 L 790,769 L 760,797 L 472,797 L 458,785 L 362,785 L 348,797 L 62,797 L 30,767 L 30,733 L 16,717 L 16,116 L 30,98 Z" fill="url(#gPlaca)" filter="url(#cepillado)"/>
       <!-- filo de luz arriba-izquierda (bisel) -->
-      <path d="M78,22 L512,22 L530,30 L798,258 L803,272 L803,544 L790,560 L790,598 L760,626 L472,626 L458,614 L362,614 L348,626 L62,626 L30,596 L30,562 L16,546 L16,116 L30,98 Z" fill="none" stroke="url(#gFiloLuz)" stroke-width="3"/>
+      <path d="M 78,22 L 512,22 L 530,30 L 798,258 L 803,272 L 803,715 L 790,731 L 790,769 L 760,797 L 472,797 L 458,785 L 362,785 L 348,797 L 62,797 L 30,767 L 30,733 L 16,717 L 16,116 L 30,98 Z" fill="none" stroke="url(#gFiloLuz)" stroke-width="3"/>
 
       <!-- cuña elevada arriba-derecha -->
-      <path d="M540,34 L796,256 L796,316 L752,316 L500,96 L500,34 Z" fill="#6e7378"/>
-      <path d="M545,36 L792,252 L792,310 L756,310 L506,92 L506,36 Z" fill="url(#gCuña)" filter="url(#cepillado)"/>
-      <path d="M545,36 L792,252" stroke="#fff" stroke-opacity=".8" stroke-width="2"/>
-      <path d="M506,92 L756,310" stroke="#3a3e42" stroke-opacity=".7" stroke-width="2"/>
+      <path d="M 540,34 L 796,256 L 796,316 L 752,316 L 500,96 L 500,34 Z" fill="#6e7378"/>
+      <path d="M 545,36 L 792,252 L 792,310 L 756,310 L 506,92 L 506,36 Z" fill="url(#gCuña)" filter="url(#cepillado)"/>
+      <path d="M 545,36 L 792,252" stroke="#fff" stroke-opacity=".8" stroke-width="2"/>
+      <path d="M 506,92 L 756,310" stroke="#3a3e42" stroke-opacity=".7" stroke-width="2"/>
       <line x1="668" y1="118" x2="742" y2="186" stroke="#3fd6ff" stroke-width="5" stroke-linecap="round" filter="url(#brillo)"/>
 
       <!-- surcos por donde van las luces (canal oscuro hundido + núcleo luminoso) -->
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#23262a" stroke-width="15"/>
-        <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
-        <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#23262a" stroke-width="13"/>
-        <path d="M470,56 L100,56 L66,90 L66,300 L50,318 L50,560 L88,598 L408,598" stroke="#3fd6ff" stroke-width="5" filter="url(#brillo)"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#23262a" stroke-width="15"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#23262a" stroke-width="13"/>
-        <path d="M408,598 L728,598 L766,560 L766,420 L752,404 L752,300" stroke="#ff8a3a" stroke-width="5" filter="url(#brillo)"/>
+        <path d="M 470,56 L 100,56 L 66,90 L 66,300 L 50,318 L 50,731 L 88,769 L 408,769" stroke="#23262a" stroke-width="15"/>
+        <path d="M 470,56 L 100,56 L 66,90 L 66,300 L 50,318 L 50,731 L 88,769 L 408,769" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
+        <path d="M 470,56 L 100,56 L 66,90 L 66,300 L 50,318 L 50,731 L 88,769 L 408,769" stroke="#23262a" stroke-width="13"/>
+        <path d="M 470,56 L 100,56 L 66,90 L 66,300 L 50,318 L 50,731 L 88,769 L 408,769" stroke="#3fd6ff" stroke-width="5" filter="url(#brillo)"/>
+        <path d="M 408,769 L 728,769 L 766,731 L 766,420 L 752,404 L 752,344" stroke="#23262a" stroke-width="15"/>
+        <path d="M 408,769 L 728,769 L 766,731 L 766,420 L 752,404 L 752,344" stroke="#ffffff" stroke-opacity=".35" stroke-width="15" transform="translate(1.5,1.5)"/>
+        <path d="M 408,769 L 728,769 L 766,731 L 766,420 L 752,404 L 752,344" stroke="#23262a" stroke-width="13"/>
+        <path d="M 408,769 L 728,769 L 766,731 L 766,420 L 752,404 L 752,344" stroke="#ff8a3a" stroke-width="5" filter="url(#brillo)"/>
       </g>
       <!-- detalles grabados de las esquinas de abajo (paneles, rejillas, pilotos) -->
       <g fill="none" stroke="#50555a" stroke-width="3" stroke-linejoin="round">
-        <path d="M92,470 L92,560 L112,578 L220,578"/><path d="M728,470 L728,560 L708,578 L600,578"/>
-        <path d="M110,520 L150,560"/><path d="M710,520 L670,560"/>
+        <path d="M 92,641 L 92,731 L 112,749 L 220,749"/><path d="M 728,641 L 728,731 L 708,749 L 600,749"/>
+        <path d="M 110,691 L 150,731"/><path d="M 710,691 L 670,731"/>
       </g>
-      <g><rect x="228" y="545" width="6" height="26" rx="2" fill="#3fd6ff" filter="url(#brillo)"/><rect x="240" y="545" width="6" height="26" rx="2" fill="#2d3033"/><rect x="252" y="545" width="6" height="26" rx="2" fill="#2d3033"/>
-        <rect x="562" y="545" width="6" height="26" rx="2" fill="#2d3033"/><rect x="574" y="545" width="6" height="26" rx="2" fill="#ff8a3a" filter="url(#brillo)"/><rect x="586" y="545" width="6" height="26" rx="2" fill="#ff8a3a" filter="url(#brillo)"/>
-        <circle cx="200" cy="562" r="5" fill="#ff8a3a" filter="url(#brillo)"/><circle cx="622" cy="562" r="5" fill="#ff8a3a" filter="url(#brillo)"/></g>
+      <g><rect x="228" y="716" width="6" height="26" rx="2" fill="#3fd6ff" filter="url(#brillo)"/><rect x="240" y="716" width="6" height="26" rx="2" fill="#2d3033"/><rect x="252" y="716" width="6" height="26" rx="2" fill="#2d3033"/>
+        <rect x="562" y="716" width="6" height="26" rx="2" fill="#2d3033"/><rect x="574" y="716" width="6" height="26" rx="2" fill="#ff8a3a" filter="url(#brillo)"/><rect x="586" y="716" width="6" height="26" rx="2" fill="#ff8a3a" filter="url(#brillo)"/>
+        <circle cx="200" cy="733" r="5" fill="#ff8a3a" filter="url(#brillo)"/><circle cx="622" cy="733" r="5" fill="#ff8a3a" filter="url(#brillo)"/></g>
       <!-- pestaña de abajo en el centro, con dos agujeros -->
-      <path d="M340,640 L360,612 L462,612 L482,640 Z" fill="url(#gCanto)"/>
-      <circle cx="378" cy="628" r="5" fill="#26292c"/><circle cx="444" cy="628" r="5" fill="#26292c"/>
+      <path d="M 340,811 L 360,783 L 462,783 L 482,811 Z" fill="url(#gCanto)"/>
+      <circle cx="378" cy="799" r="5" fill="#26292c"/><circle cx="444" cy="799" r="5" fill="#26292c"/>
       <!-- ranura arriba -->
       <rect x="210" y="4" width="50" height="10" rx="5" fill="#2a2d31"/>
 
       </g></g>
-<path d="M130,96 L478,96 L710,302 L710,505 L690,525 L130,525 L110,505 L110,116 Z" fill="none" stroke="#3c4045" stroke-width="12" stroke-linejoin="round"/>
-<path d="M130,96 L478,96 L710,302 L710,505 L690,525 L130,525 L110,505 L110,116 Z" fill="none" stroke="url(#gFiloLuz)" stroke-width="2" transform="translate(-6,-6)" opacity=".8"/>
-<g clip-path="url(#clipPozo)"><path d="M130,96 L478,96 L710,302 L710,505 L690,525 L130,525 L110,505 L110,116 Z" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="26" filter="url(#desenfoque)" transform="translate(9,12)"/></g>
-<path d="M130,96 L478,96 L710,302 L710,505 L690,525 L130,525 L110,505 L110,116 Z" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" transform="translate(1.5,2)"/>
+<path d="M 130,96 L 478,96 L 710,302 L 710,676 L 690,696 L 130,696 L 110,676 L 110,116 Z" fill="none" stroke="#3c4045" stroke-width="12" stroke-linejoin="round"/>
+<path d="M 130,96 L 478,96 L 710,302 L 710,676 L 690,696 L 130,696 L 110,676 L 110,116 Z" fill="none" stroke="url(#gFiloLuz)" stroke-width="2" transform="translate(-6,-6)" opacity=".8"/>
+<g clip-path="url(#clipPozo)"><path d="M 130,96 L 478,96 L 710,302 L 710,676 L 690,696 L 130,696 L 110,676 L 110,116 Z" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="26" filter="url(#desenfoque)" transform="translate(9,12)"/></g>
+<path d="M 130,96 L 478,96 L 710,302 L 710,676 L 690,696 L 130,696 L 110,676 L 110,116 Z" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" transform="translate(1.5,2)"/>
 </svg>

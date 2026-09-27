@@ -1,6 +1,6 @@
 const CACHE = 'documentacion-shell-v3';
 const SHELL = ['./index.html', './idiomas.js', './manifest.json', './icono.png', './icono_maskable.png', './icono_notificacion.png',
-  './skin-metalico-panel.svg', './skin-metalico-marco.svg', './skin-metalico-placa.svg', './skin-metalico-placa-marco.svg', './skin-metalico-pozo.svg'];
+  './skin-metalico-panel.svg', './skin-metalico-marco.svg', './skin-metalico-placa.svg', './skin-metalico-placa-marco.svg', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
