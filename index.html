@@ -762,6 +762,16 @@
   @media (min-width:600px){ .modal{ border-radius:var(--r-modal); } }
   .modal h3{ margin:0 0 18px; font-size:1.1rem; font-weight:600; }
   .campo{ margin-bottom:16px; }
+  /* Fecha: se escribe a la izquierda, botón de calendario a la derecha (el <input type="date"> real va oculto) */
+  .campo-fecha{ position:relative; display:flex; gap:8px; align-items:stretch; border-radius:var(--r-campo); }
+  .campo .campo-fecha .fecha-texto{ flex:1; min-width:0; width:auto; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+  .campo-fecha .fecha-calendario{
+    flex:none; width:46px; border:1px solid var(--borde); border-radius:var(--r-campo); background:var(--ink-3);
+    color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  }
+  .campo-fecha .fecha-calendario:active{ background:var(--ink-2); }
+  .campo .campo-fecha .fecha-oculta{ position:absolute; right:0; bottom:0; width:1px; height:1px; padding:0; border:0; opacity:0; pointer-events:none; }
+  .campo-fecha.fecha-error .fecha-texto{ border-color:#E5342A; box-shadow:0 0 0 2px rgba(229,52,42,.35); }
   .campo label{ display:block; font-size:.8rem; color:var(--text-dim); margin-bottom:6px; }
   .campo input[type=text], .campo input[type=date], .campo input[type=search], .campo select{
     width:100%; background:var(--ink-3); border:1px solid var(--borde);
@@ -1530,7 +1540,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.5';
+const VERSION_APP = '3.3.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6901,12 +6911,61 @@ function abrirModalCategoriaDoc(doc) {
   });
 }
 
+// ---- Campo de fecha (escribir + calendario) ----
+function htmlCampoFecha(id, iso) {
+  return `<div class="campo-fecha" id="${id}-caja">
+    <input type="text" class="fecha-texto" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" aria-label="Fecha de caducidad">
+    <button type="button" class="fecha-calendario" aria-label="Abrir calendario"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <input type="date" id="${id}" class="fecha-oculta" tabindex="-1" aria-hidden="true" value="${iso || ''}">
+  </div>`;
+}
+function isoATextoFecha(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+// "dd/mm/aaaa" → "AAAA-MM-DD" si es una fecha real (año entre 1900 y 2199); si no, ''
+function textoFechaAIso(texto) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto);
+  if (!m) return '';
+  const d = Number(m[1]), mes = Number(m[2]), a = Number(m[3]);
+  const f = new Date(a, mes - 1, d);
+  if (a < 1900 || a > 2199 || f.getFullYear() !== a || f.getMonth() !== mes - 1 || f.getDate() !== d) return '';
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+function activarCampoFecha(id) {
+  const caja = $('#' + id + '-caja');
+  const texto = caja.querySelector('.fecha-texto');
+  const oculto = caja.querySelector('.fecha-oculta');
+  texto.value = isoATextoFecha(oculto.value);
+  texto.addEventListener('input', () => {
+    // Solo cifras, con las barras puestas solas: 01052027 → 01/05/2027
+    const d = texto.value.replace(/\D/g, '').slice(0, 8);
+    texto.value = d.length > 4 ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
+    oculto.value = textoFechaAIso(texto.value);
+    caja.classList.remove('fecha-error');
+    if (typeof actualizarBotonGuardar === 'function' && $('#modal-guardar')) actualizarBotonGuardar();
+  });
+  texto.addEventListener('blur', () => caja.classList.toggle('fecha-error', !campoFechaValido(id)));
+  oculto.addEventListener('change', () => { texto.value = isoATextoFecha(oculto.value); caja.classList.remove('fecha-error'); if ($('#modal-guardar')) actualizarBotonGuardar(); });
+  caja.querySelector('.fecha-calendario').addEventListener('click', () => {
+    texto.blur();
+    try { oculto.showPicker(); } catch (e) { oculto.focus(); oculto.click(); }
+  });
+}
+// Vacío o una fecha real = válido
+function campoFechaValido(id) {
+  const caja = $('#' + id + '-caja');
+  return !caja.querySelector('.fecha-texto').value.trim() || !!caja.querySelector('.fecha-oculta').value;
+}
+function ponerCampoFecha(id, iso) {
+  const caja = $('#' + id + '-caja');
+  caja.querySelector('.fecha-oculta').value = iso || '';
+  caja.querySelector('.fecha-texto').value = isoATextoFecha(iso);
+}
+
 function abrirModalCaducidad(doc) {
   abrirModal(`
     <h3>Fecha de caducidad</h3>
     <div class="campo">
-      <label for="input-caducidad-doc">${escapeHtml(doc.nombre)}</label>
-      <input type="date" id="input-caducidad-doc" autocomplete="off" value="${doc.fechaCaducidad || ''}">
+      <label>${escapeHtml(doc.nombre)}</label>
+      ${htmlCampoFecha('input-caducidad-doc', doc.fechaCaducidad)}
     </div>
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -6915,7 +6974,9 @@ function abrirModalCaducidad(doc) {
     ${doc.fechaCaducidad ? '<button class="opcion-menu peligro" id="op-quitar-caducidad" style="justify-content:center;margin-top:14px;">Quitar fecha de caducidad</button>' : ''}
   `);
   $('#modal-cancelar').addEventListener('click', volverAtras);
+  activarCampoFecha('input-caducidad-doc');
   $('#modal-guardar-caducidad').addEventListener('click', () => {
+    if (!campoFechaValido('input-caducidad-doc')) { parpadearFalta($('#input-caducidad-doc-caja')); mostrarToast('La fecha no es válida (dd/mm/aaaa).', true); return; }
     doc.fechaCaducidad = $('#input-caducidad-doc').value || null;
     guardarMetadatos().then(() => {
       volverAtras();
@@ -7127,8 +7188,8 @@ function abrirModalSubida(previo) {
         ${datos.categorias.length ? '' : '<p style="color:var(--text-dim);font-size:.8rem;margin:4px 0 0;">Crea una categoría con «Nueva» para poder guardar el documento.</p>'}
       </div>
       <div class="campo">
-        <label for="input-caducidad">Fecha de caducidad (opcional)</label>
-        <input type="date" id="input-caducidad" autocomplete="off">
+        <label>Fecha de caducidad (opcional)</label>
+        ${htmlCampoFecha('input-caducidad', '')}
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -7139,6 +7200,7 @@ function abrirModalSubida(previo) {
     <input type="file" id="input-archivo" accept="image/*,application/pdf" capture="environment" class="visually-hidden">
   `);
 
+  activarCampoFecha('input-caducidad');
   if ($('#input-persona')) activarSelectorFila($('#input-persona'), personaPreseleccionada);
   activarSelectorFila($('#input-categoria'), catPreseleccionada);
   const seccionNormal = $('#seccion-normal-subida');
@@ -7232,7 +7294,7 @@ function abrirModalSubida(previo) {
 
   if (previo) {
     $('#input-nombre').value = previo.nombre;
-    $('#input-caducidad').value = previo.caducidad;
+    ponerCampoFecha('input-caducidad', previo.caducidad);
     renderizarListaPaginasSubida();
     actualizarBotonGuardar();
   }
@@ -7256,7 +7318,7 @@ function actualizarBotonGuardar() {
   if (!btn) return;
   const faltaPersona = !valorSelectorFila($('#input-persona')); // sin ninguna persona creada / elegida
   const faltaCategoria = !valorSelectorFila($('#input-categoria')); // hay que elegir (o crear) una categoría
-  const incompleto = faltaPersona || faltaCategoria || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
+  const incompleto = faltaPersona || faltaCategoria || !campoFechaValido('input-caducidad') || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
   // No se usa "disabled" para que el botón siga recibiendo el toque y pueda avisar de lo que falta
   btn.classList.toggle('inactivo', incompleto);
   btn.setAttribute('aria-disabled', incompleto ? 'true' : 'false');
@@ -7269,17 +7331,19 @@ function camposQueFaltanSubida() {
   if (!$('#input-nombre').value.trim()) faltan.push($('#input-nombre'));
   if (!valorSelectorFila($('#input-persona'))) faltan.push($('#input-persona') || $('#seccion-normal-subida'));
   if (!valorSelectorFila($('#input-categoria'))) faltan.push($('#input-categoria'));
+  if (!campoFechaValido('input-caducidad')) faltan.push($('#input-caducidad-caja'));
   return faltan;
+}
+function parpadearFalta(el) {
+  el.classList.remove('parpadeo-falta');
+  void el.offsetWidth; // reinicia la animación si ya estaba parpadeando
+  el.classList.add('parpadeo-falta');
+  setTimeout(() => el.classList.remove('parpadeo-falta'), 1500);
 }
 function intentarGuardarDocumento() {
   const faltan = camposQueFaltanSubida();
   if (!faltan.length) { guardarDocumentoNuevo(); return; }
-  faltan.forEach((el) => {
-    el.classList.remove('parpadeo-falta');
-    void el.offsetWidth; // reinicia la animación si ya estaba parpadeando
-    el.classList.add('parpadeo-falta');
-    setTimeout(() => el.classList.remove('parpadeo-falta'), 1500);
-  });
+  faltan.forEach(parpadearFalta);
   faltan[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -7391,11 +7455,15 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alC
   if (colorInicial) montarRuedaColor($('#renombrar-color'), colorInicial, (color) => { colorElegido = color; }, null);
   const intentarGuardar = () => {
     const nuevo = input.value.trim();
-    if (!nuevo) return;
+    if (!nuevo) { parpadearFalta(input); return; } // falta el nombre: parpadea el campo
     alGuardar(nuevo, colorElegido);
   };
   btnGuardar.addEventListener('click', intentarGuardar);
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarGuardar(); });
+  // Con la rueda de color (nueva categoría), Enter solo cierra el teclado para poder elegir el color: hay que pulsar Guardar.
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    if (colorInicial) { e.preventDefault(); input.blur(); } else intentarGuardar();
+  });
 }
 
 // Cerrar la hoja arrastrándola hacia abajo desde CUALQUIER punto de la pantalla
