@@ -1480,7 +1480,8 @@
      - skin-metalico-marco.svg: el mismo panel con el pozo HUECO → avatares: la foto o el color
        de la persona se ve por el hueco, como una pantalla metida en el metal.
      - skin-metalico-placa(-marco).svg: versión sencilla de 120×120 para border-image a 9 trozos
-       (esquinas fijas, lados estirados) → fichas anchas, chips y botones de texto, que no tienen
+       (esquinas fijas, lados estirados; 160×160, rebanadas 44 44 34 34 porque la esquina de arriba-dcha.
+       lleva el chaflán y el del hueco, en paralelo) → fichas anchas, chips y botones de texto, que no tienen
        la proporción del panel. La "-marco" deja el centro hueco para que se vea el color propio
        de la ficha (categoría, documento, botón principal).
      Proporción del panel: 900×720 (alto = 0,8 del ancho). El pozo ocupa del 16,7% al 83,3% en
@@ -1512,7 +1513,7 @@
     html[data-skin="metalico"] .barra-botones{ gap:8px; }
     html[data-skin="metalico"] .btn-icono-top.btn-barra{
       flex:1; width:auto; height:40px; aspect-ratio:auto; flex-direction:row; justify-content:center; gap:8px; padding:0 8px;
-      background:none; border-style:solid; border-width:9px; border-image:var(--placa-metal) 34 fill / 9px stretch;
+      background:none; border-style:solid; border-width:9px; border-image:var(--placa-metal) 44 44 34 34 fill / 11.6px 11.6px 9px 9px stretch;
       font-size:.8rem;
     }
     html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:18px; height:18px; }
@@ -1549,11 +1550,12 @@
 
   /* Fichas anchas, chips y botones de texto: placa a 9 trozos. --bm es el grosor del marco; el
      recorte (clip-path) quita las esquinas que quedan fuera del canto —la grande arriba a la
-     derecha mide 30/34 del marco, las pequeñas 6/34— para que el color propio no asome por ahí. */
+     derecha mide 30/34 del marco, las pequeñas 6/34— para que el color propio no asome por ahí;
+     un píxel más hondo que el dibujo, si no asoma un hilo de color por el suavizado del canto. */
   html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-secundario, .btn-grande, .btn-google, .chip){
     border-style:solid; border-width:var(--bm); border-radius:0; box-shadow:none;
-    clip-path:polygon(calc(var(--bm) * .18) 0, calc(100% - var(--bm) * .88) 0, 100% calc(var(--bm) * .88), 100% calc(100% - var(--bm) * .18),
-      calc(100% - var(--bm) * .18) 100%, calc(var(--bm) * .18) 100%, 0 calc(100% - var(--bm) * .18), 0 calc(var(--bm) * .18));
+    clip-path:polygon(calc(var(--bm) * .18 + .5px) 0, calc(100% - var(--bm) * .88 - 1px) 0, 100% calc(var(--bm) * .88 + 1px), 100% calc(100% - var(--bm) * .18 - .5px),
+      calc(100% - var(--bm) * .18 - .5px) 100%, calc(var(--bm) * .18 + .5px) 100%, 0 calc(100% - var(--bm) * .18 - .5px), 0 calc(var(--bm) * .18 + .5px));
   }
   html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina){ --bm:14px; }
   html[data-skin="metalico"] .categoria-barra{ --bm:12px; padding:4px 10px; }
@@ -1563,11 +1565,11 @@
   /* Con su propio color dentro (la placa hueca): categorías, documentos, el botón principal
      (ámbar), el chip activo y los chips de categoría */
   html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-grande, .btn-google, .chip.activo, .chip.chip-categoria){
-    border-image:var(--placa-hueca) 34 / var(--bm) stretch;
+    border-image:var(--placa-hueca) 44 44 34 34 / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch;
   }
   /* Metal por dentro, con el texto grabado: botón secundario y chips sin seleccionar */
   html[data-skin="metalico"] :is(.btn-secundario, .chip:not(.activo):not(.chip-categoria)){
-    border-image:var(--placa-metal) 34 fill / var(--bm) stretch; background:none;
+    border-image:var(--placa-metal) 44 44 34 34 fill / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch; background:none;
     color:var(--grabado); text-shadow:var(--sombra-grabado); font-weight:700;
   }
   /* Barras de categoría: chaflán más hondo, con su propia placa (skin-metalico-placa-cat.svg,
@@ -1580,7 +1582,7 @@
      que con una sola clase esta regla perdía aunque vaya después.) */
   html[data-skin="metalico"] .categoria-barra.categoria-barra{
     border-image:url('skin-metalico-placa-cat.svg') 74 74 34 34 / 26.6px 26.6px 12.2px 12.2px stretch;
-    clip-path:polygon(2.2px 0, calc(100% - 21.6px) 0, 100% 21.6px, 100% calc(100% - 2.2px), calc(100% - 2.2px) 100%, 2.2px 100%, 0 calc(100% - 2.2px), 0 2.2px);
+    clip-path:polygon(2.7px 0, calc(100% - 22.6px) 0, 100% 22.6px, 100% calc(100% - 2.7px), calc(100% - 2.7px) 100%, 2.7px 100%, 0 calc(100% - 2.7px), 0 2.7px);
   }
   html[data-skin="metalico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
   html[data-skin="metalico"] .categoria-barra{ font-weight:700; letter-spacing:.04em; text-transform:uppercase; font-size:.98rem; text-shadow:1px 1px 0 rgba(0,0,0,.4); }
@@ -1757,7 +1759,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.4';
+const VERSION_APP = '3.4.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
