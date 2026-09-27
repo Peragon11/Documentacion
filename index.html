@@ -764,7 +764,16 @@
   .campo{ margin-bottom:16px; }
   /* Fecha: se escribe a la izquierda, botón de calendario a la derecha (el <input type="date"> real va oculto) */
   .campo-fecha{ position:relative; display:flex; gap:8px; align-items:stretch; border-radius:var(--r-campo); }
-  .campo .campo-fecha .fecha-texto{ flex:1; min-width:0; width:auto; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+  .campo-fecha .fecha-marco{ position:relative; flex:1; min-width:0; display:flex; }
+  /* Letra de ancho fijo: cada cifra ocupa siempre el mismo hueco y las barras quedan siempre en la misma columna */
+  .campo .campo-fecha .fecha-texto{ flex:1; min-width:0; width:auto; font-family:ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', monospace; font-size:.95rem; letter-spacing:.04em; }
+  /* Capa con el formato en gris, encima del campo (no recibe toques): la parte ya escrita se oculta y el resto se ve */
+  .campo-fecha .fecha-fantasma{
+    position:absolute; inset:0; padding:11px 12px; border:1px solid transparent; display:flex; align-items:center; white-space:pre;
+    font-family:ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', monospace; font-size:.95rem; letter-spacing:.04em; color:var(--text-dim); opacity:.7; pointer-events:none;
+  }
+  .campo-fecha .fantasma-escrito{ visibility:hidden; }
+  .campo-fecha .fantasma-barra{ color:var(--text-light); opacity:.75; }
   .campo-fecha .fecha-calendario{
     flex:none; width:46px; border:1px solid var(--borde); border-radius:var(--r-campo); background:var(--ink-3);
     color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
@@ -1540,7 +1549,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.7';
+const VERSION_APP = '3.3.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6915,12 +6924,20 @@ function abrirModalCategoriaDoc(doc) {
 // ---- Campo de fecha (escribir + calendario) ----
 function htmlCampoFecha(id, iso) {
   return `<div class="campo-fecha" id="${id}-caja">
-    <input type="text" class="fecha-texto" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" aria-label="Fecha de caducidad">
+    <div class="fecha-marco"><input type="text" class="fecha-texto" inputmode="numeric" maxlength="10" autocomplete="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore data-form-type="other" aria-label="Fecha de caducidad"><div class="fecha-fantasma" aria-hidden="true"></div></div>
     <button type="button" class="fecha-calendario" aria-label="Abrir calendario"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <input type="date" id="${id}" class="fecha-oculta" tabindex="-1" aria-hidden="true" value="${iso || ''}">
   </div>`;
 }
 function isoATextoFecha(iso) { return iso ? iso.split('-').reverse().join('/') : ''; }
+// Capa gris del formato: lo ya escrito queda invisible (el texto real va debajo) y detrás sigue el resto del formato
+function pintarFantasmaFecha(caja) {
+  const texto = caja.querySelector('.fecha-texto').value;
+  const plantilla = trad('dd/mm/aaaa');
+  // Las barras del formato se pintan más marcadas: son fijas, siempre en el mismo sitio
+  const resto = escapeHtml(plantilla.slice(texto.length)).split('/').join('<span class="fantasma-barra">/</span>');
+  caja.querySelector('.fecha-fantasma').innerHTML = `<span class="fantasma-escrito">${escapeHtml(texto)}</span>${resto}`;
+}
 // "dd/mm/aaaa" → "AAAA-MM-DD" si es una fecha real (año entre 1900 y 2199); si no, ''
 function textoFechaAIso(texto) {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto);
@@ -6935,16 +6952,18 @@ function activarCampoFecha(id) {
   const texto = caja.querySelector('.fecha-texto');
   const oculto = caja.querySelector('.fecha-oculta');
   texto.value = isoATextoFecha(oculto.value);
+  pintarFantasmaFecha(caja);
   texto.addEventListener('input', () => {
     // Solo cifras, con las barras puestas solas: 01052027 → 01/05/2027
     const d = texto.value.replace(/\D/g, '').slice(0, 8);
     texto.value = d.length > 4 ? `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}` : d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
     oculto.value = textoFechaAIso(texto.value);
+    pintarFantasmaFecha(caja);
     caja.classList.remove('fecha-error');
     if (typeof actualizarBotonGuardar === 'function' && $('#modal-guardar')) actualizarBotonGuardar();
   });
   texto.addEventListener('blur', () => caja.classList.toggle('fecha-error', !campoFechaValido(id)));
-  oculto.addEventListener('change', () => { texto.value = isoATextoFecha(oculto.value); caja.classList.remove('fecha-error'); if ($('#modal-guardar')) actualizarBotonGuardar(); });
+  oculto.addEventListener('change', () => { texto.value = isoATextoFecha(oculto.value); pintarFantasmaFecha(caja); caja.classList.remove('fecha-error'); if ($('#modal-guardar')) actualizarBotonGuardar(); });
   caja.querySelector('.fecha-calendario').addEventListener('click', () => {
     texto.blur();
     try { oculto.showPicker(); } catch (e) { oculto.focus(); oculto.click(); }
@@ -6959,6 +6978,7 @@ function ponerCampoFecha(id, iso) {
   const caja = $('#' + id + '-caja');
   caja.querySelector('.fecha-oculta').value = iso || '';
   caja.querySelector('.fecha-texto').value = isoATextoFecha(iso);
+  pintarFantasmaFecha(caja);
 }
 
 function abrirModalCaducidad(doc) {
