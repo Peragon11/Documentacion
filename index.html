@@ -49,15 +49,15 @@
   } catch (e) {}
   // Estilo (skin): se activa antes de pintar para que no haya parpadeo, y se cargan sus letras.
   window.__fuentesSkin = {
-    pasaporte: 'family=Cormorant+Garamond:wght@600;700&family=Lato:wght@400;700',
-    carpeta: 'family=Bitter:wght@600;700&family=Courier+Prime:wght@400;700',
-    nordico: 'family=Outfit:wght@400;500;600',
-    contraste: 'family=Space+Grotesk:wght@500;700',
+    pasaporte: 'family=Cormorant+Garamond:wght@600;700&family=Lato:wght@400;700&family=Cinzel:wght@700;800',
+    carpeta: 'family=Bitter:wght@600;700&family=Special+Elite',
+    nordico: 'family=Outfit:wght@400;500;600&family=Josefin+Sans:wght@600;700',
+    contraste: 'family=Space+Grotesk:wght@500;700&family=Archivo+Black',
     bosque: 'family=Fraunces:wght@600;700&family=Nunito:wght@500;700',
-    pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P',
-    neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700',
-    chicle: 'family=Fredoka:wght@500;600;700',
-    comic: 'family=Bangers&family=Comic+Neue:wght@400;700'
+    pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P&family=Silkscreen:wght@400;700',
+    neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=Yellowtail',
+    chicle: 'family=Fredoka:wght@500;600;700&family=Bagel+Fat+One',
+    comic: 'family=Bangers&family=Comic+Neue:wght@400;700&family=Luckiest+Guy'
   };
   window.__cargarFuentesSkin = function (id) {
     var q = window.__fuentesSkin[id];
@@ -1045,7 +1045,7 @@
   [data-skin="pasaporte"]{ --ink:#1C0F16; --ink-2:#2B1822; --ink-3:#3D2431; --paper:#F2E8D5; --text-ink:#2B1822; --stamp:#C9A45C; --sobre-acento:#1C0F16; --text-light:#F4EBDD; --text-dim:#C7AEB0; --seal:#86A88B; --amber:#D9A94E; --azul:#7E9CC0; --morado:#A88BC2; --stamp-dark:#A8863F; --borde-sutil:rgba(201,164,92,.13); --borde:rgba(201,164,92,.28); --borde-fuerte:rgba(201,164,92,.46); --topbar-fondo:rgba(43,24,34,.95); 
     --serif:'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
     --sans:'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --fuente-marca:'Cormorant Garamond', Georgia, serif;
+    --fuente-marca:'Cinzel', Georgia, serif;
     --r-pill:5px; --r-chip:5px; --r-avatar:12px; --r-avatar-mini:8px; --r-tarjeta:6px; --r-miniatura:3px;
     --r-boton:5px; --r-campo:5px; --r-grupo:8px; --r-modal:10px; --r-caja:7px; --r-marca:8px; --r-app-login:16px; --r-redondo:10px;
     --sombra-ficha:0 0 0 1px color-mix(in srgb, var(--stamp) 60%, transparent), 0 0 0 4px var(--ink), 0 0 0 5px color-mix(in srgb, var(--stamp) 35%, transparent), 0 14px 24px rgba(0,0,0,.28);
@@ -1053,7 +1053,7 @@
   html[data-tema="claro"] [data-skin="pasaporte"], html[data-tema="claro"][data-skin="pasaporte"]{ --ink:#F6EEDF; --ink-2:#EFE4CE; --ink-3:#E3D5B8; --paper:#FFFBF3; --text-ink:#2A1520; --stamp:#7B1E34; --sobre-acento:#FBF2E2; --text-light:#2A1520; --text-dim:#6F5359; --seal:#4E7A5B; --amber:#9A6A18; --azul:#3F6A99; --morado:#74569C; --stamp-dark:#5C1526; --borde-sutil:rgba(123,30,52,.12); --borde:rgba(123,30,52,.24); --borde-fuerte:rgba(123,30,52,.40); --topbar-fondo:rgba(239,228,206,.95);  }
   html[data-skin="pasaporte"]{ --fondo-login:var(--ink); }
   html[data-skin="pasaporte"] .topbar{ border-bottom:1px solid var(--stamp); box-shadow:0 1px 0 var(--ink), 0 2px 0 color-mix(in srgb, var(--stamp) 40%, transparent); }
-  html[data-skin="pasaporte"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.08em; }
+  html[data-skin="pasaporte"] .topbar .marca span#titulo-topbar{ font-weight:800; letter-spacing:.08em; }
   html[data-skin="pasaporte"] h1, html[data-skin="pasaporte"] h3, html[data-skin="pasaporte"] .ajustes-titulo{ font-weight:700; letter-spacing:.02em; }
   html[data-skin="pasaporte"] .modal h3{ font-size:1.35rem; }
   html[data-skin="pasaporte"] .ajustes .ajustes-titulo{ font-size:2rem; }
@@ -1074,7 +1074,7 @@
     --serif:'Bitter', 'Iowan Old Style', Georgia, serif;
     --sans:-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --mono:'Courier Prime', ui-monospace, 'Courier New', monospace;
-    --fuente-marca:'Courier Prime', ui-monospace, 'Courier New', monospace;
+    --fuente-marca:'Special Elite', ui-monospace, 'Courier New', monospace;
     --r-pill:3px; --r-chip:9px 9px 0 0; --r-avatar:4px; --r-avatar-mini:4px; --r-tarjeta:3px; --r-miniatura:2px;
     --r-boton:3px; --r-campo:3px; --r-grupo:4px; --r-modal:6px; --r-caja:4px; --r-marca:6px; --r-app-login:8px; --r-redondo:6px;
     --sombra-ficha:3px 4px 0 var(--borde-fuerte);
@@ -1083,7 +1083,7 @@
   html[data-skin="carpeta"]{ --fondo-login:var(--ink); }
   html[data-skin="carpeta"] body{ background-image:repeating-linear-gradient(0deg, transparent 0 27px, color-mix(in srgb, var(--text-light) 5%, transparent) 27px 28px); }
   html[data-skin="carpeta"] .topbar{ border-bottom:3px double var(--text-light); }
-  html[data-skin="carpeta"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:0; }
+  html[data-skin="carpeta"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:0; }
   html[data-skin="carpeta"] h1, html[data-skin="carpeta"] h3{ font-weight:700; }
   html[data-skin="carpeta"] .titulo-grupo, html[data-skin="carpeta"] .campo label, html[data-skin="carpeta"] .ajustes .etiqueta, html[data-skin="carpeta"] .badge-mini, html[data-skin="carpeta"] .btn-prov, html[data-skin="carpeta"] .estado-prov, html[data-skin="carpeta"] .recorte-giro-grados{ font-family:var(--mono); }
   html[data-skin="carpeta"] .titulo-grupo{ font-weight:700; letter-spacing:.06em; }
@@ -1106,7 +1106,7 @@
   [data-skin="nordico"]{ --ink:#121917; --ink-2:#1A2321; --ink-3:#25312E; --paper:#E6EFEC; --text-ink:#16201E; --stamp:#6CC0AA; --sobre-acento:#0D1513; --text-light:#E6EFEC; --text-dim:#94A7A2; --seal:#7CC5AF; --amber:#E0B054; --azul:#7FAAD0; --morado:#A79CD8; --stamp-dark:#4FA18B; --borde-sutil:rgba(230,239,236,.07); --borde:rgba(230,239,236,.14); --borde-fuerte:rgba(230,239,236,.24); --topbar-fondo:rgba(26,35,33,.82); 
     --serif:'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --sans:'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --fuente-marca:'Outfit', system-ui, sans-serif;
+    --fuente-marca:'Josefin Sans', system-ui, sans-serif;
     --r-pill:999px; --r-chip:999px; --r-avatar:34%; --r-avatar-mini:30%; --r-tarjeta:22px; --r-miniatura:16px;
     --r-boton:14px; --r-campo:14px; --r-grupo:24px; --r-modal:30px; --r-caja:14px; --r-marca:12px; --r-app-login:30px; --r-redondo:50%;
     --sombra-ficha:0 16px 36px rgba(20,36,32,.16);
@@ -1114,7 +1114,7 @@
   html[data-tema="claro"] [data-skin="nordico"], html[data-tema="claro"][data-skin="nordico"]{ --ink:#F5F7F5; --ink-2:#FFFFFF; --ink-3:#E9EEEB; --paper:#FFFFFF; --text-ink:#1E2A29; --stamp:#2A7767; --sobre-acento:#FFFFFF; --text-light:#1E2A29; --text-dim:#5C6C69; --seal:#3F8D78; --amber:#A9721A; --azul:#3F76A4; --morado:#6E63A8; --stamp-dark:#1F5C4F; --borde-sutil:rgba(30,42,41,.06); --borde:rgba(30,42,41,.12); --borde-fuerte:rgba(30,42,41,.20); --topbar-fondo:rgba(245,247,245,.82);  }
   html[data-skin="nordico"]{ --fondo-login:var(--ink); }
   html[data-skin="nordico"] .topbar{ border-bottom:none; box-shadow:0 1px 0 var(--borde-sutil); backdrop-filter:blur(16px); }
-  html[data-skin="nordico"] .topbar .marca span#titulo-topbar{ font-weight:600; letter-spacing:0; }
+  html[data-skin="nordico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.1em; }
   html[data-skin="nordico"] h1, html[data-skin="nordico"] h3{ font-weight:600; letter-spacing:-.02em; }
   html[data-skin="nordico"] .titulo-grupo{ text-transform:none; letter-spacing:0; font-weight:500; font-size:.98rem; }
   html[data-skin="nordico"] .btn-icono-top{ background:var(--ink-3); }
@@ -1132,7 +1132,7 @@
   [data-skin="contraste"]{ --ink:#121212; --ink-2:#1D1D1D; --ink-3:#2B2B2B; --paper:#FFF6DC; --text-ink:#111111; --stamp:#FFC53D; --sobre-acento:#111111; --text-light:#FFF6DC; --text-dim:#CFC7B0; --seal:#46D39A; --amber:#FFB800; --azul:#6C9BFF; --morado:#B88AFF; --stamp-dark:#E0A81F; --borde-sutil:rgba(255,246,220,.28); --borde:#FFF6DC; --borde-fuerte:#FFF6DC; --topbar-fondo:#2B2B2B; 
     --serif:'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --sans:'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --fuente-marca:'Space Grotesk', system-ui, sans-serif;
+    --fuente-marca:'Archivo Black', system-ui, sans-serif;
     --r-pill:10px; --r-chip:10px; --r-avatar:22px; --r-avatar-mini:10px; --r-tarjeta:12px; --r-miniatura:8px;
     --r-boton:10px; --r-campo:10px; --r-grupo:14px; --r-modal:16px; --r-caja:10px; --r-marca:10px; --r-app-login:22px; --r-redondo:12px;
     --sombra-ficha:5px 5px 0 var(--text-light);
@@ -1141,7 +1141,7 @@
   html[data-skin="contraste"]{ --fondo-login:var(--ink); }
   html[data-skin="contraste"] .topbar{ border-bottom:3px solid var(--text-light); backdrop-filter:none; }
   html[data-skin="contraste"] .topbar .marca{ color:var(--text-light); }
-  html[data-skin="contraste"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:-.01em; }
+  html[data-skin="contraste"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:-.01em; }
   html[data-skin="contraste"] .btn-icono-top, html[data-skin="contraste"] .btn-volver{ border:2px solid var(--text-light); }
   html[data-skin="contraste"] .btn-icono-top{ box-shadow:2px 2px 0 var(--text-light); background:var(--ink-2); }
   html[data-skin="contraste"] .btn-icono-top:active{ transform:translate(2px,2px); box-shadow:none; }
@@ -1169,7 +1169,7 @@
     --serif:'Pixelify Sans', ui-monospace, 'Courier New', monospace;
     --sans:'Pixelify Sans', ui-monospace, 'Courier New', monospace;
     --mono:'Press Start 2P', 'Pixelify Sans', ui-monospace, monospace;
-    --fuente-marca:'Pixelify Sans', ui-monospace, monospace;
+    --fuente-marca:'Silkscreen', ui-monospace, monospace;
     --r-pill:0; --r-chip:0; --r-avatar:0; --r-avatar-mini:0; --r-tarjeta:0; --r-miniatura:0;
     --r-boton:0; --r-campo:0; --r-grupo:0; --r-modal:0; --r-caja:0; --r-marca:0; --r-app-login:0; --r-redondo:0;
     --sombra-ficha:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), 8px 8px 0 0 rgba(0,0,0,.35);
@@ -1192,7 +1192,7 @@
   html[data-skin="pixeles"] .doc-fila .miniatura, html[data-skin="pixeles"] .galeria-pagina .miniatura{ box-shadow:0 0 0 2px var(--borde-px); margin:10px 10px 0; }
   html[data-skin="pixeles"] .btn-primario:active, html[data-skin="pixeles"] .btn-secundario:active, html[data-skin="pixeles"] .btn-icono-top:active, html[data-skin="pixeles"] .chip:active{ transform:translate(2px,2px); box-shadow:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), inset 4px 4px 0 0 rgba(0,0,0,.26); }
   html[data-skin="pixeles"] .topbar{ border-bottom:4px solid var(--borde-px); backdrop-filter:none; box-shadow:0 4px 0 rgba(0,0,0,.25); }
-  html[data-skin="pixeles"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:0; }
+  html[data-skin="pixeles"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.02em; }
   html[data-skin="pixeles"] .titulo-grupo, html[data-skin="pixeles"] .campo label, html[data-skin="pixeles"] .ajustes .etiqueta, html[data-skin="pixeles"] .badge-mini, html[data-skin="pixeles"] .chip, html[data-skin="pixeles"] .btn-primario, html[data-skin="pixeles"] .btn-secundario, html[data-skin="pixeles"] .btn-prov, html[data-skin="pixeles"] .toast, html[data-skin="pixeles"] .recorte-giro-grados{ font-family:var(--mono); font-size:.62rem; line-height:1.7; letter-spacing:0; font-weight:400; }
   html[data-skin="pixeles"] .titulo-grupo{ font-size:.66rem; color:var(--text-light); }
   html[data-skin="pixeles"] .btn-primario, html[data-skin="pixeles"] .btn-secundario{ padding:15px 8px; }
@@ -1216,7 +1216,7 @@
   [data-skin="neon"]{ --ink:#0B0714; --ink-2:#150D24; --ink-3:#211339; --paper:#F5EEFF; --text-ink:#150D24; --stamp:#FF2E97; --sobre-acento:#14001F; --text-light:#F5EEFF; --text-dim:#B9A9DB; --seal:#19F0E6; --amber:#FFD23F; --azul:#4C93FF; --morado:#B266FF; --stamp-dark:#D6207A; --borde-sutil:rgba(245,238,255,.08); --borde:rgba(178,102,255,.38); --borde-fuerte:rgba(25,240,230,.55); --topbar-fondo:rgba(21,13,36,.92); --neon-glow:58%;
     --serif:'Orbitron', 'Segoe UI', system-ui, sans-serif;
     --sans:'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --fuente-marca:'Orbitron', system-ui, sans-serif;
+    --fuente-marca:'Yellowtail', cursive;
     --r-pill:999px; --r-chip:999px; --r-avatar:26px; --r-avatar-mini:12px; --r-tarjeta:16px; --r-miniatura:10px;
     --r-boton:12px; --r-campo:12px; --r-grupo:18px; --r-modal:22px; --r-caja:12px; --r-marca:10px; --r-app-login:26px; --r-redondo:50%;
     --sombra-ficha:0 0 0 2px var(--stamp), 0 0 26px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent);
@@ -1227,7 +1227,7 @@
   html[data-skin="neon"] body{ background-image:radial-gradient(520px 420px at 0% 0%, color-mix(in srgb, var(--stamp) 18%, transparent), transparent 70%), radial-gradient(560px 460px at 100% 100%, color-mix(in srgb, var(--seal) 14%, transparent), transparent 70%); background-repeat:no-repeat; }
   html[data-skin="neon"]{ --fondo-login:radial-gradient(520px 460px at 10% 0%, color-mix(in srgb, var(--stamp) 22%, transparent), transparent 70%), radial-gradient(560px 480px at 100% 100%, color-mix(in srgb, var(--seal) 18%, transparent), transparent 70%), var(--ink); }
   html[data-skin="neon"] .topbar{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 18px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  html[data-skin="neon"] .topbar .marca span#titulo-topbar{ font-weight:800; letter-spacing:.02em; color:var(--seal); text-shadow:0 0 12px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+  html[data-skin="neon"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:0; color:var(--seal); text-shadow:0 0 12px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
   html[data-skin="neon"] h1, html[data-skin="neon"] h3, html[data-skin="neon"] .ajustes-titulo{ font-weight:800; letter-spacing:.02em; text-shadow:0 0 14px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
   html[data-skin="neon"] .modal h3{ font-size:1.05rem; }
   html[data-skin="neon"] .titulo-grupo{ font-family:var(--serif); font-weight:600; letter-spacing:.16em; color:var(--seal); text-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
@@ -1257,7 +1257,7 @@
   [data-skin="chicle"]{ --ink:#1E0B2E; --ink-2:#2E1246; --ink-3:#421B63; --paper:#FFEFFA; --text-ink:#2A0838; --stamp:#FF6BBA; --sobre-acento:#2A0838; --text-light:#FFEFFA; --text-dim:#DDBDEB; --seal:#4DF0C8; --amber:#FFD84D; --azul:#6BC1FF; --morado:#C39BFF; --stamp-dark:#C24A98; --borde-sutil:rgba(255,239,250,.10); --borde:rgba(255,107,186,.50); --borde-fuerte:rgba(77,240,200,.65); --topbar-fondo:#FF6BBA; --c1:#FF6BBA; --c2:#4DF0C8; --c3:#FFD84D; --c4:#6BC1FF; --c5:#C39BFF;
     --serif:'Fredoka', 'Nunito', system-ui, sans-serif;
     --sans:'Fredoka', 'Nunito', system-ui, sans-serif;
-    --fuente-marca:'Fredoka', system-ui, sans-serif;
+    --fuente-marca:'Bagel Fat One', system-ui, sans-serif;
     --r-pill:999px; --r-chip:999px; --r-avatar:50%; --r-avatar-mini:50%; --r-tarjeta:28px; --r-miniatura:20px;
     --r-boton:999px; --r-campo:20px; --r-grupo:28px; --r-modal:34px; --r-caja:50%; --r-marca:14px; --r-app-login:42px; --r-redondo:50%;
     --sombra-ficha:0 0 0 5px var(--ink-2), 0 0 0 9px var(--stamp), 0 14px 22px color-mix(in srgb, var(--stamp) 40%, transparent);
@@ -1274,7 +1274,7 @@
   html[data-skin="chicle"] body{ background-image:radial-gradient(circle, color-mix(in srgb, var(--c1) 30%, transparent) 4px, transparent 4.6px), radial-gradient(circle, color-mix(in srgb, var(--c4) 28%, transparent) 4px, transparent 4.6px); background-size:52px 52px; background-position:0 0, 26px 26px; }
   html[data-skin="chicle"] .topbar{ background:linear-gradient(90deg, var(--c1), var(--c5) 55%, var(--c4)); border-bottom:4px solid var(--ink-2); box-shadow:0 6px 0 color-mix(in srgb, var(--c1) 40%, transparent); backdrop-filter:none; }
   html[data-skin="chicle"] .topbar .marca, html[data-skin="chicle"] .btn-volver{ color:var(--sobre-acento); }
-  html[data-skin="chicle"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.01em; }
+  html[data-skin="chicle"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.02em; }
   html[data-skin="chicle"] .btn-volver:active{ background:rgba(255,255,255,.35); }
   html[data-skin="chicle"] .btn-icono-top{ background:var(--paper); color:var(--sobre-acento); box-shadow:0 4px 0 rgba(42,8,56,.30); }
   html[data-skin="chicle"] .btn-icono-top:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(42,8,56,.30); }
@@ -1355,7 +1355,7 @@
   [data-skin="comic"]{ --ink:#0A0A0A; --ink-2:#121212; --ink-3:#2A2A2A; --paper:#FFFFFF; --text-ink:#000000; --stamp:#FFFFFF; --sobre-acento:#000000; --text-light:#FFFFFF; --text-dim:#C8C8C8; --seal:#FFFFFF; --amber:#B5B5B5; --azul:#DADADA; --morado:#8F8F8F; --stamp-dark:#D0D0D0; --borde-sutil:rgba(255,255,255,.30); --borde:#FFFFFF; --borde-fuerte:#FFFFFF; --topbar-fondo:#0A0A0A; --trama:rgba(255,255,255,.17);
     --serif:'Bangers', 'Comic Sans MS', 'Marker Felt', cursive;
     --sans:'Comic Neue', 'Comic Sans MS', 'Marker Felt', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --fuente-marca:'Bangers', 'Comic Sans MS', 'Marker Felt', cursive;
+    --fuente-marca:'Luckiest Guy', 'Comic Sans MS', 'Marker Felt', cursive;
     --r-pill:14px; --r-chip:18px; --r-avatar:8px; --r-avatar-mini:6px; --r-tarjeta:6px; --r-miniatura:3px;
     --r-boton:8px; --r-campo:6px; --r-grupo:6px; --r-modal:8px; --r-caja:6px; --r-marca:6px; --r-app-login:10px; --r-redondo:50%;
     --sombra-ficha:5px 5px 0 var(--text-light);
@@ -1368,7 +1368,7 @@
   html[data-skin="comic"] :is(h1, h2, h3, .serif, .topbar .marca, .categoria-barra, .persona-tile .nombre-persona, .titulo-grupo, .doc-nombre, .chip, .btn-primario, .btn-secundario, .btn-grande, .titular-sello, .ajustes-titulo, .aviso-caducidad-banner, .mqs-barra b, .mqs-ficha b, .mqs-nom){ font-family:var(--serif); font-weight:400; letter-spacing:.05em; }
   html[data-skin="comic"] .topbar{ background-image:radial-gradient(circle, var(--trama) 1.1px, transparent 1.6px); background-size:6px 6px; border-bottom:4px solid var(--text-light); backdrop-filter:none; }
   html[data-skin="comic"] .topbar .marca{ font-size:1.4rem; }
-  html[data-skin="comic"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.07em; }
+  html[data-skin="comic"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.05em; }
   html[data-skin="comic"] .btn-icono-top{ border:3px solid var(--text-light); background:var(--ink-2); box-shadow:3px 3px 0 var(--text-light); }
   html[data-skin="comic"] .btn-icono-top:active{ transform:translate(3px,3px); box-shadow:none; }
   /* Personas: recuadro con su rótulo debajo, en gris (aunque la persona tenga color o foto) */
@@ -1585,7 +1585,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.3.9';
+const VERSION_APP = '3.4.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1955,6 +1955,50 @@ mediaOscuro.addEventListener('change', () => {
 //   (hasta 18,3 px, para que dos líneas tampoco hagan crecer la barra) cuando así la
 //   letra puede ser claramente mayor. Solo un nombre larguísimo llega al tamaño
 //   mínimo y se recorta.
+// Mide, para una tipografía/tamaño/alto-de-línea dados, dos cosas de la "O" mayúscula:
+// - alto: su altura real de tinta (para que el icono, que hace de "D" del título, quede a esa altura exacta
+//   en vez de un porcentaje fijo — cada letra tiene una proporción distinta).
+// - offsetY: cuánto hay que bajar (o subir) el texto para que esa tinta quede centrada en su línea.
+//   Motivo: una tipografía reserva espacio de sobra por debajo de la línea para letras con rabito (g, y, p…),
+//   que "OCUMENTACIÓN" (en mayúsculas) no usa. Ese hueco vacío desplaza la tinta hacia arriba dentro de su
+//   propia línea — el icono no tiene ese problema (su tinta ocupa su caja de forma simétrica) — así que sin
+//   corregirlo el texto se ve descolgado hacia arriba respecto al icono, más en unas tipografías que en otras.
+// Se mide con canvas (más preciso que el DOM) y se guarda en caché por combinación letra+tamaño+alto de línea.
+const _cacheMedidaLetra = new Map();
+function medirLetraMayuscula(fontFamily, tamPx, lineHeightPx) {
+  const clave = fontFamily + '|' + tamPx.toFixed(1) + '|' + lineHeightPx.toFixed(1);
+  if (_cacheMedidaLetra.has(clave)) return _cacheMedidaLetra.get(clave);
+  let resultado = { alto: tamPx * 0.72, offsetY: 0 }; // valor de respaldo si el navegador no da métricas (poco habitual)
+  try {
+    const ctx = (medirLetraMayuscula._ctx ||= document.createElement('canvas').getContext('2d'));
+    ctx.font = tamPx + 'px ' + fontFamily;
+    const m = ctx.measureText('O');
+    if (m.actualBoundingBoxAscent) {
+      const alto = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      let offsetY = 0;
+      if (m.fontBoundingBoxAscent != null) {
+        // Reparte igual arriba y abajo el espacio de más que añada el alto de línea sobre el propio de la
+        // tipografía (la regla del "half leading" que usan los navegadores), y de ahí saca dónde cae de verdad
+        // el centro de la tinta dentro de esa línea, para desplazarla al centro exacto.
+        const altoPropioFuente = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+        const medioSobrante = (lineHeightPx - altoPropioFuente) / 2;
+        const centroTinta = medioSobrante + m.fontBoundingBoxAscent + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2;
+        offsetY = (lineHeightPx / 2) - centroTinta;
+      }
+      resultado = { alto, offsetY };
+    }
+  } catch (e) { /* se queda con el valor de respaldo */ }
+  _cacheMedidaLetra.set(clave, resultado);
+  return resultado;
+}
+
+// La "D" dibujada dentro de icono.png no ocupa todo el cuadrado: deja un margen alrededor (el mismo motivo por el
+// que el icono adaptable de Android necesita margen — ver la nota de icono_maskable). Medido a pulso sobre el
+// propio icono.png (los píxeles claros de la "D" frente al lienzo entero): ocupa el 70,3 % de la altura.
+// Para que sea la "D" —no el cuadrado que la contiene— la que cuadre con la altura de la letra de al lado, el
+// cuadrado tiene que ser más grande que esa altura, justo en esta proporción.
+const FRACCION_ALTO_D_EN_ICONO = 0.703;
+
 const TITULO_TAM_MIN = 9;
 const TITULO_TAM_MAX_APP = 38;
 const TITULO_TAM_MAX_NOMBRE = 26;
@@ -1973,6 +2017,7 @@ function ajustarTituloTopbar() {
   const marca = t.parentElement;
   const enPortada = !enNombre && !icono.classList.contains('hidden');
   icono.style.width = icono.style.height = icono.style.borderRadius = '';
+  t.style.transform = '';
   marca.style.gap = enPortada ? '2px' : '';
   if (enPortada) {
     t.classList.remove('dos-lineas');
@@ -1981,8 +2026,20 @@ function ajustarTituloTopbar() {
     const libre = marca.clientWidth - 2;
     const tam = Math.max(TITULO_TAM_MIN, Math.min(tope, libre / (0.98 + anchoNatural / 100)) * 0.985);
     t.style.fontSize = tam.toFixed(2) + 'px';
-    icono.style.width = icono.style.height = (tam * 0.98).toFixed(2) + 'px';
-    icono.style.borderRadius = (tam * 0.2).toFixed(2) + 'px';
+    // Cada tipografía tiene una "O" mayúscula más alta o más baja para un mismo tamaño de letra (una pixelada
+    // como Silkscreen no es lo mismo que una fina como Josefin Sans) — se mide la altura real de esa letra
+    // (con las de esta línea, no con un porcentaje fijo) para que el icono, que hace de "D", quede a su altura
+    // exacta y parezca una letra más en vez de un adorno pegado.
+    const lineHeightPx = parseFloat(getComputedStyle(t).lineHeight) || tam * 1.15;
+    const { alto: altoO, offsetY } = medirLetraMayuscula(getComputedStyle(t).fontFamily, tam, lineHeightPx);
+    // El CUADRADO tiene que ser más grande que altoO, para que la "D" de dentro (más pequeña que el cuadrado)
+    // sea la que salga a esa altura exacta — si el cuadrado midiera altoO, la "D" se quedaría corta.
+    const ladoCuadrado = altoO / FRACCION_ALTO_D_EN_ICONO;
+    icono.style.width = icono.style.height = ladoCuadrado.toFixed(2) + 'px';
+    icono.style.borderRadius = (ladoCuadrado * 0.2).toFixed(2) + 'px';
+    // Baja (o sube) el texto lo justo para que su tinta quede centrada con la "D", en vez de con el hueco vacío
+    // que reserva su propia tipografía por si hubiera letras con rabito.
+    t.style.transform = Math.abs(offsetY) > 0.05 ? 'translateY(' + offsetY.toFixed(2) + 'px)' : '';
     return;
   }
 
@@ -2026,7 +2083,7 @@ function ajustarTituloTopbar() {
   // la tipografía tarda en cargar y cambia el ancho del texto
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTituloTopbar);
   // también cuando termina de cargar la letra de un estilo, y al cambiar de estilo (el ancho del texto cambia)
-  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', ajustarTituloTopbar);
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { _cacheMedidaLetra.clear(); ajustarTituloTopbar(); });
   new MutationObserver(() => ajustarTituloTopbar()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
   window.addEventListener('resize', ajustarTituloTopbar);
   window.addEventListener('orientationchange', () => setTimeout(ajustarTituloTopbar, 150));
