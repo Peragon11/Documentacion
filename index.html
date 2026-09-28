@@ -347,7 +347,9 @@
      sobre el fondo del modal) — con --topbar-fondo, muy parecido a --ink-3, los botones no se distinguían
      nada de la barra en la mayoría de estilos. */
   .barra-inferior{ display:none; position:relative; flex:none; padding:8px 10px calc(10px + var(--safe-b)); background:var(--ink-2); border-top:1px solid var(--borde-sutil); }
-  #vista-app:has(#pantalla-personas:not(.hidden)) .barra-inferior{ display:block; }
+  #vista-app:has(#pantalla-personas:not(.hidden)) .barra-inferior,
+  #vista-app:has(#pantalla-persona:not(.hidden)) .barra-inferior{ display:block; }
+  body.modo-seleccion .barra-inferior{ display:none; } /* la barra de selección (fija, abajo) la sustituye */
   /* La versión queda FUERA de la barra: flota justo encima de ella (a la derecha), sin hacerla más alta */
   .barra-inferior #version-pie{ position:absolute; right:14px; bottom:100%; margin-bottom:4px; font-size:.66rem; color:var(--text-dim); opacity:.75; pointer-events:none; }
   .barra-botones{ display:flex; gap:8px; }
@@ -1712,12 +1714,6 @@
     <button class="btn-icono-top" id="btn-ajustes" aria-label="Ajustes">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
-    <button class="btn-icono-top hidden" id="btn-subir" aria-label="Subir documento">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0-12l-4 4m4-4l4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
-    <button class="btn-icono-top hidden" id="btn-menu-persona" aria-label="Opciones de esta persona">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/></svg>
-    </button>
   </div>
 
   <div class="banner-instalar hidden" id="banner-instalar">
@@ -1784,7 +1780,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.5';
+const VERSION_APP = '3.5.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4119,6 +4115,43 @@ function actualizarBotonAlternarVista() {
   }
 }
 
+const ICONO_BUSCAR = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const ICONO_AJUSTES = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+
+// La barra de abajo se reutiliza en la portada y dentro de una persona/categoría, pero con otro
+// significado: "Buscar" pasa a ser "Compartir" (entra en modo selección para elegir qué compartir;
+// así "Subir", en su mismo sitio de siempre —el segundo hueco—, no se mueve entre pantallas),
+// "Categorías/Personas" pasa a ser "Desplegar/Replegar páginas" y "Ajustes" pasa a ser "Exportar"
+// (solo dentro de una persona: es lo único que le queda; en una categoría —todas las personas a la
+// vez— sigue siendo "Ajustes", porque ahí abre los ajustes generales). Se llama al entrar o salir de
+// una persona/categoría, y también cada vez que cambia el propio estado de desplegado/replegado.
+function sincronizarBarraInferior() {
+  const enDocs = personaActivaId !== null || categoriaGlobalActivaId !== null;
+  const btnBuscar = $('#bar-buscar');
+  const btnVista = $('#bar-vista');
+  const btnAjustes = $('#bar-ajustes');
+  if (enDocs) {
+    btnBuscar.innerHTML = ICONOS_MENU.compartir + '<span>Compartir</span>';
+    btnBuscar.setAttribute('aria-label', 'Compartir documentos');
+    const desplegado = obtenerVistaDocsGuardada() === 'desplegado';
+    btnVista.innerHTML = ICONOS_MENU.vista + '<span>' + (desplegado ? 'Replegar' : 'Desplegar') + '</span>';
+    btnVista.setAttribute('aria-label', desplegado ? 'Replegar páginas' : 'Desplegar páginas');
+    if (personaActivaId !== null) {
+      btnAjustes.innerHTML = ICONOS_MENU.exportar + '<span>Exportar</span>';
+      btnAjustes.setAttribute('aria-label', 'Exportar copia');
+    } else {
+      btnAjustes.innerHTML = ICONO_AJUSTES + '<span>Ajustes</span>';
+      btnAjustes.setAttribute('aria-label', 'Ajustes');
+    }
+  } else {
+    btnBuscar.innerHTML = ICONO_BUSCAR + '<span>Buscar</span>';
+    btnBuscar.setAttribute('aria-label', 'Buscar documento');
+    btnAjustes.innerHTML = ICONO_AJUSTES + '<span>Ajustes</span>';
+    btnAjustes.setAttribute('aria-label', 'Ajustes');
+    actualizarBotonAlternarVista();
+  }
+}
+
 function mostrarPantallaPersonas() {
   personaActivaId = null;
   categoriaGlobalActivaId = null;
@@ -4126,8 +4159,6 @@ function mostrarPantallaPersonas() {
   $('#pantalla-personas').classList.remove('hidden');
   $('#pantalla-persona').classList.add('hidden');
   $('#btn-volver').classList.add('hidden');
-  $('#btn-subir').classList.add('hidden');
-  $('#btn-menu-persona').classList.add('hidden');
   // En la portada, buscar / cambiar vista / ajustes están en la barra de abajo (los de arriba se quedan ocultos)
   $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
@@ -4135,7 +4166,7 @@ function mostrarPantallaPersonas() {
   $('#topbar-punto').classList.remove('hidden');
   $('#avatar-topbar').classList.add('hidden');
   $('#titulo-topbar').textContent = 'OCUMENTACIÓN'; // la "D" es el icono que va delante
-  actualizarBotonAlternarVista();
+  sincronizarBarraInferior();
   renderizarPantallaInicio();
 }
 
@@ -4148,11 +4179,10 @@ function abrirPersona(personaId, sinNavegacion = false) {
   $('#pantalla-persona').classList.remove('hidden');
   $('#chips-categorias').classList.remove('hidden');
   $('#btn-volver').classList.remove('hidden');
-  $('#btn-subir').classList.remove('hidden');
-  $('#btn-menu-persona').classList.remove('hidden');
   $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
+  sincronizarBarraInferior();
   renderizarCabeceraPersona();
   renderizarChipsCategorias();
   renderizarAvisoCaducidadPersona();
@@ -4177,14 +4207,13 @@ function abrirCategoriaGlobal(categoriaId, sinNavegacion = false) {
   $('#aviso-caducado-persona').classList.add('hidden');
   $('#aviso-porcaducar-persona').classList.add('hidden');
   $('#btn-volver').classList.remove('hidden');
-  $('#btn-subir').classList.remove('hidden');
-  $('#btn-menu-persona').classList.remove('hidden');
   $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
   $('#topbar-punto').classList.remove('hidden');
   $('#avatar-topbar').classList.add('hidden');
   $('#titulo-topbar').textContent = cat ? cat.nombre : 'Categoría';
+  sincronizarBarraInferior();
   renderizarChipsPersonas();
   renderizarDocumentos();
   if (!sinNavegacion) pushNavegacion(mostrarPantallaPersonas);
@@ -4257,11 +4286,32 @@ function alternarVistaInicio() {
   renderizarPantallaInicio();
 }
 $('#btn-ver-categorias-top').addEventListener('click', alternarVistaInicio);
-// Barra inferior de la portada
-$('#bar-buscar').addEventListener('click', abrirBusqueda);
+// Barra inferior: en la portada es Buscar/Subir/Categorías/Ajustes; dentro de una persona o
+// categoría, los mismos 4 botones pasan a ser Subir/Seleccionar/Desplegar-Replegar/Ajustes
+// (ver sincronizarBarraInferior, que cambia sus iconos y etiquetas al entrar y salir).
+function enPantallaDocumentos() { return personaActivaId !== null || categoriaGlobalActivaId !== null; }
+$('#bar-buscar').addEventListener('click', () => {
+  if (enPantallaDocumentos()) { entrarModoSeleccion(); mostrarToast('Elige los documentos que quieras compartir'); }
+  else abrirBusqueda();
+});
 $('#bar-subir').addEventListener('click', abrirModalSubida);
-$('#bar-vista').addEventListener('click', alternarVistaInicio);
-$('#bar-ajustes').addEventListener('click', () => abrirAjustes(true));
+$('#bar-vista').addEventListener('click', () => {
+  if (enPantallaDocumentos()) {
+    guardarVistaDocs(obtenerVistaDocsGuardada() === 'desplegado' ? 'replegado' : 'desplegado');
+    sincronizarBarraInferior();
+  } else {
+    alternarVistaInicio();
+  }
+});
+// Dentro de una persona ya solo queda "Exportar copia" (Subir y Seleccionar tienen botón propio);
+// dentro de una categoría (todas las personas a la vez) no queda nada propio, así que abre los
+// ajustes generales, igual que en la portada.
+$('#bar-ajustes').addEventListener('click', () => {
+  if (!enPantallaDocumentos()) { abrirAjustes(true); return; }
+  if (categoriaGlobalActivaId !== null) { abrirAjustes(true); return; }
+  const persona = datos.personas.find((p) => p.id === personaActivaId);
+  if (persona) abrirModalExportar(persona);
+});
 
 // Búsqueda global: por nombre de documento o de página, cruzando todas
 // las personas y categorías a la vez. Reutiliza #visor-completo (como el
@@ -6022,73 +6072,6 @@ function montarRecorteDocumento(contenedor, file, { onConfirmar, onCancelar }) {
   preImg.src = urlPrevia;
 }
 
-// Pasa del menú de opciones directamente al modo selección, sustituyendo su capa de
-// navegación (ver reemplazarCapaActual) — usado tanto desde la persona como desde la
-// categoría global.
-function entrarModoSeleccionDesdeMenu() {
-  if (modoSeleccionDocs) return;
-  cerrarModal(); // solo el DOM del menú; su capa de navegación se sustituye a continuación, no se cierra aparte
-  activarModoSeleccion();
-  reemplazarCapaActual(limpiarModoSeleccion);
-}
-
-// Fila del menú para cambiar entre ver los documentos de varias páginas replegados (una ficha
-// con el número de páginas) o desplegados (cada página, su propia ficha). Se usa igual desde el
-// menú de una persona que desde el de una categoría.
-function filaVistaDocs() {
-  const desplegado = obtenerVistaDocsGuardada() === 'desplegado';
-  return filaMenu('op-vista-docs', 'morado', ICONOS_MENU.vista,
-    desplegado ? 'Replegar páginas' : 'Desplegar páginas',
-    desplegado ? 'Un documento de varias páginas, una sola ficha' : 'Cada página de un documento, en su propia ficha');
-}
-function activarFilaVistaDocs() {
-  $('#op-vista-docs').addEventListener('click', () => {
-    guardarVistaDocs(obtenerVistaDocsGuardada() === 'desplegado' ? 'replegado' : 'desplegado');
-    volverAtras();
-  });
-}
-
-// Cambiar imagen/nombre y eliminar ya no viven aquí — se gestionan desde
-// Ajustes → "Administrar personas" (ver crearTilePersonaHome). Este menú,
-// dentro de la propia persona o de la vista de una categoría, solo deja
-// acciones sobre los documentos que se están viendo.
-$('#btn-menu-persona').addEventListener('click', () => {
-  // Vista de una categoría (todas las personas a la vez): no hay una sola persona de la
-  // que "exportar su copia", así que aquí el menú solo deja seleccionar documentos.
-  if (categoriaGlobalActivaId !== null) {
-    const cat = datos.categorias.find((c) => c.id === categoriaGlobalActivaId) || CATEGORIA_SIN_ASIGNAR;
-    abrirModal(`
-      <div class="ajustes">
-        ${cabeceraMenu(cat.nombre)}
-        <div class="grupo">
-          ${filaMenu('op-seleccionar-docs', 'verde', ICONOS_MENU.seleccionar, 'Seleccionar documentos', 'Elige varios para compartirlos')}
-          ${filaVistaDocs()}
-        </div>
-      </div>
-    `);
-    activarArrastreParaCerrar($('.cabecera-hoja'));
-    $('#op-seleccionar-docs').addEventListener('click', entrarModoSeleccionDesdeMenu);
-    activarFilaVistaDocs();
-    return;
-  }
-  const persona = datos.personas.find((p) => p.id === personaActivaId);
-  if (!persona) return;
-  abrirModal(`
-    <div class="ajustes">
-      ${cabeceraMenu(persona.nombre)}
-      <div class="grupo">
-        ${filaMenu('op-seleccionar-docs', 'verde', ICONOS_MENU.seleccionar, 'Seleccionar documentos', 'Elige varios para compartirlos')}
-        ${filaVistaDocs()}
-        ${filaMenu('op-exportar-persona', 'ambar', ICONOS_MENU.exportar, 'Exportar copia', 'Guarda sus documentos en un archivo')}
-      </div>
-    </div>
-  `);
-  activarArrastreParaCerrar($('.cabecera-hoja'));
-  $('#op-seleccionar-docs').addEventListener('click', entrarModoSeleccionDesdeMenu);
-  activarFilaVistaDocs();
-  $('#op-exportar-persona').addEventListener('click', () => abrirModalExportar(persona));
-});
-
 function renderizarChipsCategorias() {
   const cont = $('#chips-categorias');
   cont.innerHTML = '';
@@ -7127,6 +7110,7 @@ const ICONOS_MENU = {
   mas: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   papelera: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   seleccionar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  subir: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0-12l-4 4m4-4l4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   vista: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="14" width="16" height="6" rx="1.4" stroke="currentColor" stroke-width="1.8"/></svg>',
   exportar: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m-4 4l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   check: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -7441,7 +7425,6 @@ function confirmarBorrado(doc, indicePagina = null) {
   });
 }
 
-$('#btn-subir').addEventListener('click', abrirModalSubida);
 
 // Selectores de fila para "Subir documento" (persona y categoría). Cada opción lleva su valor en data-valor.
 // Si hay más opciones de las que caben, salen flechas a los lados y un degradado en el borde por donde hay más.
