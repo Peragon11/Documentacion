@@ -73,7 +73,7 @@
   // salto mientras carga. Pidiéndolas ya (con un Image(), sin ponerlas en ningún sitio) quedan en
   // la caché de imágenes del navegador y, cuando de verdad hagan falta, se pintan al momento.
   window.__imagenesSkin = {
-    metalico: ['skin-metalico-panel.webp', 'skin-metalico-marco.webp', 'skin-metalico-placa.webp', 'skin-metalico-placa-marco.webp', 'skin-metalico-placa-cat.webp', 'skin-metalico-pozo.svg']
+    metalico: ['skin-metalico-panel.webp', 'skin-metalico-marco.webp', 'skin-metalico-placa.webp', 'skin-metalico-placa-marco.webp', 'skin-metalico-placa-cat.webp', 'skin-metalico-pozo.svg', 'skin-metalico-fondo.webp']
   };
   window.__cargarImagenesSkin = function (id) {
     var lista = window.__imagenesSkin[id];
@@ -1458,7 +1458,13 @@
     --borde-sutil:rgba(26,28,31,.12); --borde:#7D848C; --borde-fuerte:#1A1C1F; --topbar-fondo:rgba(203,207,211,.92);
   }
   html[data-skin="metalico"]{ --fondo-login:var(--ink); --r-avatar:6px; --r-avatar-mini:6px; }
-  html[data-skin="metalico"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L21 7V17L12 22L3 17V7Z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L21 7V17L12 22L3 17V7Z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
+  html[data-skin="metalico"] body{ background-image:linear-gradient(color-mix(in srgb, var(--ink) 55%, transparent), color-mix(in srgb, var(--ink) 55%, transparent)), url('skin-metalico-fondo.webp'); background-size:cover; background-position:center; background-repeat:no-repeat; }
+  @media (orientation:portrait){
+    /* en vertical, "cover" recorta demasiado los laterales (justo donde están las dos tiras de luz
+       de la foto) porque la imagen es más ancha que la pantalla en proporción; con "contain" se ve
+       la puerta entera, dejando el color liso del tema arriba y abajo. */
+    html[data-skin="metalico"] body{ background-size:contain; }
+  }
   html[data-skin="metalico"] .topbar{ border-bottom:none; backdrop-filter:none; }
   /* Misma cinta de aviso amarilla/negra que la barra de abajo, pegada al borde inferior (el sitio
      donde estaba el border-bottom), dentro del propio padding de la topbar. */
@@ -1776,7 +1782,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.3';
+const VERSION_APP = '3.5.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
