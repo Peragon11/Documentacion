@@ -1,4 +1,4 @@
-const CACHE = 'documentacion-shell-v4'; // v4: los SVG del skin Metálico con filtro caro pasan a WebP ya pintados
+const CACHE = 'documentacion-shell-v5'; // v5: las imágenes del skin Metálico se sirven de caché primero, no por red cada vez
 const SHELL = ['./index.html', './idiomas.js', './manifest.json', './icono.png', './icono_maskable.png', './icono_notificacion.png',
   './skin-metalico-panel.webp', './skin-metalico-marco.webp', './skin-metalico-placa.webp', './skin-metalico-placa-marco.webp', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.webp'];
 
@@ -25,9 +25,12 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.method !== 'GET') return;
 
-  // opencv.js (recorte automático de documentos) pesa ~10 MB y no cambia: se sirve
-  // de la caché y solo se descarga la primera vez que hace falta.
-  if (url.pathname.endsWith('/opencv.js')) {
+  // opencv.js (recorte automático de documentos) y las imágenes del skin Metálico no cambian una
+  // vez subidas: se sirven de la caché (al momento, sin esperar a la red) y solo se descargan de
+  // verdad la primera vez que hacen falta. Con la estrategia normal de aquí abajo (red primero)
+  // se volvían a pedir por internet CADA VEZ que se abría la app, aunque no hubiera cambiado nada
+  // — eso es lo que se notaba lento, no el peso de los archivos.
+  if (url.pathname.endsWith('/opencv.js') || /\/skin-metalico-[^/]+\.(webp|svg)$/.test(url.pathname)) {
     event.respondWith(
       caches.match(event.request).then((guardado) => guardado || fetch(event.request).then((res) => {
         if (res.ok) {
