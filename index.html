@@ -1509,7 +1509,7 @@
     html[data-skin="metalico"] .barra-botones{ gap:8px; }
     html[data-skin="metalico"] .btn-icono-top.btn-barra{
       flex:1; width:auto; height:40px; aspect-ratio:auto; flex-direction:row; justify-content:center; gap:8px; padding:0 8px;
-      background:none; border-style:solid; border-width:9px; border-image:var(--placa-metal) 44 44 34 34 fill / 11.6px 11.6px 9px 9px stretch;
+      background:none; border-style:solid; border-width:9px; border-image:var(--placa-metal) 110 110 85 85 fill / 11.6px 11.6px 9px 9px stretch;
       font-size:.8rem;
     }
     html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:18px; height:18px; }
@@ -1559,25 +1559,33 @@
   html[data-skin="metalico"] :is(.btn-grande, .btn-google){ --bm:14px; }
   html[data-skin="metalico"] .chip{ --bm:8px; padding:0 6px; }
   /* Con su propio color dentro (la placa hueca): categorías, documentos, el botón principal
-     (ámbar), el chip activo y los chips de categoría */
+     (ámbar), el chip activo y los chips de categoría.
+     border-image-slice va en PÍXELES DEL PROPIO ARCHIVO, no en unidades del dibujo original: el
+     dibujo se hizo sobre un lienzo de 160×160, pero skin-metalico-placa(-marco).webp se generó ya
+     pintado a 400×400 (×2,5, para que se viera nítido) — por eso el recorte es 110/85 (44/34 del
+     dibujo × 2,5), no 44/34. border-image-WIDTH (lo de después de la barra) es aparte, en px de
+     pantalla, y no cambia con la resolución del archivo. Si se vuelve a rasterizar con otra escala
+     (ver rasterizar.js, scratchpad de la sesión del 2026-09-28), estos números hay que recalcularlos. */
   html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-grande, .btn-google, .chip.activo, .chip.chip-categoria){
-    border-image:var(--placa-hueca) 44 44 34 34 / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch;
+    border-image:var(--placa-hueca) 110 110 85 85 / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch;
   }
   /* Metal por dentro, con el texto grabado: botón secundario y chips sin seleccionar */
   html[data-skin="metalico"] :is(.btn-secundario, .chip:not(.activo):not(.chip-categoria)){
-    border-image:var(--placa-metal) 44 44 34 34 fill / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch; background:none;
+    border-image:var(--placa-metal) 110 110 85 85 fill / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch; background:none;
     color:var(--grabado); text-shadow:var(--sombra-grabado); font-weight:700;
   }
-  /* Barras de categoría: chaflán más hondo, con su propia placa (skin-metalico-placa-cat.svg,
-     160×160, chaflán de 60 y hueco achaflanado en paralelo). A 0,36 px por unidad: rebanadas de
-     74 → 26,6px (arriba y dcha., donde cabe el chaflán) y 34 → 12,2px (abajo e izq.); el recorte
-     quita la esquina que queda fuera: 60 → 21,6px, y las pequeñas 6 → 2,2px. El grosor real del
-     marco (--bm, 12px) no cambia: la parte de más de arriba y la dcha. es hueco y deja ver el color.
+  /* Barras de categoría: chaflán más hondo, con su propia placa (dibujada sobre un lienzo de
+     160×160, chaflán de 60 y hueco achaflanado en paralelo, pero guardada ya pintada a 400×400,
+     ×2,5 — de ahí que el recorte sea 185/85 y no 74/34, igual que arriba). A 0,36 px de PANTALLA
+     por unidad de DIBUJO: rebanadas de 74 → 26,6px (arriba y dcha., donde cabe el chaflán) y
+     34 → 12,2px (abajo e izq.); el recorte del propio elemento quita la esquina que queda fuera:
+     60 → 21,6px, y las pequeñas 6 → 2,2px. El grosor real del marco (--bm, 12px) no cambia: la
+     parte de más de arriba y la dcha. es hueco y deja ver el color.
      (Clase repetida a propósito: la regla general de las placas con color es un :is() que incluye
      .chip.activo, y :is() toma la especificidad de su argumento más fuerte — dos clases —, así
      que con una sola clase esta regla perdía aunque vaya después.) */
   html[data-skin="metalico"] .categoria-barra.categoria-barra{
-    border-image:url('skin-metalico-placa-cat.webp') 74 74 34 34 / 26.6px 26.6px 12.2px 12.2px stretch;
+    border-image:url('skin-metalico-placa-cat.webp') 185 185 85 85 / 26.6px 26.6px 12.2px 12.2px stretch;
     clip-path:polygon(2.7px 0, calc(100% - 22.6px) 0, 100% 22.6px, 100% calc(100% - 2.7px), calc(100% - 2.7px) 100%, 2.7px 100%, 0 calc(100% - 2.7px), 0 2.7px);
   }
   html[data-skin="metalico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
@@ -1763,7 +1771,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.0';
+const VERSION_APP = '3.5.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
