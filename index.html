@@ -1453,7 +1453,7 @@
      Paneles de nave espacial: metal remachado, una sola esquina cortada (con su propio marco,
      no un canto desnudo) en botones y fichas, placas de nombre con "tornillos" a los lados,
      avatares como portillas y letra técnica (Share Tech Mono / Orbitron para el título). */
-  html[data-skin="metalico"] .persona-tile-clic{ --altura-nombre:calc(.78rem * 1.2 + 16px); }
+  html[data-skin="metalico"] .persona-tile-clic{ --altura-nombre:calc(.78rem * 1.2 * 2 + 16px); }
   [data-skin="metalico"]{
     --ink:#24272B; --ink-2:#2F3236; --ink-3:#3A3E43; --paper:#E7E9EC; --text-ink:#1A1C1F;
     --stamp:#E8B923; --sobre-acento:#1A1C1F; --text-light:#DDE1E5; --text-dim:#8A9099;
@@ -1596,8 +1596,16 @@
 
   /* Placa de nombre remachada: un "tornillo" a cada lado, como una etiqueta atornillada */
   html[data-skin="metalico"] .persona-tile .nombre-persona{
-    position:relative; display:inline-block; max-width:100%; font-size:.78rem; font-weight:700;
-    text-transform:uppercase; letter-spacing:.04em; padding:4px 16px; border-radius:3px; -webkit-line-clamp:1;
+    /* El nombre no se recorta a una línea: cabe hasta en DOS (por eso --altura-nombre reserva sitio
+       para dos, ver más abajo). Si aun así no cupiera, se recorta con puntos suspensivos —
+       -webkit-line-clamp cuando el navegador lo aplique, y el tope de altura (max-height) siempre,
+       que es lo que de verdad evita que una tercera línea asome por debajo de la placa: al ser un
+       elemento de la rejilla (grid) de la ficha, el navegador "bloquea" el display a flow-root, y
+       con flow-root -webkit-line-clamp no hace nada por sí solo. */
+    position:relative; display:-webkit-box; width:fit-content; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+    line-height:1.2; max-height:calc(.78rem * 1.2 * 2 + 8px);
+    max-width:100%; font-size:.78rem; font-weight:700; text-align:center;
+    text-transform:uppercase; letter-spacing:.04em; padding:4px 16px; border-radius:3px;
     background:linear-gradient(165deg, var(--ink-3), var(--ink-2) 60%, var(--ink) 100%);
     box-shadow:inset 1px 1px 0 rgba(255,255,255,.18), inset -1px -1px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.35);
   }
@@ -1765,7 +1773,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.6';
+const VERSION_APP = '3.4.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
