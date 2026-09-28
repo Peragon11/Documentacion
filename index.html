@@ -162,6 +162,7 @@
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
     -webkit-font-smoothing:antialiased; transition:background-color .2s ease, color .2s ease;
+    isolation:isolate; /* para que un ::before con z-index:-1 (motivos de fondo) quede sobre el fondo propio y bajo el contenido, no oculto detrás de todo */
   }
   h1,h2,h3,.serif{ font-family:var(--serif); }
   button{ font-family:inherit; }
@@ -1070,6 +1071,7 @@
   }
   html[data-tema="claro"] [data-skin="pasaporte"], html[data-tema="claro"][data-skin="pasaporte"]{ --ink:#F6EEDF; --ink-2:#EFE4CE; --ink-3:#E3D5B8; --paper:#FFFBF3; --text-ink:#2A1520; --stamp:#7B1E34; --sobre-acento:#FBF2E2; --text-light:#2A1520; --text-dim:#6F5359; --seal:#4E7A5B; --amber:#9A6A18; --azul:#3F6A99; --morado:#74569C; --stamp-dark:#5C1526; --borde-sutil:rgba(123,30,52,.12); --borde:rgba(123,30,52,.24); --borde-fuerte:rgba(123,30,52,.40); --topbar-fondo:rgba(239,228,206,.95);  }
   html[data-skin="pasaporte"]{ --fondo-login:var(--ink); }
+  html[data-skin="pasaporte"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 1L14.5 9.5L23 12L14.5 14.5L12 23L9.5 14.5L1 12L9.5 9.5Z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 1L14.5 9.5L23 12L14.5 14.5L12 23L9.5 14.5L1 12L9.5 9.5Z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
   html[data-skin="pasaporte"] .topbar{ border-bottom:1px solid var(--stamp); box-shadow:0 1px 0 var(--ink), 0 2px 0 color-mix(in srgb, var(--stamp) 40%, transparent); }
   html[data-skin="pasaporte"] .topbar .marca span#titulo-topbar{ font-weight:800; letter-spacing:.08em; }
   html[data-skin="pasaporte"] h1, html[data-skin="pasaporte"] h3, html[data-skin="pasaporte"] .ajustes-titulo{ font-weight:700; letter-spacing:.02em; }
@@ -1131,6 +1133,7 @@
   }
   html[data-tema="claro"] [data-skin="nordico"], html[data-tema="claro"][data-skin="nordico"]{ --ink:#F5F7F5; --ink-2:#FFFFFF; --ink-3:#E9EEEB; --paper:#FFFFFF; --text-ink:#1E2A29; --stamp:#2A7767; --sobre-acento:#FFFFFF; --text-light:#1E2A29; --text-dim:#5C6C69; --seal:#3F8D78; --amber:#A9721A; --azul:#3F76A4; --morado:#6E63A8; --stamp-dark:#1F5C4F; --borde-sutil:rgba(30,42,41,.06); --borde:rgba(30,42,41,.12); --borde-fuerte:rgba(30,42,41,.20); --topbar-fondo:rgba(245,247,245,.82);  }
   html[data-skin="nordico"]{ --fondo-login:var(--ink); }
+  html[data-skin="nordico"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L16.5 9L13.8 9L18 15L14.5 15L18.5 21L5.5 21L9.5 15L6 15L10.2 9L7.5 9Z M11 21L13 21L13 23L11 23Z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L16.5 9L13.8 9L18 15L14.5 15L18.5 21L5.5 21L9.5 15L6 15L10.2 9L7.5 9Z M11 21L13 21L13 23L11 23Z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
   html[data-skin="nordico"] .topbar{ border-bottom:none; box-shadow:0 1px 0 var(--borde-sutil); backdrop-filter:blur(16px); }
   html[data-skin="nordico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.1em; }
   html[data-skin="nordico"] h1, html[data-skin="nordico"] h3{ font-weight:600; letter-spacing:-.02em; }
@@ -1306,6 +1309,7 @@
   }
   html[data-tema="claro"] [data-skin="bosque"], html[data-tema="claro"][data-skin="bosque"]{ --ink:#F1EEDF; --ink-2:#FAF7EC; --ink-3:#E4E0CB; --paper:#FBF8EE; --text-ink:#17291F; --stamp:#D9822B; --sobre-acento:#17291F; --text-light:#17291F; --text-dim:#52665A; --seal:#3F7A5A; --amber:#9C6A12; --azul:#3E6C93; --morado:#6F5798; --stamp-dark:#B96A1E; --borde-sutil:rgba(23,41,31,.09); --borde:rgba(23,41,31,.18); --borde-fuerte:rgba(23,41,31,.30); --topbar-fondo:rgba(228,224,203,.95);  }
   html[data-skin="bosque"]{ --fondo-login:var(--ink); }
+  html[data-skin="bosque"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 21C7 17 4 12 8 6c3-3 8-3 11 0-1 8-5 13-7 15z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 21C7 17 4 12 8 6c3-3 8-3 11 0-1 8-5 13-7 15z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
   html[data-skin="bosque"] .topbar{ border-bottom:none; box-shadow:0 8px 24px rgba(0,0,0,.18); }
   html[data-skin="bosque"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:0; }
   html[data-skin="bosque"] h1, html[data-skin="bosque"] h3{ font-weight:700; letter-spacing:-.01em; }
@@ -1454,6 +1458,7 @@
     --borde-sutil:rgba(26,28,31,.12); --borde:#7D848C; --borde-fuerte:#1A1C1F; --topbar-fondo:rgba(203,207,211,.92);
   }
   html[data-skin="metalico"]{ --fondo-login:var(--ink); --r-avatar:6px; --r-avatar-mini:6px; }
+  html[data-skin="metalico"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L21 7V17L12 22L3 17V7Z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L21 7V17L12 22L3 17V7Z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
   html[data-skin="metalico"] .topbar{ border-bottom:none; backdrop-filter:none; }
   /* Misma cinta de aviso amarilla/negra que la barra de abajo, pegada al borde inferior (el sitio
      donde estaba el border-bottom), dentro del propio padding de la topbar. */
@@ -1771,7 +1776,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.2';
+const VERSION_APP = '3.5.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
