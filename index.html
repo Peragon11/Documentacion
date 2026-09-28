@@ -52,7 +52,6 @@
     pasaporte: 'family=Cormorant+Garamond:wght@600;700&family=Lato:wght@400;700&family=Cinzel:wght@700;800',
     carpeta: 'family=Bitter:wght@600;700&family=Special+Elite',
     nordico: 'family=Outfit:wght@400;500;600&family=Josefin+Sans:wght@600;700',
-    contraste: 'family=Space+Grotesk:wght@500;700&family=Archivo+Black',
     bosque: 'family=Fraunces:wght@600;700&family=Nunito:wght@500;700',
     pixeles: 'family=Pixelify+Sans:wght@400&family=Press+Start+2P&family=Silkscreen:wght@400;700',
     neon: 'family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=Yellowtail',
@@ -74,7 +73,7 @@
   // salto mientras carga. Pidiéndolas ya (con un Image(), sin ponerlas en ningún sitio) quedan en
   // la caché de imágenes del navegador y, cuando de verdad hagan falta, se pintan al momento.
   window.__imagenesSkin = {
-    metalico: ['skin-metalico-panel.svg', 'skin-metalico-marco.svg', 'skin-metalico-placa.svg', 'skin-metalico-placa-marco.svg', 'skin-metalico-placa-cat.svg', 'skin-metalico-pozo.svg']
+    metalico: ['skin-metalico-panel.webp', 'skin-metalico-marco.webp', 'skin-metalico-placa.webp', 'skin-metalico-placa-marco.webp', 'skin-metalico-placa-cat.webp', 'skin-metalico-pozo.svg']
   };
   window.__cargarImagenesSkin = function (id) {
     var lista = window.__imagenesSkin[id];
@@ -1017,9 +1016,6 @@
   .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
   .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
   .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="contraste"] .mqs-barra{ border-bottom:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc, .mq-skin[data-skin="contraste"] .mqs-ficha i{ border:2px solid var(--text-light); }
-  .mq-skin[data-skin="contraste"] .mqs-doc{ box-shadow:2px 2px 0 var(--text-light); }
   .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
   .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
   .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
@@ -1149,42 +1145,6 @@
   html[data-skin="nordico"] .chip{ border-color:var(--borde); background:transparent; }
   html[data-skin="nordico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); border-color:var(--stamp); }
   html[data-skin="nordico"] .modal{ box-shadow:0 -20px 60px rgba(20,36,32,.18); }
-
-  /* ---- contraste ---- */
-  [data-skin="contraste"]{ --ink:#121212; --ink-2:#1D1D1D; --ink-3:#2B2B2B; --paper:#FFF6DC; --text-ink:#111111; --stamp:#FFC53D; --sobre-acento:#111111; --text-light:#FFF6DC; --text-dim:#CFC7B0; --seal:#46D39A; --amber:#FFB800; --azul:#6C9BFF; --morado:#B88AFF; --stamp-dark:#E0A81F; --borde-sutil:rgba(255,246,220,.28); --borde:#FFF6DC; --borde-fuerte:#FFF6DC; --topbar-fondo:#2B2B2B; 
-    --serif:'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --sans:'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    --fuente-marca:'Archivo Black', system-ui, sans-serif;
-    --r-pill:10px; --r-chip:10px; --r-avatar:22px; --r-avatar-mini:10px; --r-tarjeta:12px; --r-miniatura:8px;
-    --r-boton:10px; --r-campo:10px; --r-grupo:14px; --r-modal:16px; --r-caja:10px; --r-marca:10px; --r-app-login:22px; --r-redondo:12px;
-    --sombra-ficha:5px 5px 0 var(--text-light);
-  }
-  html[data-tema="claro"] [data-skin="contraste"], html[data-tema="claro"][data-skin="contraste"]{ --ink:#FFF6DC; --ink-2:#FFFFFF; --ink-3:#FFE6A0; --paper:#FFFFFF; --text-ink:#111111; --stamp:#FF5A36; --sobre-acento:#111111; --text-light:#111111; --text-dim:#4D4638; --seal:#12805A; --amber:#B37D00; --azul:#2F5FE0; --morado:#7A3FE0; --stamp-dark:#D9401C; --borde-sutil:rgba(17,17,17,.22); --borde:#111111; --borde-fuerte:#111111; --topbar-fondo:#FFC53D;  }
-  html[data-skin="contraste"]{ --fondo-login:var(--ink); }
-  html[data-skin="contraste"] .topbar{ border-bottom:3px solid var(--text-light); backdrop-filter:none; }
-  html[data-skin="contraste"] .topbar .marca{ color:var(--text-light); }
-  html[data-skin="contraste"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:-.01em; }
-  html[data-skin="contraste"] .btn-icono-top, html[data-skin="contraste"] .btn-volver{ border:2px solid var(--text-light); }
-  html[data-skin="contraste"] .btn-icono-top{ box-shadow:2px 2px 0 var(--text-light); background:var(--ink-2); }
-  html[data-skin="contraste"] .btn-icono-top:active{ transform:translate(2px,2px); box-shadow:none; }
-  html[data-skin="contraste"] h1, html[data-skin="contraste"] h3{ font-weight:700; letter-spacing:-.02em; }
-  html[data-skin="contraste"] .titulo-grupo{ font-weight:700; color:var(--text-light); letter-spacing:.02em; }
-  html[data-skin="contraste"] .avatar-persona{ border:3px solid var(--text-light); }
-  html[data-skin="contraste"] .doc-fila, html[data-skin="contraste"] .galeria-pagina, html[data-skin="contraste"] .categoria-barra{ border:2px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); }
-  html[data-skin="contraste"] .doc-fila:active, html[data-skin="contraste"] .categoria-barra:active{ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--text-light); }
-  html[data-skin="contraste"] .doc-fila .miniatura, html[data-skin="contraste"] .galeria-pagina .miniatura{ border:2px solid var(--text-light); }
-  html[data-skin="contraste"] .doc-nombre, html[data-skin="contraste"] .persona-tile .nombre-persona{ font-weight:700; }
-  html[data-skin="contraste"] .btn-primario, html[data-skin="contraste"] .btn-secundario, html[data-skin="contraste"] .chip{ border:2px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-weight:700; }
-  html[data-skin="contraste"] .btn-secundario{ color:var(--text-light); background:var(--ink-2); }
-  html[data-skin="contraste"] .btn-primario:active, html[data-skin="contraste"] .btn-secundario:active{ transform:translate(3px,3px); box-shadow:none; }
-  html[data-skin="contraste"] .chip{ color:var(--text-light); background:var(--ink-2); box-shadow:2px 2px 0 var(--text-light); }
-  html[data-skin="contraste"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
-  html[data-skin="contraste"] .ajustes .grupo{ border:2px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); background:var(--ink-2); }
-  html[data-skin="contraste"] .ajustes .grupo > * + *{ border-top:2px solid var(--text-light); }
-  html[data-skin="contraste"] .modal{ border-top:3px solid var(--text-light); }
-  html[data-skin="contraste"] .campo input, html[data-skin="contraste"] .campo select, html[data-skin="contraste"] .input-busqueda{ border:2px solid var(--text-light); background:var(--ink-2); }
-  html[data-skin="contraste"] .btn-prov{ border:2px solid var(--text-light); color:var(--text-light); font-weight:700; }
-  html[data-skin="contraste"] .toast{ border:2px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); }
 
   /* ---- pixeles ---- */
   [data-skin="pixeles"]{ --ink:#1A1C2C; --ink-2:#29366F; --ink-3:#333C57; --paper:#F4F4F4; --text-ink:#1A1C2C; --stamp:#FFCD75; --sobre-acento:#1A1C2C; --text-light:#F4F4F4; --text-dim:#B4C7D6; --seal:#38B764; --amber:#EF7D57; --azul:#41A6F6; --morado:#A56BE8; --stamp-dark:#E0A94F; --borde-sutil:rgba(244,244,244,.12); --borde:#566C86; --borde-fuerte:#94B0C2; --topbar-fondo:#29366F; --borde-px:#94B0C2;
@@ -1502,22 +1462,30 @@
     background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px);
   }
   html[data-skin="metalico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.03em; text-shadow:1px 1px 0 rgba(0,0,0,.35); }
-  /* ===== El panel de metal (dibujo vectorial propio, en archivos SVG aparte) =====
-     - skin-metalico-panel.svg: panel entero con el pozo central relleno de metal → botones de
+  /* ===== El panel de metal (dibujo propio, en archivos aparte) =====
+     - skin-metalico-panel.webp: panel entero con el pozo central relleno de metal → botones de
        icono (barra de abajo y los de arriba). El icono y el texto van GRABADOS en ese pozo.
-     - skin-metalico-marco.svg: el mismo panel con el pozo HUECO → avatares: la foto o el color
+     - skin-metalico-marco.webp: el mismo panel con el pozo HUECO → avatares: la foto o el color
        de la persona se ve por el hueco, como una pantalla metida en el metal.
-     - skin-metalico-placa(-marco).svg: versión sencilla de 120×120 para border-image a 9 trozos
+     - skin-metalico-placa(-marco).webp: versión sencilla de 120×120 para border-image a 9 trozos
        (esquinas fijas, lados estirados; 160×160, rebanadas 44 44 34 34 porque la esquina de arriba-dcha.
        lleva el chaflán y el del hueco, en paralelo) → fichas anchas, chips y botones de texto, que no tienen
        la proporción del panel. La "-marco" deja el centro hueco para que se vea el color propio
        de la ficha (categoría, documento, botón principal).
      Proporción del panel: 900×720 (alto = 0,8 del ancho). El pozo ocupa del 16,7% al 83,3% en
      horizontal y del 17,5% al 77% en vertical, y está centrado: en los botones basta con
-     centrar el icono y el texto. */
+     centrar el icono y el texto.
+     Por qué WebP y no SVG: el dibujo lleva grano de metal cepillado (un filtro feTurbulence), que
+     es caro de recalcular — y como estas imágenes se ven a muchos tamaños distintos (el mismo
+     avatar de 44 a 210px, botones de varios tamaños...), el navegador no podía reutilizar un
+     mismo dibujo ya pintado entre un tamaño y otro y lo recalculaba una y otra vez: iba muy lento
+     en el móvil. Pintado una sola vez y guardado como imagen, el resultado se ve igual pero el
+     móvil solo tiene que colocarla, no recalcular nada. En PNG el grano pesaba muchísimo (2,7 MB
+     el panel); en WebP, con el mismo aspecto, pesa 50 veces menos. (skin-metalico-pozo.svg no
+     lleva ese filtro —es solo una forma plana, para recortar— así que se queda como SVG.) */
   html[data-skin="metalico"]{
-    --panel-metal:url('skin-metalico-panel.svg'); --marco-metal:url('skin-metalico-marco.svg');
-    --placa-metal:url('skin-metalico-placa.svg'); --placa-hueca:url('skin-metalico-placa-marco.svg');
+    --panel-metal:url('skin-metalico-panel.webp'); --marco-metal:url('skin-metalico-marco.webp');
+    --placa-metal:url('skin-metalico-placa.webp'); --placa-hueca:url('skin-metalico-placa-marco.webp');
     /* Grabado: letra oscura y, con la luz viniendo de arriba, solo un filo fino de sombra encima
        (medio píxel: en el móvil es un único píxel real) y el filo de abajo cogiendo brillo, todo en
        vertical. Con desplazamientos en diagonal de 1px la letra pequeña se desdoblaba y se veía
@@ -1609,7 +1577,7 @@
      .chip.activo, y :is() toma la especificidad de su argumento más fuerte — dos clases —, así
      que con una sola clase esta regla perdía aunque vaya después.) */
   html[data-skin="metalico"] .categoria-barra.categoria-barra{
-    border-image:url('skin-metalico-placa-cat.svg') 74 74 34 34 / 26.6px 26.6px 12.2px 12.2px stretch;
+    border-image:url('skin-metalico-placa-cat.webp') 74 74 34 34 / 26.6px 26.6px 12.2px 12.2px stretch;
     clip-path:polygon(2.7px 0, calc(100% - 22.6px) 0, 100% 22.6px, 100% calc(100% - 2.7px), calc(100% - 2.7px) 100%, 2.7px 100%, 0 calc(100% - 2.7px), 0 2.7px);
   }
   html[data-skin="metalico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
@@ -1795,7 +1763,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.9';
+const VERSION_APP = '3.5.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2101,7 +2069,6 @@ const SKINS = {
   pasaporte: { nombre: 'Pasaporte', descripcion: 'Burdeos y oro, esquinas rectas y letra de imprenta',           color: { oscuro: '#2B1822', claro: '#EFE4CE' } },
   carpeta:   { nombre: 'Carpeta',   descripcion: 'Cartulina de archivo, sello rojo y letra de máquina de escribir', color: { oscuro: '#2A2318', claro: '#D8C596' } },
   nordico:   { nombre: 'Nórdico',   descripcion: 'Blanco y aire, verde agua suave y formas redondeadas',         color: { oscuro: '#1A2321', claro: '#F5F7F5' } },
-  contraste: { nombre: 'Contraste', descripcion: 'Amarillo y negro, bordes gruesos y sombras duras',             color: { oscuro: '#2B2B2B', claro: '#FFC53D' } },
   bosque:    { nombre: 'Bosque',    descripcion: 'Verde hondo y albaricoque, formas de hoja',                    color: { oscuro: '#172D26', claro: '#E4E0CB' } },
   pixeles:   { nombre: 'Píxeles',   descripcion: 'Videojuego de 8 bits: esquinas escalonadas, letra pixelada y colores retro (en claro, pantalla de Game Boy)', color: { oscuro: '#29366F', claro: '#9BBC0F' } },
   neon:      { nombre: 'Neón',      descripcion: 'Rótulos luminosos: contornos que brillan en rosa y turquesa sobre la noche', color: { oscuro: '#150D24', claro: '#E4D9FF' } },

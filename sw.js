@@ -1,6 +1,6 @@
-const CACHE = 'documentacion-shell-v3';
+const CACHE = 'documentacion-shell-v4'; // v4: los SVG del skin Metálico con filtro caro pasan a WebP ya pintados
 const SHELL = ['./index.html', './idiomas.js', './manifest.json', './icono.png', './icono_maskable.png', './icono_notificacion.png',
-  './skin-metalico-panel.svg', './skin-metalico-marco.svg', './skin-metalico-placa.svg', './skin-metalico-placa-marco.svg', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.svg'];
+  './skin-metalico-panel.webp', './skin-metalico-marco.webp', './skin-metalico-placa.webp', './skin-metalico-placa-marco.webp', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.webp'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

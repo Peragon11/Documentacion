@@ -407,8 +407,6 @@
     [`Cartulina de archivo, sello rojo y letra de máquina de escribir`, `Filing card, red stamp and typewriter lettering`, `Cartolina d'arxiu, segell vermell i lletra de màquina d'escriure`, `Cartoncino da archivio, timbro rosso e caratteri da macchina da scrivere`, `Fiche cartonnée, tampon rouge et lettrage de machine à écrire`, `Karteikarte, roter Stempel und Schreibmaschinenschrift`],
     [`Nórdico`, `Nordic`, `Nòrdic`, `Nordico`, `Nordique`, `Nordisch`],
     [`Blanco y aire, verde agua suave y formas redondeadas`, `White and air, soft aqua green and rounded shapes`, `Blanc i aire, verd aigua suau i formes arrodonides`, `Bianco e aria, verde acqua tenue e forme arrotondate`, `Blanc et air, vert d'eau doux et formes arrondies`, `Weiß und Luft, sanftes Aquagrün und runde Formen`],
-    [`Contraste`, `Contrast`, `Contrast`, `Contrasto`, `Contraste`, `Kontrast`],
-    [`Amarillo y negro, bordes gruesos y sombras duras`, `Yellow and black, thick borders and hard shadows`, `Groc i negre, vores gruixudes i ombres dures`, `Giallo e nero, bordi spessi e ombre nette`, `Jaune et noir, bordures épaisses et ombres dures`, `Gelb und Schwarz, dicke Ränder und harte Schatten`],
     [`Bosque`, `Forest`, `Bosc`, `Bosco`, `Forêt`, `Wald`],
     [`Verde hondo y albaricoque, formas de hoja`, `Deep green and apricot, leaf-shaped corners`, `Verd fons i albercoc, formes de fulla`, `Verde profondo e albicocca, forme a foglia`, `Vert profond et abricot, formes de feuille`, `Tiefgrün und Aprikose, blattförmige Ecken`],
     [`Píxeles`, `Pixels`, `Píxels`, `Pixel`, `Pixels`, `Pixel`],
