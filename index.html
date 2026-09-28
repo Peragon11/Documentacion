@@ -68,9 +68,23 @@
     l.href = 'https://fonts.googleapis.com/css2?' + q + '&display=swap';
     document.head.appendChild(l);
   };
+  // Estilos con sus propias imágenes de fondo (border-image, máscaras…): el navegador solo las
+  // pide la primera vez que pinta algo que las usa, así que la primera vez que aparece un botón o
+  // una ficha nuevos en la pantalla (al cambiar de pantalla, no solo al abrir la app) se ve un
+  // salto mientras carga. Pidiéndolas ya (con un Image(), sin ponerlas en ningún sitio) quedan en
+  // la caché de imágenes del navegador y, cuando de verdad hagan falta, se pintan al momento.
+  window.__imagenesSkin = {
+    metalico: ['skin-metalico-panel.svg', 'skin-metalico-marco.svg', 'skin-metalico-placa.svg', 'skin-metalico-placa-marco.svg', 'skin-metalico-placa-cat.svg', 'skin-metalico-pozo.svg']
+  };
+  window.__cargarImagenesSkin = function (id) {
+    var lista = window.__imagenesSkin[id];
+    if (!lista || window['__imagenesSkinCargadas_' + id]) return;
+    window['__imagenesSkinCargadas_' + id] = true;
+    lista.forEach(function (src) { var img = new Image(); img.src = src; });
+  };
   try {
     var s = localStorage.getItem('documentacion_skin');
-    if (s && window.__fuentesSkin[s]) { document.documentElement.setAttribute('data-skin', s); window.__cargarFuentesSkin(s); }
+    if (s && window.__fuentesSkin[s]) { document.documentElement.setAttribute('data-skin', s); window.__cargarFuentesSkin(s); window.__cargarImagenesSkin(s); }
   } catch (e) {}
 })();
 </script>
@@ -1781,7 +1795,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.4.8';
+const VERSION_APP = '3.4.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2121,7 +2135,11 @@ function aplicarTema(tema) {
 function aplicarSkin(id) {
   const skin = SKINS[id] ? id : 'clasico';
   if (skin === 'clasico') document.documentElement.removeAttribute('data-skin');
-  else { document.documentElement.setAttribute('data-skin', skin); if (window.__cargarFuentesSkin) window.__cargarFuentesSkin(skin); }
+  else {
+    document.documentElement.setAttribute('data-skin', skin);
+    if (window.__cargarFuentesSkin) window.__cargarFuentesSkin(skin);
+    if (window.__cargarImagenesSkin) window.__cargarImagenesSkin(skin);
+  }
   aplicarTema(obtenerTemaGuardado()); // actualiza también el color de la barra del sistema
 }
 
