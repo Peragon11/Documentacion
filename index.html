@@ -614,12 +614,13 @@
     background:var(--ink-2); border:1px solid transparent; color:var(--text-dim);
     padding:7px 13px; border-radius:var(--r-chip); font-size:.8rem; cursor:pointer; white-space:nowrap;
   }
-  .chip.activo{ background:var(--ink-3); color:var(--text-light); border-color:var(--borde); }
+  .chip.activo{ background:var(--ink-3); color:var(--text-light); border-color:var(--stamp); font-weight:700; box-shadow:0 0 0 1px var(--stamp); }
   /* Chip de una categoría real (no "Todos"): fondo sólido de su propio color, igual de
      intenso que los botones grandes de categoría de la pantalla de inicio (.categoria-barra).
-     La que está activa se distingue con un aro blanco por dentro, no con un cambio de fondo. */
-  .chip-categoria{ color:#fff; opacity:.7; }
-  .chip-categoria.activo{ opacity:1; box-shadow:0 0 0 2px rgba(255,255,255,.6) inset; }
+     La que está activa se distingue con un aro doble bien marcado (no solo un cambio de opacidad,
+     que con colores ya vivos apenas se notaba) y la letra en negrita. */
+  .chip-categoria{ color:#fff; opacity:.62; }
+  .chip-categoria.activo{ opacity:1; font-weight:700; box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4.5px rgba(255,255,255,.95); }
 
   .grupo-documentos{ margin-bottom:26px; }
   .grupo-documentos:last-child{ margin-bottom:0; }
@@ -1466,8 +1467,11 @@
        de la foto) porque la imagen es más ancha que la pantalla en proporción, y "contain" (probado
        antes) deja una franja lisa demasiado grande arriba y abajo, sobre todo si encima hay barra de
        categorías. Término medio: un poco más ancha que la pantalla (120%), así se recorta muy poco
-       de los lados (las tiras de luz quedan casi enteras) y el hueco arriba/abajo queda pequeño. */
-    html[data-skin="metalico"] body{ background-size:120% auto; }
+       de los lados (las tiras de luz quedan casi enteras) y el hueco que sobra en alto queda pequeño.
+       Ese hueco se manda entero abajo (background-position:top): centrado se repartía mitad arriba
+       mitad abajo, y la mitad de arriba quedaba detrás de la topbar —que aquí no lleva desenfoque
+       (backdrop-filter:none) y es algo transparente— así que se notaba el corte justo por debajo. */
+    html[data-skin="metalico"] body{ background-size:120% auto; background-position:top; }
   }
   html[data-skin="metalico"] .topbar{ border-bottom:none; backdrop-filter:none; }
   /* Misma cinta de aviso amarilla/negra que la barra de abajo, pegada al borde inferior (el sitio
@@ -1780,7 +1784,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.6';
+const VERSION_APP = '3.5.7';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
