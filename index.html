@@ -1461,9 +1461,11 @@
   html[data-skin="metalico"] body{ background-image:linear-gradient(color-mix(in srgb, var(--ink) 55%, transparent), color-mix(in srgb, var(--ink) 55%, transparent)), url('skin-metalico-fondo.webp'); background-size:cover; background-position:center; background-repeat:no-repeat; }
   @media (orientation:portrait){
     /* en vertical, "cover" recorta demasiado los laterales (justo donde están las dos tiras de luz
-       de la foto) porque la imagen es más ancha que la pantalla en proporción; con "contain" se ve
-       la puerta entera, dejando el color liso del tema arriba y abajo. */
-    html[data-skin="metalico"] body{ background-size:contain; }
+       de la foto) porque la imagen es más ancha que la pantalla en proporción, y "contain" (probado
+       antes) deja una franja lisa demasiado grande arriba y abajo, sobre todo si encima hay barra de
+       categorías. Término medio: un poco más ancha que la pantalla (120%), así se recorta muy poco
+       de los lados (las tiras de luz quedan casi enteras) y el hueco arriba/abajo queda pequeño. */
+    html[data-skin="metalico"] body{ background-size:120% auto; }
   }
   html[data-skin="metalico"] .topbar{ border-bottom:none; backdrop-filter:none; }
   /* Misma cinta de aviso amarilla/negra que la barra de abajo, pegada al borde inferior (el sitio
@@ -1782,7 +1784,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.4';
+const VERSION_APP = '3.5.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
