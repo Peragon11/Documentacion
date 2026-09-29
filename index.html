@@ -395,11 +395,12 @@
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     font-family:var(--fuente-marca); letter-spacing:.01em;
   }
+  /* Centrado solo en la portada (el nombre de la app); el nombre de una persona o categoría
+     se queda pegado al avatar, como estaba antes (ver ajustarTituloTopbar). */
+  .topbar .marca span#titulo-topbar.centrado{ text-align:center; }
   /* Nombre largo: se reparte en dos líneas (ajustarTituloTopbar) */
   .topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.2; overflow:hidden; max-height:calc(2.4em + 7px); padding-bottom:5px; margin-bottom:-5px; }
   .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:var(--r-avatar-mini); flex:none; box-shadow:none; }
-  .icono-marca{ width:38px; height:38px; border-radius:var(--r-marca); flex:none; display:block; }
-  @media (max-width:340px){ .icono-marca{ width:32px; height:32px; border-radius:calc(var(--r-marca) - 1px); } } /* pantallas muy estrechas: el título necesita el hueco */
   .btn-icono-top{
     background:var(--ink-2); border:none; color:var(--text-light); width:44px; height:44px; border-radius:var(--r-redondo);
     display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none; position:relative;
@@ -1196,7 +1197,7 @@
   html[data-skin="pixeles"] .modal{ border-top:4px solid var(--borde-px); }
   html[data-skin="pixeles"] .ajustes .grupo > * + *{ border-top:4px solid var(--borde-sutil); }
   html[data-skin="pixeles"] .doc-fila.aviso, html[data-skin="pixeles"] .doc-fila.caducado{ margin-bottom:4px; }
-  html[data-skin="pixeles"] .icono-accion, html[data-skin="pixeles"] .marca-prov, html[data-skin="pixeles"] .icono-marca{ box-shadow:0 0 0 2px var(--borde-px); }
+  html[data-skin="pixeles"] .icono-accion, html[data-skin="pixeles"] .marca-prov{ box-shadow:0 0 0 2px var(--borde-px); }
   html[data-skin="pixeles"] .opcion-tema .marca-tema, html[data-skin="pixeles"] .btn-icono-top{ border-radius:0; }
   html[data-skin="pixeles"] .persona-tile .avatar-persona{ margin:4px 4px 0; width:calc(100% - 8px); }
 
@@ -1239,7 +1240,6 @@
   html[data-skin="neon"] .campo input:focus, html[data-skin="neon"] .input-busqueda:focus{ outline:none; border-color:var(--seal); box-shadow:0 0 14px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
   html[data-skin="neon"] .modal{ border-top:1px solid var(--stamp); box-shadow:0 -8px 40px color-mix(in srgb, var(--stamp) calc(var(--neon-glow) - 18%), transparent); }
   html[data-skin="neon"] .toast{ box-shadow:0 0 22px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  html[data-skin="neon"] .icono-marca{ box-shadow:0 0 14px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
 
   /* ---- chicle ---- */
   [data-skin="chicle"]{ --ink:#1E0B2E; --ink-2:#2E1246; --ink-3:#421B63; --paper:#FFEFFA; --text-ink:#2A0838; --stamp:#FF6BBA; --sobre-acento:#2A0838; --text-light:#FFEFFA; --text-dim:#DDBDEB; --seal:#4DF0C8; --amber:#FFD84D; --azul:#6BC1FF; --morado:#C39BFF; --stamp-dark:#C24A98; --borde-sutil:rgba(255,239,250,.10); --borde:rgba(255,107,186,.50); --borde-fuerte:rgba(77,240,200,.65); --topbar-fondo:#FF6BBA; --c1:#FF6BBA; --c2:#4DF0C8; --c3:#FFD84D; --c4:#6BC1FF; --c5:#C39BFF;
@@ -1266,7 +1266,7 @@
   html[data-skin="chicle"] .btn-volver:active{ background:rgba(255,255,255,.35); }
   html[data-skin="chicle"] .btn-icono-top{ background:var(--paper); color:var(--sobre-acento); box-shadow:0 4px 0 rgba(42,8,56,.30); }
   html[data-skin="chicle"] .btn-icono-top:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(42,8,56,.30); }
-  html[data-skin="chicle"] .topbar .avatar-persona, html[data-skin="chicle"] .icono-marca{ box-shadow:0 0 0 3px var(--paper); }
+  html[data-skin="chicle"] .topbar .avatar-persona{ box-shadow:0 0 0 3px var(--paper); }
   html[data-skin="chicle"] h1, html[data-skin="chicle"] h3{ font-weight:700; letter-spacing:0; }
   html[data-skin="chicle"] .persona-tile .avatar-persona{ box-shadow:0 0 0 5px var(--ink), 0 0 0 9px var(--caramelo, var(--stamp)), 0 14px 22px color-mix(in srgb, var(--caramelo, var(--stamp)) 42%, transparent); }
   html[data-skin="chicle"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin-top:8px; padding:3px 14px; border-radius:999px; background:var(--caramelo, var(--stamp)); color:var(--sobre-acento); font-weight:600; font-size:1rem; }
@@ -1424,7 +1424,7 @@
   html[data-skin="comic"] .icono-login{ border:4px solid var(--text-light); box-shadow:6px 6px 0 var(--text-light); }
   html[data-skin="comic"] .toast{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-family:var(--sans); font-weight:700; }
   /* Nada de color suelto: logos y marcas en gris, y los rojos/naranjas fijos pasan a negro/blanco */
-  html[data-skin="comic"] :is(.icono-marca, .icono-login, .marca-prov, .icono-accion.tema){ filter:grayscale(1) contrast(1.1); }
+  html[data-skin="comic"] :is(.icono-login, .marca-prov, .icono-accion.tema){ filter:grayscale(1) contrast(1.1); }
   html[data-skin="comic"] .icono-accion:not(.sigla):not(.tema){ background:var(--stamp); color:var(--sobre-acento); border:2px solid var(--text-light); }
   html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong, .opcion-menu.peligro, .icon-btn-persona-tile:last-child){ color:var(--text-light); }
   html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong){ font-weight:700; text-decoration:underline; text-underline-offset:3px; }
@@ -1705,9 +1705,8 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <div class="marca">
-      <img class="icono-marca" src="icono.png" id="topbar-punto" alt="">
       <div class="avatar-persona hidden" id="avatar-topbar"></div>
-      <span id="titulo-topbar">OCUMENTACIÓN</span>
+      <span id="titulo-topbar">DOCUMENTACIÓN</span>
     </div>
     <button class="btn-icono-top" id="btn-buscar-top" aria-label="Buscar documento">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -1784,7 +1783,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.7';
+const VERSION_APP = '3.5.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2158,50 +2157,6 @@ mediaOscuro.addEventListener('change', () => {
 //   (hasta 18,3 px, para que dos líneas tampoco hagan crecer la barra) cuando así la
 //   letra puede ser claramente mayor. Solo un nombre larguísimo llega al tamaño
 //   mínimo y se recorta.
-// Mide, para una tipografía/tamaño/alto-de-línea dados, dos cosas de la "O" mayúscula:
-// - alto: su altura real de tinta (para que el icono, que hace de "D" del título, quede a esa altura exacta
-//   en vez de un porcentaje fijo — cada letra tiene una proporción distinta).
-// - offsetY: cuánto hay que bajar (o subir) el texto para que esa tinta quede centrada en su línea.
-//   Motivo: una tipografía reserva espacio de sobra por debajo de la línea para letras con rabito (g, y, p…),
-//   que "OCUMENTACIÓN" (en mayúsculas) no usa. Ese hueco vacío desplaza la tinta hacia arriba dentro de su
-//   propia línea — el icono no tiene ese problema (su tinta ocupa su caja de forma simétrica) — así que sin
-//   corregirlo el texto se ve descolgado hacia arriba respecto al icono, más en unas tipografías que en otras.
-// Se mide con canvas (más preciso que el DOM) y se guarda en caché por combinación letra+tamaño+alto de línea.
-const _cacheMedidaLetra = new Map();
-function medirLetraMayuscula(fontFamily, tamPx, lineHeightPx) {
-  const clave = fontFamily + '|' + tamPx.toFixed(1) + '|' + lineHeightPx.toFixed(1);
-  if (_cacheMedidaLetra.has(clave)) return _cacheMedidaLetra.get(clave);
-  let resultado = { alto: tamPx * 0.72, offsetY: 0 }; // valor de respaldo si el navegador no da métricas (poco habitual)
-  try {
-    const ctx = (medirLetraMayuscula._ctx ||= document.createElement('canvas').getContext('2d'));
-    ctx.font = tamPx + 'px ' + fontFamily;
-    const m = ctx.measureText('O');
-    if (m.actualBoundingBoxAscent) {
-      const alto = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-      let offsetY = 0;
-      if (m.fontBoundingBoxAscent != null) {
-        // Reparte igual arriba y abajo el espacio de más que añada el alto de línea sobre el propio de la
-        // tipografía (la regla del "half leading" que usan los navegadores), y de ahí saca dónde cae de verdad
-        // el centro de la tinta dentro de esa línea, para desplazarla al centro exacto.
-        const altoPropioFuente = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
-        const medioSobrante = (lineHeightPx - altoPropioFuente) / 2;
-        const centroTinta = medioSobrante + m.fontBoundingBoxAscent + (m.actualBoundingBoxDescent - m.actualBoundingBoxAscent) / 2;
-        offsetY = (lineHeightPx / 2) - centroTinta;
-      }
-      resultado = { alto, offsetY };
-    }
-  } catch (e) { /* se queda con el valor de respaldo */ }
-  _cacheMedidaLetra.set(clave, resultado);
-  return resultado;
-}
-
-// La "D" dibujada dentro de icono.png no ocupa todo el cuadrado: deja un margen alrededor (el mismo motivo por el
-// que el icono adaptable de Android necesita margen — ver la nota de icono_maskable). Medido a pulso sobre el
-// propio icono.png (los píxeles claros de la "D" frente al lienzo entero): ocupa el 70,3 % de la altura.
-// Para que sea la "D" —no el cuadrado que la contiene— la que cuadre con la altura de la letra de al lado, el
-// cuadrado tiene que ser más grande que esa altura, justo en esta proporción.
-const FRACCION_ALTO_D_EN_ICONO = 0.703;
-
 const TITULO_TAM_MIN = 9;
 const TITULO_TAM_MAX_APP = 38;
 const TITULO_TAM_MAX_NOMBRE = 26;
@@ -2213,38 +2168,7 @@ function ajustarTituloTopbar() {
   if (!disponible) return;          // la app aún no está a la vista
   const enNombre = !$('#btn-volver').classList.contains('hidden'); // dentro de una persona o categoría
   const tope = enNombre ? TITULO_TAM_MAX_NOMBRE : TITULO_TAM_MAX_APP;
-
-  // Portada: el icono de la app hace de "D" del título (`OCUMENTACIÓN`): va pegado, con la altura de las letras, y
-  // entre los dos ocupan todo el ancho. Fuera de la portada el icono y el hueco vuelven a su tamaño normal.
-  const icono = $('#topbar-punto');
-  const marca = t.parentElement;
-  const enPortada = !enNombre && !icono.classList.contains('hidden');
-  icono.style.width = icono.style.height = icono.style.borderRadius = '';
-  t.style.transform = '';
-  marca.style.gap = enPortada ? '2px' : '';
-  if (enPortada) {
-    t.classList.remove('dos-lineas');
-    t.style.fontSize = '100px';
-    const anchoNatural = t.scrollWidth;
-    const libre = marca.clientWidth - 2;
-    const tam = Math.max(TITULO_TAM_MIN, Math.min(tope, libre / (0.98 + anchoNatural / 100)) * 0.985);
-    t.style.fontSize = tam.toFixed(2) + 'px';
-    // Cada tipografía tiene una "O" mayúscula más alta o más baja para un mismo tamaño de letra (una pixelada
-    // como Silkscreen no es lo mismo que una fina como Josefin Sans) — se mide la altura real de esa letra
-    // (con las de esta línea, no con un porcentaje fijo) para que el icono, que hace de "D", quede a su altura
-    // exacta y parezca una letra más en vez de un adorno pegado.
-    const lineHeightPx = parseFloat(getComputedStyle(t).lineHeight) || tam * 1.15;
-    const { alto: altoO, offsetY } = medirLetraMayuscula(getComputedStyle(t).fontFamily, tam, lineHeightPx);
-    // El CUADRADO tiene que ser más grande que altoO, para que la "D" de dentro (más pequeña que el cuadrado)
-    // sea la que salga a esa altura exacta — si el cuadrado midiera altoO, la "D" se quedaría corta.
-    const ladoCuadrado = altoO / FRACCION_ALTO_D_EN_ICONO;
-    icono.style.width = icono.style.height = ladoCuadrado.toFixed(2) + 'px';
-    icono.style.borderRadius = (ladoCuadrado * 0.2).toFixed(2) + 'px';
-    // Baja (o sube) el texto lo justo para que su tinta quede centrada con la "D", en vez de con el hueco vacío
-    // que reserva su propia tipografía por si hubiera letras con rabito.
-    t.style.transform = Math.abs(offsetY) > 0.05 ? 'translateY(' + offsetY.toFixed(2) + 'px)' : '';
-    return;
-  }
+  t.classList.toggle('centrado', !enNombre);
 
   // Una línea: se mide a 100 px y se escala hasta llenar el hueco.
   t.classList.remove('dos-lineas');
@@ -2286,7 +2210,7 @@ function ajustarTituloTopbar() {
   // la tipografía tarda en cargar y cambia el ancho del texto
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarTituloTopbar);
   // también cuando termina de cargar la letra de un estilo, y al cambiar de estilo (el ancho del texto cambia)
-  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { _cacheMedidaLetra.clear(); ajustarTituloTopbar(); });
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', ajustarTituloTopbar);
   new MutationObserver(() => ajustarTituloTopbar()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
   window.addEventListener('resize', ajustarTituloTopbar);
   window.addEventListener('orientationchange', () => setTimeout(ajustarTituloTopbar, 150));
@@ -4167,9 +4091,8 @@ function mostrarPantallaPersonas() {
   $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
-  $('#topbar-punto').classList.remove('hidden');
   $('#avatar-topbar').classList.add('hidden');
-  $('#titulo-topbar').textContent = 'OCUMENTACIÓN'; // la "D" es el icono que va delante
+  $('#titulo-topbar').textContent = 'DOCUMENTACIÓN';
   sincronizarBarraInferior();
   renderizarPantallaInicio();
 }
@@ -4214,7 +4137,6 @@ function abrirCategoriaGlobal(categoriaId, sinNavegacion = false) {
   $('#btn-buscar-top').classList.add('hidden');
   $('#btn-ver-categorias-top').classList.add('hidden');
   $('#btn-ajustes').classList.add('hidden');
-  $('#topbar-punto').classList.remove('hidden');
   $('#avatar-topbar').classList.add('hidden');
   $('#titulo-topbar').textContent = cat ? cat.nombre : 'Categoría';
   sincronizarBarraInferior();
@@ -5119,7 +5041,6 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
 function renderizarCabeceraPersona() {
   const persona = datos.personas.find((p) => p.id === personaActivaId);
   if (!persona) return;
-  $('#topbar-punto').classList.add('hidden');
   const avatarTop = $('#avatar-topbar');
   avatarTop.classList.remove('hidden');
   avatarTop.setAttribute('style', estiloAvatar(persona));

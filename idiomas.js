@@ -139,7 +139,6 @@
     [`Abrir calendario`, `Open calendar`, `Obre el calendari`, `Apri il calendario`, `Ouvrir le calendrier`, `Kalender öffnen`],
     [`Fecha de caducidad`, `Expiry date`, `Data de caducitat`, `Data di scadenza`, `Date d'expiration`, `Ablaufdatum`],
     [`La fecha no es válida (dd/mm/aaaa).`, `The date is not valid (dd/mm/yyyy).`, `La data no és vàlida (dd/mm/aaaa).`, `La data non è valida (gg/mm/aaaa).`, `La date n'est pas valide (jj/mm/aaaa).`, `Das Datum ist ungültig (TT/MM/JJJJ).`],
-    [`OCUMENTACIÓN`, `OCUMENTS`, `OCUMENTACIÓ`, `OCUMENTI`, `OCUMENTS`, `OKUMENTE`],
     [`Buscar`, `Search`, `Cerca`, `Cerca`, `Rechercher`, `Suchen`],
     [`Subir`, `Upload`, `Puja`, `Carica`, `Importer`, `Hochladen`],
     [`Todavía no tienes a nadie aquí.`, `You don't have anyone here yet.`, `Encara no tens ningú aquí.`, `Non hai ancora nessuno qui.`, `Vous n'avez encore personne ici.`, `Du hast hier noch niemanden.`],
