@@ -794,6 +794,17 @@
   .galeria-pagina{
     display:flex; flex-direction:column; width:100%; background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2));
     border:none; border-radius:var(--r-tarjeta); overflow:hidden; cursor:pointer; text-align:left;
+    touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+  }
+  /* El touch-action:none de arriba es imprescindible: esta ficha vive DENTRO de su propio
+     contenedor con scroll (galeria-cuerpo, a diferencia de las fichas de persona/categoría, que
+     scrollean por "main" y no por su propia cuadrícula) — sin él, el navegador coge el gesto para
+     hacer scroll nativo a mitad de la pulsación larga y deja de entregar pointermove a partir de
+     ahí (el arrastre parecía "activarse" pero nunca intercambiaba las fichas). */
+  /* Mantener pulsada una página para arrastrarla y cambiar el orden (habilitarArrastreTiles) */
+  .galeria-pagina.arrastrando-tile{
+    z-index:30; cursor:grabbing; transition:none; pointer-events:none;
+    box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
   }
   .galeria-pagina .miniatura{
     width:auto; margin:8px 8px 0; aspect-ratio:16/10; position:relative;
@@ -1797,7 +1808,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.6.1';
+const VERSION_APP = '3.6.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4878,9 +4889,17 @@ function lanzarInerciaScroll(zona, historial) {
 // CSS de cada ficha ('.persona-tile' o '.categoria-barra'), arrayDatos es
 // el array real (datos.personas o datos.categorias, se reordena en el
 // sitio) y atributoDataset el nombre del data-* que guarda su id.
-function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
-  const contenedor = $('#grid-personas');
-  const zonaScroll = $('main');
+// opciones.contenedor / opciones.zonaScroll: por defecto la cuadrícula de la portada (personas o
+// categorías), pero se puede pasar otro contenedor — p. ej. la galería de páginas de un documento,
+// donde el propio contenedor ES la zona con scroll (no hay un "main" exterior distinto).
+// opciones.campoId: qué propiedad del objeto identifica cada ficha al reordenar el array de datos
+// (por defecto "id"; las páginas de un documento no tienen id propio, así que usan "archivoId").
+// opciones.alGuardarOrden: aviso opcional tras guardar, para refrescar algo que dependa del orden
+// (p. ej. las etiquetas "Página 1", "Página 2"… de la galería, que son por posición).
+function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset, opciones = {}) {
+  const contenedor = opciones.contenedor || $('#grid-personas');
+  const zonaScroll = opciones.zonaScroll || $('main');
+  const campoId = opciones.campoId || 'id';
   const DURACION_PULSACION = 320;
   const UMBRAL_MOVIMIENTO = 20;
 
@@ -5051,8 +5070,9 @@ function habilitarArrastreTiles(claseTile, arrayDatos, atributoDataset) {
 
   function guardarOrdenDesdeDOM() {
     const idsEnOrden = Array.from(contenedor.querySelectorAll(claseTile)).map((el) => el.dataset[atributoDataset]);
-    arrayDatos.sort((a, b) => idsEnOrden.indexOf(a.id) - idsEnOrden.indexOf(b.id));
+    arrayDatos.sort((a, b) => idsEnOrden.indexOf(String(a[campoId])) - idsEnOrden.indexOf(String(b[campoId])));
     guardarMetadatos();
+    if (opciones.alGuardarOrden) opciones.alGuardarOrden();
   }
 }
 
@@ -7124,11 +7144,18 @@ function abrirGaleriaDocumento(doc) {
     const esImagen = (pagina.mimeType || '').startsWith('image/');
     const btn = document.createElement('button');
     btn.className = 'galeria-pagina';
+    btn.dataset.archivoId = String(pagina.archivoId);
     btn.style.setProperty('--color-categoria', (datos.categorias.find((cat) => cat.id === doc.categoria) || CATEGORIA_SIN_ASIGNAR).color);
     btn.innerHTML = `
       <div class="miniatura">${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}</div>
       <p class="galeria-pagina-nombre">${escapeHtml(pagina.nombre || trad('Página {n}', { n: indice + 1 }))}</p>`;
-    btn.addEventListener('click', () => abrirVisor(doc, indice));
+    // Ojo: NO capturar "indice" aquí — tras reordenar arrastrando, este botón puede pasar a
+    // representar otra posición; buscar el índice de verdad de "pagina" (el mismo objeto de
+    // siempre, su posición en el array es lo único que cambia) en el momento del toque.
+    btn.addEventListener('click', () => {
+      if (Date.now() - momentoUltimoArrastrePersona < 300) return;
+      abrirVisor(doc, doc.paginas.indexOf(pagina));
+    });
     cuerpo.appendChild(btn);
 
     if (esImagen) {
@@ -7148,6 +7175,23 @@ function abrirGaleriaDocumento(doc) {
         cont.appendChild(img);
       }).catch(() => { btn.querySelector('.skeleton')?.remove(); });
     }
+  });
+
+  // Mantener pulsada una página para arrastrarla y cambiar el orden (mismo mecanismo que las
+  // fichas de persona/categoría en la portada). Las páginas no tienen "id" propio como esas, así
+  // que se identifican por archivoId; y como su nombre por defecto es "Página N" (por posición,
+  // no guardado), hay que repintarlo tras cada reordenación.
+  habilitarArrastreTiles('.galeria-pagina', doc.paginas, 'archivoId', {
+    contenedor: cuerpo,
+    zonaScroll: cuerpo,
+    campoId: 'archivoId',
+    alGuardarOrden: () => {
+      cuerpo.querySelectorAll('.galeria-pagina').forEach((btn, indice) => {
+        const etiqueta = btn.querySelector('.galeria-pagina-nombre');
+        const pag = doc.paginas[indice];
+        if (etiqueta && pag) etiqueta.textContent = pag.nombre || trad('Página {n}', { n: indice + 1 });
+      });
+    },
   });
 }
 
