@@ -591,12 +591,13 @@
     -ms-overflow-style:none; scrollbar-width:none;
   }
   .chips-categorias::-webkit-scrollbar{ display:none; }
-  /* Al deslizar a otra persona/categoría el contenido entra desde el lado hacia el que se ha deslizado */
-  #pantalla-persona.desliza-der{ animation:entra-der .26s ease-out; }
-  #pantalla-persona.desliza-izq{ animation:entra-izq .26s ease-out; }
+  /* Al deslizar a otra persona/categoría (o a otra página de un documento, en el visor) el
+     contenido entra desde el lado hacia el que se ha deslizado */
+  #pantalla-persona.desliza-der, #visor-cuerpo.desliza-der{ animation:entra-der .26s ease-out; }
+  #pantalla-persona.desliza-izq, #visor-cuerpo.desliza-izq{ animation:entra-izq .26s ease-out; }
   @keyframes entra-der{ from{ transform:translateX(44px); opacity:0; } to{ transform:none; opacity:1; } }
   @keyframes entra-izq{ from{ transform:translateX(-44px); opacity:0; } to{ transform:none; opacity:1; } }
-  @media (prefers-reduced-motion:reduce){ #pantalla-persona.desliza-der, #pantalla-persona.desliza-izq{ animation:none; } }
+  @media (prefers-reduced-motion:reduce){ #pantalla-persona.desliza-der, #pantalla-persona.desliza-izq, #visor-cuerpo.desliza-der, #visor-cuerpo.desliza-izq{ animation:none; } }
 
   .aviso-caducidad-banner{
     display:flex; align-items:center; justify-content:center; padding:11px 14px; margin:-4px 0 16px;
@@ -604,7 +605,7 @@
   }
   .aviso-caducidad-banner{ cursor:pointer; gap:8px; }
   .aviso-caducidad-banner .banner-placa{ display:inline-flex; align-items:center; gap:8px; }
-  .categoria-barra .aviso-caducidad-persona{ position:static; flex:none; width:32px; height:32px; min-width:0; min-height:0; max-width:none; max-height:none; margin-left:8px; }
+  .categoria-barra .aviso-caducidad-persona{ position:static; flex:none; width:32px; height:32px; min-width:0; min-height:0; max-width:none; max-height:none; margin-left:8px; cursor:pointer; }
   .aviso-caducidad-banner:active{ filter:brightness(.92); }
   .aviso-caducidad-banner .banner-flecha{ font-size:1.3em; line-height:1; margin-top:-2px; }
   .aviso-caducidad-banner.aviso{ background:#C77B22; }
@@ -662,15 +663,17 @@
     cursor:pointer; text-align:left;
   }
   /* Aviso de caducidad: como cada ficha ya lleva el color de su categoría, el aviso no puede ser un color de
-     fondo. Es una cinta diagonal en la esquina de la miniatura con la palabra: roja "CADUCADO" o ámbar
-     "POR CADUCAR". La ficha conserva el color de su categoría. */
+     fondo. Es un sello de tinta en la esquina de la miniatura (como un sello de aduana sobre un documento
+     caducado), con la palabra "CADUCADO" o "POR CADUCAR". La ficha conserva el color de su categoría. */
   .cinta-caducidad{
-    position:absolute; top:22px; left:-44px; width:160px; padding:3px 0; z-index:2; pointer-events:none;
-    transform:rotate(-45deg); text-align:center; font-family:var(--sans); font-size:.66rem; font-weight:800; letter-spacing:.07em;
-    text-transform:uppercase; box-shadow:0 2px 6px rgba(0,0,0,.4);
+    position:absolute; top:12px; left:12px; z-index:2; pointer-events:none;
+    display:inline-flex; align-items:center; padding:6px 12px; border:3px solid currentColor; border-radius:8px;
+    font-family:var(--sans); font-size:.92rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+    transform:rotate(-8deg); background:rgba(0,0,0,.15);
+    box-shadow:0 0 0 1px color-mix(in srgb, currentColor 30%, transparent) inset, 0 2px 6px rgba(0,0,0,.35);
   }
-  .cinta-caducidad.caducado{ background:#E5342A; color:#fff; }
-  .cinta-caducidad.aviso{ background:#F2A100; color:#1B1B1B; letter-spacing:.03em; font-size:.6rem; }
+  .cinta-caducidad.caducado{ color:#FF5449; }
+  .cinta-caducidad.aviso{ color:#FFC24B; font-size:.8rem; }
   .doc-fila .miniatura{
     width:auto; margin:8px 8px 0; aspect-ratio:16/10; position:relative;
     background:var(--ink-3); overflow:hidden; display:flex; align-items:center; justify-content:center;
@@ -748,6 +751,7 @@
   .visor-topbar .titulo{ font-size:.85rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:45vw; }
   .visor-cuerpo{
     flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 12px;
+    touch-action:none; /* el zoom con doble toque/pellizco lo gestiona activarZoomVisor() a mano, sin el del navegador */
   }
   .visor-cuerpo img{
     max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; pointer-events:none;
@@ -1783,7 +1787,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.5.8';
+const VERSION_APP = '3.5.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4601,10 +4605,14 @@ function crearBarraCategoriaHome(cat, editable) {
     <button class="icon-btn-cat-bar" type="button" aria-label="Eliminar categoría">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
     </button>` : ''}`;
-  fila.querySelector('.categoria-barra-nombre').addEventListener('click', () => {
+  const abrirEstaCategoria = () => {
     if (Date.now() - momentoUltimoArrastrePersona < 300) return;
     abrirCategoriaGlobal(cat.id);
-  });
+  };
+  fila.querySelector('.categoria-barra-nombre').addEventListener('click', abrirEstaCategoria);
+  // El aviso de caducidad es un elemento suelto (no va dentro del botón del nombre, para poder
+  // ponerlo a su propio tamaño fijo) — sin este listener, tocarlo no hacía nada.
+  fila.querySelector('.aviso-caducidad-persona')?.addEventListener('click', abrirEstaCategoria);
   if (editable) {
     fila.querySelector('[aria-label="Renombrar categoría"]').addEventListener('click', () => abrirRenombrarCategoria(cat));
     fila.querySelector('[aria-label="Cambiar color"]').addEventListener('click', () => abrirRuedaColorCategoria(cat, fila));
@@ -6834,7 +6842,169 @@ async function notificarCaducidad(doc, dias) {
   }
 }
 
-async function abrirVisor(doc, indicePagina = 0) {
+// Zoom del visor de una imagen: doble toque para acercar (a un nivel fijo) o para volver al tamaño
+// original si ya estaba ampliada, doble toque SIN soltar y deslizando arriba/abajo para variar el
+// zoom en el momento, pellizco con dos dedos, y arrastrar con un dedo para moverse por la imagen
+// ampliada. Todo a mano (sin el zoom nativo del navegador — touch-action:none en .visor-cuerpo, ver
+// el CSS) para poder combinar doble-toque-y-arrastre con lo demás en el mismo gesto.
+// Con la imagen a tamaño normal (sin ampliar), ese mismo arrastre de un dedo no mueve nada — se deja
+// para decidir al soltar si fue un deslizar de lado a lado (cambiar de página), avisando con
+// onDeslizar(1 o -1) si lo pasan. Solo tiene efecto cuando NO está ampliada, igual que el deslizar
+// entre personas/categorías, para no pelearse con el arrastre-para-moverse cuando sí lo está.
+function activarZoomVisor(cuerpo, onDeslizar) {
+  const img = cuerpo.querySelector('img');
+  if (!img) return;
+  const ZOOM_MIN = 1, ZOOM_DOBLE_TOQUE = 2.5, ZOOM_MAX = 5;
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+  const distancia = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const puntoMedio = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const centroCuerpo = () => {
+    const r = cuerpo.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  };
+
+  let escala = 1, panX = 0, panY = 0;
+  const punteros = new Map();
+  let pinchRef = null, panRef = null, dobleToqueRef = null;
+  let inicioToque = null, ultimoToqueArriba = null;
+
+  function aplicar(conTransicion) {
+    img.style.transition = conTransicion ? 'transform .25s ease' : 'none';
+    img.style.transform = `translate(${panX}px, ${panY}px) scale(${escala})`;
+  }
+  function limitar() {
+    const r = cuerpo.getBoundingClientRect();
+    const w = img.offsetWidth * escala, h = img.offsetHeight * escala;
+    const maxPanX = Math.max(0, (w - r.width) / 2), maxPanY = Math.max(0, (h - r.height) / 2);
+    panX = clamp(panX, -maxPanX, maxPanX);
+    panY = clamp(panY, -maxPanY, maxPanY);
+  }
+  function esSegundoToque(e) {
+    if (!ultimoToqueArriba) return false;
+    return Date.now() - ultimoToqueArriba.t < 350 && distancia(e, ultimoToqueArriba) < 40;
+  }
+
+  cuerpo.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    cuerpo.setPointerCapture(e.pointerId);
+    punteros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (punteros.size === 2) {
+      dobleToqueRef = null; panRef = null; inicioToque = null;
+      const [a, b] = [...punteros.values()];
+      const centro = puntoMedio(a, b), c = centroCuerpo();
+      pinchRef = {
+        dist: distancia(a, b), escalaInicio: escala, panXInicio: panX, panYInicio: panY,
+        offXInicio: centro.x - (c.x + panX), offYInicio: centro.y - (c.y + panY),
+      };
+      return;
+    }
+    if (punteros.size !== 1) return;
+    inicioToque = { x: e.clientX, y: e.clientY, t: Date.now() };
+    if (esSegundoToque(e)) {
+      const c = centroCuerpo();
+      dobleToqueRef = {
+        x: e.clientX, y: e.clientY, escalaInicio: escala, panXInicio: panX, panYInicio: panY,
+        offXInicio: e.clientX - (c.x + panX), offYInicio: e.clientY - (c.y + panY), movido: false,
+      };
+      ultimoToqueArriba = null;
+    } else {
+      // Con zoom normal (escala 1) el arrastre no mueve la imagen: se deja para decidir al soltar
+      // si fue un deslizar de lado a lado (cambiar de página, ver esDeslizar más abajo). Con la
+      // imagen ampliada, el mismo arrastre sí mueve la imagen (desplazarse por ella).
+      panRef = { x: e.clientX, y: e.clientY, t: Date.now(), panXInicio: panX, panYInicio: panY, esDeslizar: escala <= 1.01 };
+    }
+  });
+
+  cuerpo.addEventListener('pointermove', (e) => {
+    if (!punteros.has(e.pointerId)) return;
+    punteros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (punteros.size === 2 && pinchRef) {
+      const [a, b] = [...punteros.values()];
+      const nuevaEscala = clamp(pinchRef.escalaInicio * (distancia(a, b) / pinchRef.dist), ZOOM_MIN, ZOOM_MAX);
+      panX = pinchRef.panXInicio + pinchRef.offXInicio * (1 - nuevaEscala / pinchRef.escalaInicio);
+      panY = pinchRef.panYInicio + pinchRef.offYInicio * (1 - nuevaEscala / pinchRef.escalaInicio);
+      escala = nuevaEscala;
+      aplicar(false);
+      return;
+    }
+    if (dobleToqueRef) {
+      const deltaY = dobleToqueRef.y - e.clientY, deltaX = e.clientX - dobleToqueRef.x;
+      if (!dobleToqueRef.movido && Math.hypot(deltaX, deltaY) > 8) dobleToqueRef.movido = true;
+      if (dobleToqueRef.movido) {
+        const nuevaEscala = clamp(dobleToqueRef.escalaInicio * Math.pow(2, deltaY / 150), ZOOM_MIN, ZOOM_MAX);
+        panX = dobleToqueRef.panXInicio + dobleToqueRef.offXInicio * (1 - nuevaEscala / dobleToqueRef.escalaInicio);
+        panY = dobleToqueRef.panYInicio + dobleToqueRef.offYInicio * (1 - nuevaEscala / dobleToqueRef.escalaInicio);
+        escala = nuevaEscala;
+        aplicar(false);
+      }
+      return;
+    }
+    if (panRef && !panRef.esDeslizar) {
+      panX = panRef.panXInicio + (e.clientX - panRef.x);
+      panY = panRef.panYInicio + (e.clientY - panRef.y);
+      aplicar(false);
+    }
+  });
+
+  function soltar(e) {
+    punteros.delete(e.pointerId);
+
+    if (pinchRef) {
+      if (punteros.size >= 2) return;
+      pinchRef = null;
+      limitar(); aplicar(true);
+      if (punteros.size === 1) {
+        const [p] = [...punteros.values()];
+        panRef = { x: p.x, y: p.y, panXInicio: panX, panYInicio: panY };
+      }
+      inicioToque = null;
+      return;
+    }
+
+    if (dobleToqueRef) {
+      if (punteros.size > 0) return;
+      if (!dobleToqueRef.movido) {
+        const nuevaEscala = escala > 1.01 ? ZOOM_MIN : ZOOM_DOBLE_TOQUE;
+        const c = centroCuerpo();
+        const offX = dobleToqueRef.x - (c.x + panX), offY = dobleToqueRef.y - (c.y + panY);
+        panX += offX * (1 - nuevaEscala / escala);
+        panY += offY * (1 - nuevaEscala / escala);
+        escala = nuevaEscala;
+        if (escala <= 1.01) { panX = 0; panY = 0; }
+      } else if (escala < 1.08) {
+        escala = 1; panX = 0; panY = 0;
+      }
+      limitar(); aplicar(true);
+      dobleToqueRef = null; ultimoToqueArriba = null; inicioToque = null;
+      return;
+    }
+
+    if (panRef) {
+      if (punteros.size > 0) return;
+      if (panRef.esDeslizar) {
+        const dx = e.clientX - panRef.x, dy = e.clientY - panRef.y, dt = Date.now() - panRef.t;
+        if (onDeslizar && dt <= 800 && Math.abs(dx) >= 70 && Math.abs(dx) >= Math.abs(dy) * 1.8) onDeslizar(dx < 0 ? 1 : -1);
+      } else {
+        limitar(); aplicar(true);
+      }
+      panRef = null;
+    }
+
+    if (punteros.size === 0 && inicioToque) {
+      const esToqueCorto = distancia(e, inicioToque) < 12 && Date.now() - inicioToque.t < 400;
+      ultimoToqueArriba = esToqueCorto ? { x: e.clientX, y: e.clientY, t: Date.now() } : null;
+    }
+    inicioToque = null;
+  }
+  cuerpo.addEventListener('pointerup', soltar);
+  cuerpo.addEventListener('pointercancel', soltar);
+}
+
+// sinNavegacion: al cambiar de página deslizando (ver abajo) se reconstruye el visor entero con
+// esta misma función, pero sin abrir un paso nuevo en el historial — un solo "atrás" tiene que
+// cerrar el visor, no ir pasando página a página. direccionDeslizar (1 o -1) es solo para la
+// animación de entrada del cuerpo, igual que al deslizar entre personas/categorías.
+async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccionDeslizar = 0) {
   const pagina = doc.paginas[indicePagina];
   const esImagen = (pagina.mimeType || '').startsWith('image/');
   const visor = $('#visor-completo');
@@ -6856,16 +7026,22 @@ async function abrirVisor(doc, indicePagina = 0) {
       <div class="estado-carga"><div class="spinner"></div><span>Abriendo…</span></div>
     </div>`;
   visor.classList.remove('hidden');
-  // Solo aquí se permite el zoom nativo del navegador; en el resto de
-  // la app está bloqueado para que un pellizco accidental no amplíe la
-  // pantalla entera.
+  if (direccionDeslizar) {
+    const cuerpoNuevo = $('#visor-cuerpo');
+    cuerpoNuevo.classList.add(direccionDeslizar > 0 ? 'desliza-der' : 'desliza-izq');
+  }
+  // Las imágenes tienen su propio zoom a mano (activarZoomVisor, más abajo) y bloquean el del
+  // navegador (.visor-cuerpo lleva touch-action:none). Esta clase deja el zoom nativo disponible
+  // solo por si hiciera falta para otra cosa dentro del visor (p. ej. un PDF, que aún no tiene zoom propio).
   document.documentElement.classList.add('zoom-doc');
   let urlActual = null;
-  pushNavegacion(() => {
+  const cerrarVisor = () => {
     visor.classList.add('hidden');
     document.documentElement.classList.remove('zoom-doc');
     if (urlActual) URL.revokeObjectURL(urlActual);
-  });
+  };
+  if (sinNavegacion) reemplazarCapaActual(cerrarVisor);
+  else pushNavegacion(cerrarVisor);
 
   $('#visor-cerrar').addEventListener('click', volverAtras);
   $('#visor-ajustes').addEventListener('click', () => abrirMenuPagina(doc, indicePagina));
@@ -6877,6 +7053,11 @@ async function abrirVisor(doc, indicePagina = 0) {
     const cuerpo = $('#visor-cuerpo');
     if (esImagen) {
       cuerpo.innerHTML = `<img src="${url}" alt="${escapeHtml(pagina.nombre || doc.nombre)}">`;
+      activarZoomVisor(cuerpo, doc.paginas.length > 1 ? (direccion) => {
+        const destino = indicePagina + direccion;
+        if (destino < 0 || destino >= doc.paginas.length) return;
+        abrirVisor(doc, destino, true, direccion);
+      } : null);
     } else {
       cuerpo.innerHTML = `
         <div class="visor-pdf">
