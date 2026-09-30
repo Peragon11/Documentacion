@@ -587,8 +587,11 @@
   @keyframes girar{ to{ transform:rotate(360deg); } }
 
   .chips-categorias{
-    display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px;
+    display:flex; gap:7px; overflow-x:auto; padding:6px; margin:-6px -6px 14px;
     -ms-overflow-style:none; scrollbar-width:none;
+    /* el padding de 6px por los cuatro lados (compensado con margen negativo arriba/lados, para que
+       no se note el hueco) es sitio de sobra para el aro del chip activo — si no, overflow-x:auto
+       también recorta en vertical y por los lados, y el aro se veía cortado. */
   }
   .chips-categorias::-webkit-scrollbar{ display:none; }
   /* Al deslizar a otra persona/categoría (o a otra página de un documento, en el visor) el
@@ -752,10 +755,17 @@
   .visor-cuerpo{
     flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 12px;
     touch-action:none; /* el zoom con doble toque/pellizco lo gestiona activarZoomVisor() a mano, sin el del navegador */
+    background:#0A0F14; /* mismo fondo que #visor-completo, a prueba de que algún repintado deje ver lo de detrás */
   }
   .visor-cuerpo img{
     max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; pointer-events:none;
     -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
+    /* Capa de composición propia para la imagen: sin esto, al hacer zoom con el pellizco (sobre todo
+       quitando zoom) el navegador puede dejar restos/rayas del fotograma anterior en el hueco que
+       queda alrededor de la imagen en vez de repintarlo limpio. (will-change, no transform:translateZ(0)
+       a secas en la hoja de estilos — activarZoomVisor pone su propio transform por JS en cada
+       cambio, y lo pisaría sin enterarse.) */
+    will-change:transform;
   }
   .visor-pdf{ display:flex; flex-direction:column; align-items:center; gap:16px; color:var(--text-dim); text-align:center; padding:20px; }
   @media (orientation:landscape) and (max-height:520px){
@@ -1117,7 +1127,7 @@
   html[data-skin="carpeta"] .titulo-grupo{ font-weight:700; letter-spacing:.06em; }
   html[data-skin="carpeta"] .chip{ font-family:var(--mono); font-weight:700; border:1.5px solid var(--borde); border-bottom:0; padding-bottom:8px; }
   html[data-skin="carpeta"] .chip.activo{ background:var(--ink-2); border-color:var(--text-light); }
-  html[data-skin="carpeta"] .chips-categorias{ border-bottom:1.5px solid var(--text-light); padding-bottom:0; }
+  html[data-skin="carpeta"] .chips-categorias{ border-bottom:1.5px solid var(--text-light); }
   html[data-skin="carpeta"] .doc-fila{ border:2px dashed var(--borde-fuerte); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); box-shadow:2px 3px 0 var(--borde); }
   html[data-skin="carpeta"] .galeria-pagina{ border:2px dashed var(--borde-fuerte); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); box-shadow:2px 3px 0 var(--borde); }
   html[data-skin="carpeta"] .doc-nombre, html[data-skin="carpeta"] .persona-tile .nombre-persona{ font-family:var(--serif); font-weight:700; }
@@ -1190,7 +1200,7 @@
   html[data-skin="pixeles"] .titulo-grupo{ font-size:.66rem; color:var(--text-light); }
   html[data-skin="pixeles"] .btn-primario, html[data-skin="pixeles"] .btn-secundario{ padding:15px 8px; }
   html[data-skin="pixeles"] .chip{ padding:9px 12px; margin:6px 5px 10px 4px; }
-  html[data-skin="pixeles"] .chips-categorias{ padding:2px 4px 2px; }
+  html[data-skin="pixeles"] .chips-categorias{ padding:6px; }
   html[data-skin="pixeles"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
   html[data-skin="pixeles"] h1, html[data-skin="pixeles"] h3{ font-weight:700; letter-spacing:0; }
   html[data-skin="pixeles"] .modal h3{ font-size:1.25rem; }
@@ -1282,7 +1292,7 @@
   html[data-skin="chicle"] .lista-docs, html[data-skin="chicle"] .galeria-paginas{ gap:16px; }
   html[data-skin="chicle"] .categoria-barra{ border:3px solid #fff; box-shadow:0 6px 0 rgba(0,0,0,.20); font-weight:700; }
   html[data-skin="chicle"] .doc-nombre{ font-weight:600; font-size:1.02rem; }
-  html[data-skin="chicle"] .chips-categorias{ padding:2px 3px 9px; }
+  html[data-skin="chicle"] .chips-categorias{ padding:6px 6px 9px; }
   html[data-skin="chicle"] .chip{ border:3px solid var(--caramelo, var(--c1)); background:var(--ink-2); color:var(--text-light); font-weight:600; padding:5px 14px; }
   html[data-skin="chicle"] .chip.activo{ background:var(--caramelo, var(--c1)); color:var(--sobre-acento); box-shadow:0 4px 0 color-mix(in srgb, var(--caramelo, var(--c1)) 55%, #000); }
   html[data-skin="chicle"] .btn-primario{ font-weight:700; font-size:1rem; padding:14px; box-shadow:0 5px 0 var(--stamp-dark); }
@@ -1400,7 +1410,7 @@
   html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); }
   html[data-skin="comic"] .categoria-barra:active::before{ box-shadow:2px 2px 0 var(--text-light); }
   /* Filtro de categorías: globitos de texto (los de categoría, en gris) */
-  html[data-skin="comic"] .chips-categorias{ padding:3px 6px 9px; }
+  html[data-skin="comic"] .chips-categorias{ padding:6px 6px 9px; }
   html[data-skin="comic"] .chip{ border:3px solid var(--text-light); background:var(--ink-2); color:var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1rem; padding:4px 14px 2px; }
   html[data-skin="comic"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
   html[data-skin="comic"] .chip.chip-categoria{ filter:url(#trazo-chip-a); color:#fff; text-shadow:1px 1px 0 #000; opacity:.95; }
@@ -1787,7 +1797,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.6.0';
+const VERSION_APP = '3.6.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
