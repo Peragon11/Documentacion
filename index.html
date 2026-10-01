@@ -1808,7 +1808,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.6.2';
+const VERSION_APP = '3.6.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4241,12 +4241,35 @@ $('#btn-ver-categorias-top').addEventListener('click', alternarVistaInicio);
 // categoría, los mismos 4 botones pasan a ser Subir/Seleccionar/Desplegar-Replegar/Ajustes
 // (ver sincronizarBarraInferior, que cambia sus iconos y etiquetas al entrar y salir).
 function enPantallaDocumentos() { return personaActivaId !== null || categoriaGlobalActivaId !== null; }
-$('#bar-buscar').addEventListener('click', () => {
+// El usuario detectó que, justo después de deslizar la cuadrícula de personas, el siguiente toque
+// en la barra de abajo a veces no hacía nada (un segundo toque sí). El "click" sintético que genera
+// el navegador a partir de un toque se puede perder si llega justo después de un gesto de arrastre
+// reciente en otra parte de la pantalla; "pointerup" es un evento más de bajo nivel que no se pierde
+// así. Se dispara con el que llegue primero (normalmente pointerup) y se ignora el otro, para no
+// ejecutar la acción dos veces.
+function alTocarBoton(el, fn) {
+  let x0 = 0, y0 = 0, yaDisparado = false;
+  el.addEventListener('pointerdown', (ev) => { x0 = ev.clientX; y0 = ev.clientY; yaDisparado = false; });
+  el.addEventListener('pointerup', (ev) => {
+    if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 10) return;
+    yaDisparado = true;
+    // Por si el "click" que normalmente sigue a este toque no llega a disparar nunca (el fallo que
+    // se está arreglando): sin este límite de tiempo, un toque por teclado/accesibilidad posterior
+    // (que solo dispara "click", sin pointerdown/up) se quedaría bloqueado para siempre.
+    setTimeout(() => { yaDisparado = false; }, 500);
+    fn();
+  });
+  el.addEventListener('click', () => {
+    if (yaDisparado) { yaDisparado = false; return; }
+    fn();
+  });
+}
+alTocarBoton($('#bar-buscar'), () => {
   if (enPantallaDocumentos()) { entrarModoSeleccion(); mostrarToast('Elige los documentos que quieras compartir'); }
   else abrirBusqueda();
 });
-$('#bar-subir').addEventListener('click', abrirModalSubida);
-$('#bar-vista').addEventListener('click', () => {
+alTocarBoton($('#bar-subir'), abrirModalSubida);
+alTocarBoton($('#bar-vista'), () => {
   if (enPantallaDocumentos()) {
     guardarVistaDocs(obtenerVistaDocsGuardada() === 'desplegado' ? 'replegado' : 'desplegado');
     sincronizarBarraInferior();
@@ -4257,7 +4280,7 @@ $('#bar-vista').addEventListener('click', () => {
 // Dentro de una persona ya solo queda "Exportar copia" (Subir y Seleccionar tienen botón propio);
 // dentro de una categoría (todas las personas a la vez) no queda nada propio, así que abre los
 // ajustes generales, igual que en la portada.
-$('#bar-ajustes').addEventListener('click', () => {
+alTocarBoton($('#bar-ajustes'), () => {
   if (!enPantallaDocumentos()) { abrirAjustes(true); return; }
   if (categoriaGlobalActivaId !== null) { abrirAjustes(true); return; }
   const persona = datos.personas.find((p) => p.id === personaActivaId);
@@ -7036,8 +7059,12 @@ function activarZoomVisor(cuerpo, onDeslizar) {
 // sinNavegacion: al cambiar de página deslizando (ver abajo) se reconstruye el visor entero con
 // esta misma función, pero sin abrir un paso nuevo en el historial — un solo "atrás" tiene que
 // cerrar el visor, no ir pasando página a página. direccionDeslizar (1 o -1) es solo para la
-// animación de entrada del cuerpo, igual que al deslizar entre personas/categorías.
-async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccionDeslizar = 0) {
+// animación de entrada del cuerpo, igual que al deslizar entre personas/categorías. volverAGaleria:
+// este documento se abrió desde su galería de páginas (ver abrirGaleriaDocumento) — "atrás"/cerrar
+// debe reabrir esa galería en vez de cerrar el visor del todo, si no un "atrás" se come dos pasos a
+// la vez pero el segundo no se ve (la galería ya no estaba en el DOM, el visor la había pisado) y el
+// siguiente "atrás" no hace nada (cierra un visor que ya estaba oculto).
+async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccionDeslizar = 0, volverAGaleria = false) {
   const pagina = doc.paginas[indicePagina];
   const esImagen = (pagina.mimeType || '').startsWith('image/');
   const visor = $('#visor-completo');
@@ -7069,9 +7096,10 @@ async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccio
   document.documentElement.classList.add('zoom-doc');
   let urlActual = null;
   const cerrarVisor = () => {
-    visor.classList.add('hidden');
     document.documentElement.classList.remove('zoom-doc');
     if (urlActual) URL.revokeObjectURL(urlActual);
+    if (volverAGaleria) abrirGaleriaDocumento(doc, true);
+    else visor.classList.add('hidden');
   };
   if (sinNavegacion) reemplazarCapaActual(cerrarVisor);
   else pushNavegacion(cerrarVisor);
@@ -7089,7 +7117,7 @@ async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccio
       activarZoomVisor(cuerpo, doc.paginas.length > 1 ? (direccion) => {
         const destino = indicePagina + direccion;
         if (destino < 0 || destino >= doc.paginas.length) return;
-        abrirVisor(doc, destino, true, direccion);
+        abrirVisor(doc, destino, true, direccion, volverAGaleria);
       } : null);
     } else {
       cuerpo.innerHTML = `
@@ -7115,7 +7143,10 @@ async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccio
 // libro de familia fotografiado hoja a hoja) no van directos a pantalla
 // completa: primero se ven todas en miniatura aquí, y solo al tocar una
 // concreta se abre esa en el visor de siempre.
-function abrirGaleriaDocumento(doc) {
+// sinNavegacion: al volver aquí desde una página abierta de esta misma galería (ver abrirVisor,
+// volverAGaleria), este paso ya ocupaba su propio lugar en el historial — se sustituye la capa
+// actual en vez de abrir una nueva, para no dejar un "atrás" de más que no hace nada visible.
+function abrirGaleriaDocumento(doc, sinNavegacion = false) {
   const visor = $('#visor-completo');
   visor.innerHTML = `
     <div class="visor-topbar">
@@ -7133,7 +7164,8 @@ function abrirGaleriaDocumento(doc) {
     </div>
     <div class="galeria-paginas" id="galeria-cuerpo"></div>`;
   visor.classList.remove('hidden');
-  pushNavegacion(() => visor.classList.add('hidden'));
+  if (sinNavegacion) reemplazarCapaActual(() => visor.classList.add('hidden'));
+  else pushNavegacion(() => visor.classList.add('hidden'));
 
   $('#galeria-cerrar').addEventListener('click', volverAtras);
   $('#galeria-anadir').addEventListener('click', () => agregarPagina(doc));
@@ -7154,7 +7186,7 @@ function abrirGaleriaDocumento(doc) {
     // siempre, su posición en el array es lo único que cambia) en el momento del toque.
     btn.addEventListener('click', () => {
       if (Date.now() - momentoUltimoArrastrePersona < 300) return;
-      abrirVisor(doc, doc.paginas.indexOf(pagina));
+      abrirVisor(doc, doc.paginas.indexOf(pagina), false, 0, true);
     });
     cuerpo.appendChild(btn);
 
