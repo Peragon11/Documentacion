@@ -1808,7 +1808,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.6.3';
+const VERSION_APP = '3.6.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4241,28 +4241,25 @@ $('#btn-ver-categorias-top').addEventListener('click', alternarVistaInicio);
 // categoría, los mismos 4 botones pasan a ser Subir/Seleccionar/Desplegar-Replegar/Ajustes
 // (ver sincronizarBarraInferior, que cambia sus iconos y etiquetas al entrar y salir).
 function enPantallaDocumentos() { return personaActivaId !== null || categoriaGlobalActivaId !== null; }
-// El usuario detectó que, justo después de deslizar la cuadrícula de personas, el siguiente toque
-// en la barra de abajo a veces no hacía nada (un segundo toque sí). El "click" sintético que genera
-// el navegador a partir de un toque se puede perder si llega justo después de un gesto de arrastre
-// reciente en otra parte de la pantalla; "pointerup" es un evento más de bajo nivel que no se pierde
-// así. Se dispara con el que llegue primero (normalmente pointerup) y se ignora el otro, para no
-// ejecutar la acción dos veces.
+// Justo después de deslizar la cuadrícula de personas, el navegador se "come" el "click" del
+// siguiente toque (lo gasta en frenar el deslizamiento), y el primer toque en la barra no hacía nada.
+// Por eso, con el dedo, la acción se lanza en "touchend" y no en "click". Dos detalles importantes:
+// - touchend siempre llega al elemento donde EMPEZÓ el toque: un deslizamiento que empieza en una
+//   ficha y se suelta encima de la barra no cuenta como toque en el botón.
+// - preventDefault() en touchend anula el "click" que vendría después. Sin eso, ese click se calcula
+//   en el punto del dedo DESPUÉS de abrir la pantalla, cae sobre el fondo del modal recién abierto
+//   y lo cierra al instante (Ajustes se abría y cerraba sin llegar a verse, toque tras toque).
+// Si touchend no se puede cancelar, se deja todo al "click" normal (ratón y teclado, igual).
 function alTocarBoton(el, fn) {
-  let x0 = 0, y0 = 0, yaDisparado = false;
-  el.addEventListener('pointerdown', (ev) => { x0 = ev.clientX; y0 = ev.clientY; yaDisparado = false; });
-  el.addEventListener('pointerup', (ev) => {
-    if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 10) return;
-    yaDisparado = true;
-    // Por si el "click" que normalmente sigue a este toque no llega a disparar nunca (el fallo que
-    // se está arreglando): sin este límite de tiempo, un toque por teclado/accesibilidad posterior
-    // (que solo dispara "click", sin pointerdown/up) se quedaría bloqueado para siempre.
-    setTimeout(() => { yaDisparado = false; }, 500);
+  let x0 = 0, y0 = 0;
+  el.addEventListener('touchstart', (ev) => { x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY; }, { passive: true });
+  el.addEventListener('touchend', (ev) => {
+    const t = ev.changedTouches[0];
+    if (!ev.cancelable || ev.touches.length > 0 || Math.hypot(t.clientX - x0, t.clientY - y0) > 10) return;
+    ev.preventDefault();
     fn();
   });
-  el.addEventListener('click', () => {
-    if (yaDisparado) { yaDisparado = false; return; }
-    fn();
-  });
+  el.addEventListener('click', fn);
 }
 alTocarBoton($('#bar-buscar'), () => {
   if (enPantallaDocumentos()) { entrarModoSeleccion(); mostrarToast('Elige los documentos que quieras compartir'); }
