@@ -18,6 +18,10 @@
     if (modo === 'claro') document.documentElement.setAttribute('data-tema', 'claro');
   } catch (e) {}
   try {
+    var tx = localStorage.getItem('documentacion_texto');
+    if (tx && /^(85|92|100|110|120)$/.test(tx)) document.documentElement.style.fontSize = tx + '%';
+  } catch (e) {}
+  try {
     // Este móvil ya tiene documentos guardados: la pantalla de bienvenida no se va a usar (el
     // script principal, más abajo, entra directo a la app). Se oculta ya mismo, antes de que el
     // navegador llegue a pintar nada: si no, cuando la carga tarda un poco (primera vez que se
@@ -157,6 +161,7 @@
     -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
   }
   input, textarea, [contenteditable]{ -webkit-touch-callout:default; user-select:text; -webkit-user-select:text; }
+  html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
   html,body{ height:100%; overscroll-behavior-x:contain; overscroll-behavior-y:contain; background:var(--ink); touch-action:pan-x pan-y; }
   body{
     margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
@@ -1070,6 +1075,7 @@
   .mq-skin[data-skin="comic"] .mqs-doc{ margin:0 3px 3px 0; }
   .mq-skin[data-skin="comic"] .mqs-ficha b, .mq-skin[data-skin="comic"] .mqs-nom{ font-weight:400; letter-spacing:.05em; font-size:.9rem; }
   .icono-accion.idioma{ background:linear-gradient(135deg, var(--azul), var(--morado)); }
+  .icono-accion.letra{ background:linear-gradient(135deg, var(--seal), var(--azul)); font-family:var(--serif); font-weight:700; font-size:1.05rem; color:#fff; }
   .icono-accion.sigla{ overflow:hidden; padding:0; }
   .icono-accion.sigla .bandera-idioma{ width:100%; height:100%; border-radius:0; box-shadow:none; }
 
@@ -1807,7 +1813,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.6.5';
+const VERSION_APP = '3.6.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2123,6 +2129,23 @@ const SKINS = {
 function obtenerSkinGuardado() {
   const s = localStorage.getItem(SKIN_STORAGE_KEY);
   return SKINS[s] ? s : 'clasico';
+}
+
+const TEXTO_STORAGE_KEY = 'documentacion_texto';
+const TAMANOS_TEXTO = [
+  { pct: 85, nombre: 'Muy pequeño' },
+  { pct: 92, nombre: 'Pequeño' },
+  { pct: 100, nombre: 'Normal' },
+  { pct: 110, nombre: 'Grande' },
+  { pct: 120, nombre: 'Muy grande' }
+];
+function obtenerTamanoTexto() {
+  const t = TAMANOS_TEXTO.find((x) => String(x.pct) === localStorage.getItem(TEXTO_STORAGE_KEY));
+  return t || TAMANOS_TEXTO[2];
+}
+function aplicarTamanoTexto(pct) {
+  document.documentElement.style.fontSize = pct === 100 ? '' : pct + '%';
+  localStorage.setItem(TEXTO_STORAGE_KEY, String(pct));
 }
 
 const TEMA_STORAGE_KEY = 'documentacion_tema';
@@ -8160,6 +8183,38 @@ function abrirIdiomas() {
   });
 }
 
+function abrirTamanoTexto() {
+  const actual = obtenerTamanoTexto().pct;
+  const filas = TAMANOS_TEXTO.map((t) => `
+    <button class="fila-accion fila-cat" data-pct="${t.pct}">
+      <span class="icono-accion letra" aria-hidden="true" style="font-size:${(t.pct / 100 * 1.05).toFixed(2)}rem">Aa</span>
+      <span><strong>${t.nombre}</strong></span>
+      ${actual === t.pct ? `<span class="marca-actual">${ICONOS_MENU.check}</span>` : ''}
+    </button>`).join('');
+  abrirModal(`
+    <div class="ajustes">
+      <div class="cabecera-hoja">
+        <div class="asa" aria-hidden="true"></div>
+        <div class="fila-titulo">
+          <button type="button" class="btn-atras-ajustes" id="ajustes-volver" aria-label="Volver a Ajustes">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <h3 class="ajustes-titulo">Tamaño del texto</h3>
+        </div>
+      </div>
+      <div class="grupo">${filas}</div>
+    </div>
+  `);
+  activarArrastreParaCerrar($('.cabecera-hoja'));
+  $('#ajustes-volver').addEventListener('click', () => abrirAjustes(false));
+  $$('[data-pct]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      aplicarTamanoTexto(Number(btn.dataset.pct));
+      abrirTamanoTexto();
+    });
+  });
+}
+
 // Subpantalla de Apariencia: se sustituye el contenido de la misma hoja (no se
 // apila otra ventana). Al tocar un modo se aplica al momento.
 function abrirApariencia() {
@@ -8206,6 +8261,7 @@ function abrirAjustes(animar = true) {
         <div class="asa" aria-hidden="true"></div>
         <h3 class="ajustes-titulo">Ajustes</h3>
       </div>
+      <p id="diag-tam" style="margin:0;font:12px monospace;color:#f90;user-select:text;-webkit-user-select:text"></p>
 
       <div class="bloque-copias">
         <div class="sello-copias" id="sello-copias"></div>
@@ -8228,6 +8284,10 @@ function abrirAjustes(animar = true) {
         <button class="fila-accion" id="op-estilo">
           <span class="icono-accion estilo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.9-.9 1.6-1.9-.3-1 .3-2.1 1.4-2.1H17a4 4 0 0 0 4-4c0-5.2-4-10-9-10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.2" r="1.2" fill="currentColor"/><circle cx="15" cy="7.6" r="1.2" fill="currentColor"/></svg></span>
           <span><strong>Estilo</strong><small>${trad(SKINS[obtenerSkinGuardado()].nombre)}</small></span>
+        </button>
+        <button class="fila-accion" id="op-texto">
+          <span class="icono-accion letra" aria-hidden="true">Aa</span>
+          <span><strong>Tamaño del texto</strong><small>${trad(obtenerTamanoTexto().nombre)}</small></span>
         </button>
         <button class="fila-accion" id="op-idioma">
           <span class="icono-accion idioma"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
@@ -8257,6 +8317,7 @@ function abrirAjustes(animar = true) {
     </div>
   `);
   refrescarSelloCopias();
+  $('#diag-tam').textContent = `ancho ${innerWidth}x${innerHeight} · pantalla ${screen.width}x${screen.height} · dpr ${devicePixelRatio} · zoom ${visualViewport ? visualViewport.scale : '?'} · html ${getComputedStyle(document.documentElement).fontSize} · SerifOK ${document.fonts.check('600 16px "Source Serif 4"')} · PoppinsOK ${document.fonts.check('600 16px Poppins')} · standalone ${matchMedia('(display-mode: standalone)').matches}`;
   activarArrastreParaCerrar($('.cabecera-hoja'));
   if (animar) {
     // La hoja sube desde abajo al abrir Ajustes.
@@ -8293,6 +8354,7 @@ function abrirAjustes(animar = true) {
   });
   $('#op-apariencia').addEventListener('click', abrirApariencia);
   $('#op-estilo').addEventListener('click', abrirEstilos);
+  $('#op-texto').addEventListener('click', abrirTamanoTexto);
   $('#op-idioma').addEventListener('click', abrirIdiomas);
   $('#lista-proveedores').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-accion]');
