@@ -1,6 +1,7 @@
-const CACHE = 'documentacion-shell-v6'; // v6: foto de fondo del skin Metálico añadida al SHELL
+const CACHE = 'documentacion-shell-v7'; // v7: letras de avatar (letras/*.webp) añadidas al SHELL
 const SHELL = ['./index.html', './idiomas.js', './manifest.json', './icono.png', './icono_maskable.png', './icono_notificacion.png',
-  './skin-metalico-panel.webp', './skin-metalico-marco.webp', './skin-metalico-placa.webp', './skin-metalico-placa-marco.webp', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.webp', './skin-metalico-fondo.webp'];
+  './skin-metalico-panel.webp', './skin-metalico-marco.webp', './skin-metalico-placa.webp', './skin-metalico-placa-marco.webp', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.webp', './skin-metalico-fondo.webp',
+  ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => './letras/' + l + '.webp')];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
