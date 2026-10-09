@@ -241,6 +241,8 @@
     [`Cambiar fecha de caducidad`, `Change expiry date`, `Canvia la data de caducitat`, `Cambia data di scadenza`, `Changer la date d'expiration`, `Ablaufdatum ändern`],
     [`Añadir fecha de caducidad`, `Add expiry date`, `Afegeix una data de caducitat`, `Aggiungi data di scadenza`, `Ajouter une date d'expiration`, `Ablaufdatum hinzufügen`],
     [`Otra foto o PDF para este documento`, `Another photo or PDF for this document`, `Una altra foto o PDF per a aquest document`, `Un'altra foto o PDF per questo documento`, `Une autre photo ou un autre PDF pour ce document`, `Ein weiteres Foto oder PDF für dieses Dokument`],
+    [`Ordenar páginas`, `Reorder pages`, `Ordena les pàgines`, `Riordina pagine`, `Réorganiser les pages`, `Seiten anordnen`],
+    [`Ver todas y cambiarlas de orden`, `See them all and change their order`, `Mira-les totes i canvia'n l'ordre`, `Vedile tutte e cambiane l'ordine`, `Toutes les voir et changer leur ordre`, `Alle ansehen und ihre Reihenfolge ändern`],
     [`Eliminar esta página`, `Delete this page`, `Elimina aquesta pàgina`, `Elimina questa pagina`, `Supprimer cette page`, `Diese Seite löschen`],
     [`Eliminar documento`, `Delete document`, `Elimina el document`, `Elimina documento`, `Supprimer le document`, `Dokument löschen`],
     [`Quita solo esta página`, `Removes only this page`, `Treu només aquesta pàgina`, `Rimuove solo questa pagina`, `Retire uniquement cette page`, `Entfernt nur diese Seite`],
