@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.2';
+const VERSION_APP = '3.7.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -292,14 +292,14 @@ function mostrarApp() {
 // estilo (carpeta fuentes/) se cargan solo cuando ese estilo se usa (ver el script del <head>).
 const SKIN_STORAGE_KEY = 'documentacion_skin';
 const SKINS = {
-  clasico:   { nombre: 'Clásico',   descripcion: 'Azul noche y terracota, el de siempre',                       color: { oscuro: '#14202E', claro: '#F2F3F5' } },
+  clasico:   { nombre: 'Clásico',   descripcion: 'Azul noche, el de siempre',                                color: { oscuro: '#14202E', claro: '#F2F3F5' } },
   pasaporte: { nombre: 'Pasaporte', descripcion: 'Burdeos y oro, esquinas rectas y letra de imprenta',           color: { oscuro: '#2B1822', claro: '#EFE4CE' } },
   carpeta:   { nombre: 'Carpeta',   descripcion: 'Cartulina de archivo, sello rojo y letra de máquina de escribir', color: { oscuro: '#2A2318', claro: '#D8C596' } },
   nordico:   { nombre: 'Nórdico',   descripcion: 'Blanco y aire, verde agua suave y formas redondeadas',         color: { oscuro: '#1A2321', claro: '#F5F7F5' } },
   bosque:    { nombre: 'Bosque',    descripcion: 'Verde hondo y albaricoque, formas de hoja',                    color: { oscuro: '#172D26', claro: '#E4E0CB' } },
-  pixeles:   { nombre: 'Píxeles',   descripcion: 'Videojuego de 8 bits: esquinas escalonadas, letra pixelada y colores retro (en claro, pantalla de Game Boy)', color: { oscuro: '#29366F', claro: '#9BBC0F' } },
+  pixeles:   { nombre: 'Píxeles',   descripcion: 'Videojuego de 8 bits: esquinas escalonadas, letra pixelada y colores retro', color: { oscuro: '#29366F', claro: '#9BBC0F' } },
   neon:      { nombre: 'Neón',      descripcion: 'Rótulos luminosos: contornos que brillan en rosa y turquesa sobre la noche', color: { oscuro: '#150D24', claro: '#E4D9FF' } },
-  chicle:    { nombre: 'Chicle',    descripcion: 'Rosa chicle, menta, limón y celeste: todo redondo, gordito y de colorines', color: { oscuro: '#FF6BBA', claro: '#FF5DAF' } },
+  chicle:    { nombre: 'Chicle',    descripcion: 'Rosa chicle, menta, limón y celeste: todo redondo y de colorines', color: { oscuro: '#FF6BBA', claro: '#FF5DAF' } },
   comic:     { nombre: 'Cómic',     descripcion: 'Blanco y negro de cómic: tinta gruesa, trama de puntitos y sombras duras', color: { oscuro: '#0A0A0A', claro: '#FFFFFF' } },
   metalico:  { nombre: 'Metálico',  descripcion: 'Paneles de nave espacial: metal remachado, esquinas cortadas y placas con tornillos', color: { oscuro: '#24272B', claro: '#D7DADD' } },
 };
@@ -3525,6 +3525,7 @@ function montarRecortador(contenedor, file, opciones) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
         </button>
       </div>
+      ${marcoMax ? `<div class="recorte-orientacion"><button type="button" id="recorte-orientacion"></button></div>` : ''}
     </div>
 ` : ''}
     <p class="recorte-ayuda">${textoAyuda}</p>
@@ -3605,16 +3606,36 @@ function montarRecortador(contenedor, file, opciones) {
     rango.value = String(fino);
     etiquetaGrados.textContent = (fino > 0 ? '+' : '') + String(fino).replace('.', ',') + '°';
   }
-  // Con el giro, el marco toma la proporción de la foto (o la inversa si está girada 90° o 270°).
+  // Con el giro, el marco toma la proporción de la foto (o la inversa si está girada 90° o 270°). Además se
+  // puede cambiar la orientación del marco sin girar la foto (botón de abajo): p. ej. una foto vertical
+  // recortada en horizontal, aunque no se vea entera.
+  let marcoInvertido = false;
+  const botonOrientacion = contenedor.querySelector('#recorte-orientacion');
+  const ICONO_MARCO = (ancho, alto) => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="${12 - ancho / 2}" y="${12 - alto / 2}" width="${ancho}" height="${alto}" rx="2"/></svg>`;
+  function pintarBotonOrientacion() {
+    if (!botonOrientacion) return;
+    const ahoraHorizontal = anchoMarco > altoMarco;
+    botonOrientacion.innerHTML = ICONO_MARCO(ahoraHorizontal ? 10 : 16, ahoraHorizontal ? 16 : 10) + '<span>' + trad(ahoraHorizontal ? 'Cambiar a marco vertical' : 'Cambiar a marco horizontal') + '</span>';
+  }
   function ajustarMarcoAlGiro() {
     if (!giro || !marcoMax) return;
     const vertical = Math.abs(Math.round(base90 / CUARTO)) % 2 === 1;
-    const proporcion = vertical ? img.naturalHeight / img.naturalWidth : img.naturalWidth / img.naturalHeight;
+    let proporcion = vertical ? img.naturalHeight / img.naturalWidth : img.naturalWidth / img.naturalHeight;
+    if (marcoInvertido) proporcion = 1 / proporcion;
     let ancho = marcoMax.ancho, alto = Math.round(marcoMax.ancho / proporcion);
     if (alto > marcoMax.alto) { alto = marcoMax.alto; ancho = Math.round(marcoMax.alto * proporcion); }
     anchoMarco = ancho; altoMarco = alto;
     marco.style.width = ancho + 'px'; marco.style.height = alto + 'px';
+    pintarBotonOrientacion();
   }
+  function alternarOrientacionMarco() {
+    marcoInvertido = !marcoInvertido;
+    ajustarMarcoAlGiro();
+    cx = anchoMarco / 2; cy = altoMarco / 2;
+    escala = escalaMinima(rot);
+    aplicarTransform();
+  }
+  if (botonOrientacion) botonOrientacion.addEventListener('click', alternarOrientacionMarco);
   function girar90(sentido) {
     rot += sentido * CUARTO; // se conserva el ajuste fino que hubiera
     sincronizarGiro();
@@ -3640,6 +3661,7 @@ function montarRecortador(contenedor, file, opciones) {
     cx = anchoMarco / 2;
     cy = altoMarco / 2;
     aplicarTransform();
+    pintarBotonOrientacion();
   };
   img.src = url;
   marco.appendChild(img);
