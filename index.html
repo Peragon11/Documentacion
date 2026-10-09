@@ -1048,51 +1048,9 @@
   .icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
   .lista-estilos{ display:flex; flex-direction:column; gap:14px; }
   .opcion-estilo .texto-tema{ padding-right:44px; }
-  .mq-skin{ display:block; background:var(--ink); color:var(--text-light); border-radius:14px; overflow:hidden; border:1px solid var(--borde); font-family:var(--sans); }
-  .mqs-barra{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); }
-  .mqs-logo{ display:block; width:20px; height:20px; flex:none; background:var(--stamp); border-radius:var(--r-avatar-mini); }
-  .mqs-barra b{ flex:1; min-width:0; font-family:var(--fuente-marca); font-size:.84rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .mqs-btn{ display:block; width:17px; height:17px; flex:none; background:var(--ink-3); border-radius:var(--r-redondo); }
-  .mqs-cuerpo{ display:block; padding:10px; }
-  .mqs-fichas{ display:flex; gap:10px; margin-bottom:9px; }
-  .mqs-ficha{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; }
-  .mqs-ficha i{ display:block; width:100%; max-width:46px; aspect-ratio:1; background:var(--seal); border-radius:var(--r-avatar-mini); }
-  .mqs-ficha.a i{ background:var(--azul); }
-  .mqs-ficha.z i{ background:var(--amber); }
-  .mqs-ficha b{ font-family:var(--serif); font-size:.72rem; font-weight:600; }
-  .mqs-doc{ display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--ink-2); border:1px solid var(--borde-sutil); border-radius:var(--r-tarjeta); }
-  .mqs-mini{ display:block; width:28px; height:19px; flex:none; background:var(--ink-3); border-radius:var(--r-miniatura); }
-  .mqs-nom{ flex:1; min-width:0; font-family:var(--serif); font-size:.8rem; font-weight:600; }
-  .mqs-doc em{ font-style:normal; font-family:var(--sans); font-size:.66rem; font-weight:700; background:var(--stamp); color:var(--sobre-acento); padding:3px 10px; border-radius:var(--r-pill); }
-  .mq-skin[data-skin="pasaporte"] .mqs-barra{ border-bottom-color:var(--stamp); }
-  .mq-skin[data-skin="pasaporte"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="carpeta"] .mqs-barra{ border-bottom:3px double var(--text-light); }
-  .mq-skin[data-skin="carpeta"] .mqs-doc{ border:1.5px dashed var(--borde-fuerte); }
-  .mq-skin[data-skin="nordico"] .mqs-doc{ border-color:transparent; box-shadow:0 5px 14px rgba(20,36,32,.10); }
-  .mq-skin[data-skin="bosque"] .mqs-doc{ border-color:var(--borde); }
-  .mq-skin[data-skin="pixeles"] .mqs-barra{ border-bottom:3px solid var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc, .mq-skin[data-skin="pixeles"] .mqs-ficha i{ border:none; box-shadow:0 -3px 0 0 var(--borde-px), 0 3px 0 0 var(--borde-px), -3px 0 0 0 var(--borde-px), 3px 0 0 0 var(--borde-px); }
-  .mq-skin[data-skin="pixeles"] .mqs-doc{ margin:3px 3px 2px; }
-  .mq-skin[data-skin="pixeles"] .mqs-fichas{ padding:3px 4px 0; }
-  .mq-skin[data-skin="pixeles"] .mqs-barra b, .mq-skin[data-skin="pixeles"] .mqs-nom{ font-weight:700; }
-  .mq-skin[data-skin="neon"] .mqs-barra{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-barra b{ color:var(--seal); text-shadow:0 0 8px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc, .mq-skin[data-skin="neon"] .mqs-ficha i{ border:1px solid var(--seal); box-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="neon"] .mqs-doc em{ box-shadow:0 0 10px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
-  .mq-skin[data-skin="chicle"] .mqs-barra{ background:linear-gradient(90deg, var(--c1), var(--c5), var(--c4)); border-bottom:none; }
-  .mq-skin[data-skin="chicle"] .mqs-barra b{ color:var(--sobre-acento); font-weight:700; }
-  .mq-skin[data-skin="chicle"] :is(.mqs-logo, .mqs-btn){ background:var(--paper); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c1); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha.a i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c2); }
-  .mq-skin[data-skin="chicle"] .mqs-ficha.z i{ box-shadow:0 0 0 2px var(--ink), 0 0 0 4px var(--c3); }
-  .mq-skin[data-skin="chicle"] .mqs-fichas{ padding:4px 4px 2px; }
-  .mq-skin[data-skin="chicle"] .mqs-doc{ border:2px solid var(--c1); box-shadow:0 3px 0 var(--c1); margin-bottom:3px; }
-  .mq-skin[data-skin="comic"]{ border:2px solid var(--text-light); background-image:radial-gradient(circle, var(--trama) 1.2px, transparent 1.7px), radial-gradient(circle, var(--trama) 1.2px, transparent 1.7px); background-size:9px 9px; background-position:0 0, 4.5px 4.5px; }
-  .mq-skin[data-skin="comic"] .mqs-barra{ border-bottom:3px solid var(--text-light); }
-  .mq-skin[data-skin="comic"] .mqs-barra b{ font-weight:400; letter-spacing:.06em; font-size:1rem; }
-  .mq-skin[data-skin="comic"] .mqs-doc, .mq-skin[data-skin="comic"] .mqs-ficha i{ border:2px solid var(--text-light); box-shadow:2px 2px 0 var(--text-light); }
-  .mq-skin[data-skin="comic"] .mqs-doc{ margin:0 3px 3px 0; }
-  .mq-skin[data-skin="comic"] .mqs-ficha b, .mq-skin[data-skin="comic"] .mqs-nom{ font-weight:400; letter-spacing:.05em; font-size:.9rem; }
+  /* Maqueta fiel: la pantalla de inicio de verdad dentro de un marco, con el estilo puesto, a escala */
+  .mq-estilo{ display:block; position:relative; width:100%; aspect-ratio:412 / 470; border-radius:14px; overflow:hidden; border:1px solid var(--borde); background:var(--ink); }
+  .mq-estilo iframe{ position:absolute; left:0; top:0; width:412px; height:560px; border:0; transform-origin:0 0; transform:scale(var(--k, .8)); pointer-events:none; background:transparent; }
   .icono-accion.idioma{ background:linear-gradient(135deg, var(--azul), var(--morado)); }
   .icono-accion.letra{ background:linear-gradient(135deg, #3D6E99, #6B4FA8); font-family:var(--serif); font-weight:700; font-size:1.05rem; color:#fff; }
   .icono-accion.sigla{ overflow:hidden; padding:0; }
@@ -1405,7 +1363,7 @@
   /* El papel pintado: dos capas de puntos desplazadas media casilla forman una red en rombo */
   html[data-skin="comic"] body{ background-image:radial-gradient(circle, var(--trama) 1.7px, transparent 2.2px), radial-gradient(circle, var(--trama) 1.7px, transparent 2.2px); background-size:16px 16px; background-position:0 0, 8px 8px; }
   /* Letra de tebeo: Bangers solo trae un peso, así que nada de negritas falsas */
-  html[data-skin="comic"] :is(h1, h2, h3, .serif, .topbar .marca, .categoria-barra, .persona-tile .nombre-persona, .titulo-grupo, .doc-nombre, .chip, .btn-primario, .btn-secundario, .btn-grande, .titular-sello, .ajustes-titulo, .aviso-caducidad-banner, .mqs-barra b, .mqs-ficha b, .mqs-nom){ font-family:var(--serif); font-weight:400; letter-spacing:.05em; }
+  html[data-skin="comic"] :is(h1, h2, h3, .serif, .topbar .marca, .categoria-barra, .persona-tile .nombre-persona, .titulo-grupo, .doc-nombre, .chip, .btn-primario, .btn-secundario, .btn-grande, .titular-sello, .ajustes-titulo, .aviso-caducidad-banner){ font-family:var(--serif); font-weight:400; letter-spacing:.05em; }
   html[data-skin="comic"] .topbar{ background-image:radial-gradient(circle, var(--trama) 1.1px, transparent 1.6px); background-size:6px 6px; border-bottom:4px solid var(--text-light); backdrop-filter:none; }
   html[data-skin="comic"] .topbar .marca{ font-size:1.4rem; }
   html[data-skin="comic"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.05em; }
@@ -1693,10 +1651,6 @@
   /* Cinta de aviso (amarillo/negro) sobre la barra inferior, como en una escotilla de acceso */
   html[data-skin="metalico"] .barra-inferior{ background:linear-gradient(180deg, var(--ink-3), var(--ink-2) 45%, var(--ink) 100%); border-top:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
   html[data-skin="metalico"] .barra-inferior::before{ content:''; display:block; height:6px; margin:-8px -10px 8px; background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px); }
-  .mq-skin[data-skin="metalico"]{ border:1px solid var(--borde-fuerte); }
-  .mq-skin[data-skin="metalico"] .mqs-barra{ border-bottom:1px solid var(--borde-fuerte); }
-  .mq-skin[data-skin="metalico"] .mqs-barra b, .mq-skin[data-skin="metalico"] .mqs-nom{ font-family:var(--fuente-marca); letter-spacing:.02em; }
-  .mq-skin[data-skin="metalico"] .mqs-doc, .mq-skin[data-skin="metalico"] .mqs-ficha i{ border:1px solid var(--borde-fuerte); }
 
   /* Menús de opciones de documento, página y persona (mismo diseño que Ajustes) */
   html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
@@ -1835,7 +1789,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.0';
+const VERSION_APP = '3.7.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6258,7 +6212,7 @@ function renderizarDocumentos() {
     grupo.innerHTML = `<h3 class="titulo-grupo"><span class="punto-grupo" style="color:${cat.color}"></span>${escapeHtml(cat.nombre)}</h3><div class="lista-docs"></div>`;
     const listaEl = grupo.querySelector('.lista-docs');
     docs.forEach((doc) => listaEl.appendChild(crearTarjetaDoc(doc)));
-    hacerGrupoPlegable(grupo, catId, docs.length, categoriaActiva !== 'todos');
+    hacerGrupoPlegable(grupo, catId, docs.length, categoriaActiva !== 'todos', false);
     cont.appendChild(grupo);
   });
 }
@@ -8269,23 +8223,55 @@ async function pintarColoresMaquetas(cont) {
 
 // Subpantalla de Estilo: cada estilo con una maqueta hecha con sus propios colores, formas y
 // letra (en el modo claro u oscuro que tengas ahora). Al tocar uno se aplica al momento.
-function htmlMaquetaSkin(id) {
-  return `<span class="mq-skin" data-skin="${id}">
-    <span class="mqs-barra"><i class="mqs-logo"></i><b>Documentación</b><i class="mqs-btn"></i><i class="mqs-btn"></i></span>
-    <span class="mqs-cuerpo">
-      <span class="mqs-fichas">
-        <span class="mqs-ficha"><i></i><b>Ana</b></span><span class="mqs-ficha a"><i></i><b>Luis</b></span><span class="mqs-ficha z"><i></i><b>Eva</b></span>
-      </span>
-      <span class="mqs-doc"><span class="mqs-mini"></span><span class="mqs-nom">DNI</span><em>Guardar</em></span>
-    </span>
-  </span>`;
+// El marco mide 560 (más alto que ancho) para que cuente como vertical y no se activen las reglas de móvil apaisado; la app dentro ocupa solo ALTO_MAQUETA_ESTILO y el resto se recorta.
+const ALTO_MAQUETA_ESTILO = 470;
+let urlMaquetaEstilos = null;
+// Documento de la maqueta: el mismo CSS de la app y el mismo HTML de la pantalla de inicio (copiado de la
+// de verdad, con la primera persona), así cada estilo se ve exactamente como es. El estilo y el modo
+// se ponen dentro del marco con el hash de la dirección (#estilo|modo|fuentes), por eso vale un único documento.
+function crearUrlMaquetaEstilos() {
+  if (urlMaquetaEstilos) URL.revokeObjectURL(urlMaquetaEstilos);
+  const app = $('#vista-app').cloneNode(true);
+  const q = (sel) => app.querySelector(sel);
+  app.removeAttribute('style');
+  app.classList.remove('hidden');
+  q('#pantalla-personas').classList.remove('hidden');
+  q('#pantalla-persona').classList.add('hidden');
+  ['#tutorial-modo', '#banner-instalar', '#btn-volver', '#btn-buscar-top', '#btn-ver-categorias-top', '#btn-ajustes', '#avatar-topbar'].forEach((sel) => q(sel).classList.add('hidden'));
+  q('#titulo-topbar').textContent = 'DOCUMENTACIÓN';
+  q('#bar-buscar').innerHTML = ICONO_BUSCAR + '<span>' + trad('Buscar') + '</span>';
+  q('#bar-vista').innerHTML = ICONO_VER_LISTA + '<span>' + trad('Categorías') + '</span>';
+  q('#bar-ajustes').innerHTML = ICONO_AJUSTES + '<span>' + trad('Ajustes') + '</span>';
+  app.querySelectorAll('.aviso-nube').forEach((e) => e.classList.remove('aviso-nube'));
+  const muestras = datos.personas.length ? datos.personas.slice(0, 1) : [{ id: 'muestra-1', nombre: 'Ana', icono: 'A' }];
+  const grid = q('#grid-personas');
+  grid.innerHTML = '';
+  grid.className = 'grid-personas pocas';
+  muestras.forEach((p) => grid.appendChild(crearTilePersonaHome(p, false).cloneNode(true)));
+  const css = [...document.querySelectorAll('style')].map((e) => e.textContent).join('\n');
+  const filtros = [...document.body.children].filter((e) => e.tagName.toLowerCase() === 'svg').map((e) => e.outerHTML).join('');
+  const guion = '<' + 'script>(function(){var h=location.hash.slice(1).split("|"),r=document.documentElement;'
+    + 'if(h[0]&&h[0]!=="clasico")r.setAttribute("data-skin",h[0]);if(h[1]==="claro")r.setAttribute("data-tema","claro");'
+    + 'if(h[2]){var l=document.createElement("link");l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?"+decodeURIComponent(h[2])+"&display=swap";document.head.appendChild(l);}})();<' + '/script>';
+  const html = '<!doctype html><html lang="es" style="--alto-app:' + ALTO_MAQUETA_ESTILO + 'px"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1"><base href="' + location.href.split('#')[0] + '">'
+    + '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">'
+    + '<style>' + css + '</style></head><body>' + filtros + app.outerHTML + guion + '</body></html>';
+  urlMaquetaEstilos = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  return urlMaquetaEstilos;
+}
+function htmlMaquetaSkin(id, url, modo) {
+  const fuentes = (window.__fuentesSkin && window.__fuentesSkin[id]) || '';
+  return '<span class="mq-estilo"><iframe src="' + url + '#' + id + '|' + modo + '|' + encodeURIComponent(fuentes) + '" tabindex="-1" aria-hidden="true" scrolling="no"></iframe></span>';
 }
 function abrirEstilos() {
   Object.keys(SKINS).forEach((id) => { if (window.__cargarFuentesSkin) window.__cargarFuentesSkin(id); }); // para que las maquetas se vean con su letra
   const actual = obtenerSkinGuardado();
+  const urlMaqueta = crearUrlMaquetaEstilos();
+  const modoMaqueta = document.documentElement.getAttribute('data-tema') === 'claro' ? 'claro' : 'oscuro';
   const opcion = (id) => `
     <button type="button" class="opcion-tema opcion-estilo${actual === id ? ' activa' : ''}" data-valor="${id}">
-      ${htmlMaquetaSkin(id)}
+      ${htmlMaquetaSkin(id, urlMaqueta, modoMaqueta)}
       <span class="texto-tema"><strong>${trad(SKINS[id].nombre)}</strong><small>${trad(SKINS[id].descripcion)}</small></span>
       <span class="marca-tema" aria-hidden="true"></span>
     </button>`;
@@ -8305,6 +8291,7 @@ function abrirEstilos() {
   `);
   activarArrastreParaCerrar($('.cabecera-hoja'));
   $('#ajustes-volver').addEventListener('click', () => abrirAjustes(false));
+  $$('.mq-estilo').forEach((mq) => mq.style.setProperty('--k', mq.clientWidth / 412));
   $$('.opcion-estilo').forEach((btn) => {
     btn.addEventListener('click', () => {
       guardarSkin(btn.dataset.valor);
