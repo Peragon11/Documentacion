@@ -200,12 +200,14 @@
     [`Usa el botón`, `Use the button`, `Fes servir el botó`, `Usa il pulsante`, `Utilisez le bouton`, `Nutze die Schaltfläche`],
     [`para añadir el primero.`, `to add the first one.`, `per afegir el primer.`, `per aggiungere il primo.`, `pour ajouter le premier.`, `um das erste hinzuzufügen.`],
     [`No hay documentos en esta categoría.`, `There are no documents in this category.`, `No hi ha documents en aquesta categoria.`, `Non ci sono documenti in questa categoria.`, `Il n'y a aucun document dans cette catégorie.`, `In dieser Kategorie gibt es keine Dokumente.`],
-    [`Desplegar páginas`, `Show pages separately`, `Desplega les pàgines`, `Mostra le pagine separate`, `Afficher les pages séparément`, `Seiten einzeln anzeigen`],
+    [`Desplegar todo`, `Expand all`, `Desplega-ho tot`, `Espandi tutto`, `Tout déplier`, `Alle aufklappen`],
+    [`Replegar todo`, `Collapse all`, `Replega-ho tot`, `Comprimi tutto`, `Tout replier`, `Alle einklappen`],
+    [`Menú principal`, `Main menu`, `Menú principal`, `Menu principale`, `Menu principal`, `Hauptmenü`],
+    [`Anteriores`, `Previous`, `Anteriors`, `Precedenti`, `Précédents`, `Vorherige`],
+    [`Siguientes`, `Next`, `Següents`, `Successivi`, `Suivants`, `Nächste`],
+    [`Añadir persona`, `Add person`, `Afegeix una persona`, `Aggiungi persona`, `Ajouter une personne`, `Person hinzufügen`],
     [`Desplegar`, `Expand`, `Desplega`, `Espandi`, `Déplier`, `Aufklappen`],
-    [`Cada página de un documento, en su propia ficha`, `Each page of a document on its own card`, `Cada pàgina d'un document, a la seva fitxa`, `Ogni pagina di un documento, nella sua scheda`, `Chaque page d'un document sur sa propre fiche`, `Jede Seite eines Dokuments auf eigener Karte`],
-    [`Replegar páginas`, `Group pages together`, `Replega les pàgines`, `Raggruppa le pagine`, `Regrouper les pages`, `Seiten zusammenfassen`],
     [`Replegar`, `Collapse`, `Replega`, `Comprimi`, `Replier`, `Einklappen`],
-    [`Un documento de varias páginas, una sola ficha`, `A multi-page document on a single card`, `Un document de diverses pàgines, una sola fitxa`, `Un documento di più pagine, una sola scheda`, `Un document de plusieurs pages sur une seule fiche`, `Ein mehrseitiges Dokument auf einer Karte`],
     [`Caducado`, `Expired`, `Caducat`, `Scaduto`, `Expiré`, `Abgelaufen`],
 
     // ---- compartir

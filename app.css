@@ -1,0 +1,1553 @@
+:root{
+  --ink:#14202E;
+  --ink-2:#1E2F42;
+  --ink-3:#28405A;
+  --paper:#F2EEE3;
+  --stamp:#C1502E;
+  --stamp-dark:#9C3D24;
+  --seal:#5C8374;
+  --amber:#C48A2E;
+  --azul:#4A7BA6;
+  --morado:#8A6FB0;
+  --text-light:#EDE9DE;
+  --text-dim:#9FB0C3;
+  --text-ink:#1E2A38;
+  --borde-sutil:rgba(255,255,255,.06);
+  --borde:rgba(255,255,255,.14);
+  --borde-fuerte:rgba(255,255,255,.22);
+  --topbar-fondo:rgba(40,64,90,.92);
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --serif: 'Source Serif 4', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  /* Estilo (skin): forma, letra y detalles que cambian de un estilo a otro. Estos son los del
+     estilo Clásico; cada estilo los redefine en su bloque [data-skin="…"] (más abajo). */
+  --sobre-acento:var(--paper);        /* texto sobre botones de color de acento */
+  --r-pill:999px;                     /* botones y etiquetas en píldora */
+  --r-chip:999px;
+  --r-avatar:32px;                    /* fichas de persona */
+  --r-avatar-mini:12px;               /* foto de persona pequeña */
+  --r-tarjeta:16px;                   /* fichas de documento, categorías, botones grandes */
+  --r-miniatura:11px;
+  --r-boton:10px;
+  --r-campo:9px;
+  --r-grupo:18px;                     /* paneles de Ajustes */
+  --r-modal:18px;
+  --r-caja:12px;                      /* cajitas de iconos */
+                      /* icono de la app en la barra */
+  --r-app-login:26px;
+  --r-redondo:50%;                    /* botones redondos de la barra */
+  --sombra-ficha:0 10px 24px rgba(0,0,0,.32);
+  --fuente-marca:'Poppins', var(--sans);
+  --fondo-login:
+    radial-gradient(700px 500px at 15% -10%, rgba(92,131,116,.16), transparent 60%),
+    radial-gradient(600px 500px at 110% 10%, rgba(193,80,46,.14), transparent 55%),
+    var(--ink);
+}
+html[data-tema="claro"]{
+  --ink:#F2F3F5;
+  --ink-2:#E6E7EB;
+  --ink-3:#D8DADF;
+  --text-light:#1E2A38;
+  --text-dim:#5A606B;
+  --borde-sutil:rgba(20,26,36,.07);
+  --borde:rgba(20,26,36,.15);
+  --borde-fuerte:rgba(20,26,36,.24);
+  --topbar-fondo:rgba(216,218,223,.92);
+}
+*{
+  box-sizing:border-box; -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
+}
+input, textarea, [contenteditable]{ -webkit-touch-callout:default; user-select:text; -webkit-user-select:text; }
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+html,body{ height:100%; overscroll-behavior-x:contain; overscroll-behavior-y:contain; background:var(--ink); touch-action:pan-x pan-y; }
+body{
+  margin:0; font-family:var(--sans); background:var(--ink); color:var(--text-light);
+  -webkit-font-smoothing:antialiased; transition:background-color .2s ease, color .2s ease;
+  isolation:isolate; /* para que un ::before con z-index:-1 (motivos de fondo) quede sobre el fondo propio y bajo el contenido, no oculto detrás de todo */
+}
+h1,h2,h3{ font-family:var(--serif); }
+button{ font-family:inherit; }
+img{ max-width:100%; display:block; }
+.hidden{ display:none !important; }
+.visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+button:focus-visible, input:focus-visible, [tabindex]:focus-visible{ outline:2px solid var(--seal); outline-offset:2px; }
+@media (prefers-reduced-motion:reduce){ *{ animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+html[data-preguntar-idioma] #vista-login{ display:none; }
+html[data-hay-datos] #vista-login{ display:none; }
+#vista-idioma{
+  position:fixed; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 24px; text-align:center; background:var(--fondo-login);
+}
+html:not([data-preguntar-idioma]) #vista-idioma{ display:none; }
+/* Contenido de las pantallas de inicio: se reduce (zoom) lo justo para caber sin scroll, ver ajustarPantallasInicio */
+.inicio-ajuste{ display:flex; flex-direction:column; align-items:center; width:100%; }
+#vista-idioma .lead-idiomas{ max-width:320px; color:var(--text-dim); line-height:1.6; margin:0 0 30px; font-size:.95rem; }
+#vista-idioma .lead-idiomas span{ display:block; }
+.btn-idioma-inicio{ display:flex; align-items:center; justify-content:center; gap:10px; }
+.bandera-idioma{ display:block; flex:none; border-radius:50%; overflow:hidden; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+.bandera-idioma svg{ display:block; width:100%; height:100%; }
+.bandera-idioma-inicio{ width:30px; height:30px; }
+#vista-login{
+  position:fixed; inset:0; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 24px; text-align:center;
+  background:var(--fondo-login);
+}
+.icono-login{ width:96px; height:96px; border-radius:var(--r-app-login); margin-bottom:22px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
+#vista-login h1{ font-size:2.1rem; margin:0 0 10px; letter-spacing:-.01em; font-weight:600; }
+#vista-login p.lead{ max-width:320px; color:var(--text-dim); line-height:1.55; margin:0 0 30px; font-size:.95rem; }
+.btn-google{
+  display:flex; align-items:center; gap:12px; background:var(--paper); color:var(--text-ink);
+  border:none; border-radius:var(--r-pill); padding:14px 26px; font-size:1rem; font-weight:600;
+  cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.login-nota{ margin-top:20px; max-width:320px; font-size:.9rem; color:var(--text-dim); line-height:1.5; }
+.login-nota strong{ color:var(--seal); font-weight:600; }
+/* ===== Ajustes ===== */
+.ajustes{ display:flex; flex-direction:column; gap:18px; }
+.ajustes .asa{ width:38px; height:4px; border-radius:2px; background:var(--borde-fuerte); margin:-10px auto -4px; }
+.ajustes .ajustes-titulo{ margin:0; font-size:1.6rem; font-weight:600; letter-spacing:-.015em; line-height:1.1; }
+.ajustes .etiqueta{ margin:0 0 8px 4px; font-size:.82rem; font-weight:600; color:var(--text-dim); }
+
+/* El sello: estado real de las copias. Es lo único que llama la atención. */
+.ajustes .bloque-copias{ display:flex; flex-direction:column; gap:16px; }
+.ajustes .sello-copias{ display:flex; align-items:center; gap:16px; min-height:88px; }
+.sello{ --tono:var(--seal); flex:none; width:88px; height:88px; color:var(--tono); transform:rotate(-7deg); }
+.sello.ok{ --tono:var(--seal); }
+.sello.aviso{ --tono:var(--amber); }
+.sello.sin{ --tono:var(--stamp); }
+.sello.copiando{ --tono:var(--azul); }
+.sello .aro{ fill:color-mix(in srgb, var(--tono) 13%, transparent); stroke:var(--tono); stroke-width:3; }
+.sello .hilo{ fill:none; stroke:var(--tono); stroke-width:1.6; stroke-dasharray:1.5 5.5; stroke-linecap:round; }
+.sello .signo{ fill:none; stroke:var(--tono); stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
+.sello.sellar{ animation:sellar .42s cubic-bezier(.2,.9,.3,1.15) both; }
+@keyframes sellar{
+  from{ transform:rotate(-17deg) scale(1.45); opacity:0; }
+  to{ transform:rotate(-7deg) scale(1); opacity:1; }
+}
+.ajustes .texto-sello{ min-width:0; }
+.ajustes .titular-sello{ font-family:var(--serif); font-size:1.4rem; font-weight:600; line-height:1.12; letter-spacing:-.01em; }
+.ajustes .detalle-sello{ margin:5px 0 0; font-size:.88rem; line-height:1.4; color:var(--text-dim); }
+.ajustes .ultima-sync{ margin:8px 0 0; font-size:.76rem; line-height:1.4; color:var(--text-dim); }
+
+/* Listas agrupadas: un solo panel con filas separadas por una línea fina */
+.ajustes .grupo{ background:var(--ink-3); border:1px solid var(--borde-sutil); border-radius:var(--r-grupo); overflow:hidden; }
+.ajustes .grupo > * + *{ border-top:1px solid var(--borde-sutil); }
+html[data-tema="claro"] .ajustes .grupo{ background:#fff; border-color:var(--borde); }
+html[data-tema="claro"] .ajustes .fila-accion:active{ background:var(--ink); }
+
+.fila-prov{
+  display:grid; grid-template-columns:44px minmax(0,1fr); align-items:center; column-gap:12px; row-gap:10px;
+  padding:12px 14px;
+}
+.marca-prov{ width:44px; height:44px; border-radius:calc(var(--r-caja) + 1px); background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.18); }
+.info-prov{ display:flex; flex-direction:column; min-width:0; gap:1px; }
+.info-prov strong{ font-size:.96rem; font-weight:600; color:var(--text-light); }
+.info-prov .correo-prov{ font-size:.78rem; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.estado-prov{ display:flex; align-items:center; gap:6px; font-size:.78rem; color:var(--text-dim); }
+.estado-prov .punto-estado{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex:none; opacity:.6; }
+.estado-prov.ok .punto-estado{ background:var(--seal); opacity:1; }
+.estado-prov.copiando .punto-estado{ background:var(--azul); opacity:1; }
+.estado-prov.aviso{ color:#E0897A; }
+.estado-prov.aviso .punto-estado{ background:var(--amber); opacity:1; }
+/* "Ver carpeta" y Conectar/Reconectar/Desconectar, uno al lado del otro, en su propia fila
+   a todo el ancho de la ficha (debajo del logo también) — así el nombre/email de arriba
+   tienen todo el ancho para respirar, sin un botón detrás empujándolos. */
+.fila-botones-prov{ grid-column:1/-1; display:flex; gap:8px; }
+.fila-botones-prov .btn-prov{ flex:1; }
+.btn-prov{ border-radius:var(--r-pill); padding:7px 13px; font-size:.78rem; font-weight:600; cursor:pointer; border:1px solid var(--borde); background:transparent; color:var(--text-dim); }
+.btn-prov.primario{ background:var(--stamp); border-color:var(--stamp); color:var(--sobre-acento); }
+.btn-prov:active{ transform:scale(.97); }
+
+.fila-accion{ display:grid; grid-template-columns:38px minmax(0,1fr); align-items:center; gap:14px; width:100%; padding:10px 14px; background:none; border:none; color:var(--text-light); text-align:left; cursor:pointer; font-size:.96rem; }
+.fila-accion:active{ background:var(--ink-2); }
+.fila-accion strong{ display:block; font-weight:600; }
+.fila-accion small{ display:block; margin-top:2px; font-size:.78rem; line-height:1.35; color:var(--text-dim); }
+.icono-accion{ width:38px; height:38px; border-radius:calc(var(--r-caja) - 1px); display:flex; align-items:center; justify-content:center; color:#fff; }
+.icono-accion.verde{ background:var(--seal); }
+.icono-accion.azul{ background:var(--azul); }
+.icono-accion.ambar{ background:var(--amber); }
+.icono-accion.morado{ background:var(--morado); }
+
+/* Apariencia: se elige viendo cómo queda */
+
+/* Cerrar sesión: una fila más de la lista, en rojo, con la versión a la derecha */
+.fila-accion.salir{ grid-template-columns:38px minmax(0,1fr) auto; }
+.fila-accion.salir strong{ color:#E0897A; }
+.icono-accion.rojo{ background:rgba(224,137,122,.16); color:#E0897A; }
+.fila-accion .version-fila{ font-size:.74rem; color:var(--text-dim); font-variant-numeric:tabular-nums; white-space:nowrap; }
+html[data-tema="claro"] .fila-accion.salir strong, html[data-tema="claro"] .estado-prov.aviso{ color:#B3432A; }
+html[data-tema="claro"] .icono-accion.rojo{ background:rgba(179,67,42,.11); color:#B3432A; }
+/* Cabecera de la hoja: el asa y el título son la zona por la que se arrastra para cerrar */
+.ajustes .cabecera-hoja{ margin:-22px -22px -4px; padding:10px 22px 4px; }
+.ajustes .cabecera-hoja .asa{ width:42px; height:5px; border-radius:3px; background:var(--borde-fuerte); margin:0 auto 12px; }
+.ajustes .fila-titulo{ display:flex; align-items:center; gap:6px; }
+.ajustes .btn-atras-ajustes{ flex:none; width:36px; height:36px; margin-left:-8px; border:none; border-radius:50%; background:none; color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.ajustes .btn-atras-ajustes:active{ background:var(--ink-3); }
+/* Al abrir Ajustes la hoja sube desde abajo (solo la animación de entrada: así no pisa el arrastre) */
+.modal.sube{ animation:subirHoja .36s cubic-bezier(.2,.85,.25,1) backwards; }
+.modal-fondo.entra{ animation:aparecerFondo .3s ease backwards; }
+@keyframes subirHoja{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+@keyframes aparecerFondo{ from{ opacity:0; } to{ opacity:1; } }
+
+.icono-accion.tema{ background:linear-gradient(135deg, #1E2F42 50%, #F2EEE3 50%); }
+
+/* Estilos: cada opción con su maqueta, nombre y marca de elegida */
+.opcion-tema{ position:relative; display:flex; flex-direction:column; gap:10px; width:100%; padding:10px; background:var(--ink-3); border:2px solid transparent; border-radius:calc(var(--r-grupo) + 2px); color:var(--text-light); text-align:left; cursor:pointer; }
+html[data-tema="claro"] .opcion-tema{ background:#fff; border-color:var(--borde-sutil); }
+.opcion-tema.activa{ border-color:var(--stamp); box-shadow:0 0 0 3px color-mix(in srgb, var(--stamp) 22%, transparent); }
+.opcion-tema .texto-tema{ display:block; padding:0 4px 2px; }
+.opcion-tema .texto-tema strong{ display:block; font-size:1rem; font-weight:600; }
+.opcion-tema .texto-tema small{ display:block; margin-top:2px; font-size:.8rem; color:var(--text-dim); }
+.opcion-tema .marca-tema{ position:absolute; right:14px; bottom:14px; width:24px; height:24px; border-radius:50%; border:2px solid var(--borde-fuerte); }
+.opcion-tema.activa .marca-tema{ background:var(--stamp) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2EEE3' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/16px no-repeat; border-color:var(--stamp); }
+/* Apariencia: tres miniaturas de la pantalla de inicio en fila, con los colores reales del estilo en cada modo */
+.fila-apariencia{ display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-top:4px; }
+.opcion-apariencia{ display:flex; flex-direction:column; align-items:center; gap:8px; padding:0; background:none; border:none; color:var(--text-dim); font:inherit; font-size:.85rem; cursor:pointer; }
+.opcion-apariencia.activa{ color:var(--text-light); font-weight:700; }
+.mq-ap{ position:relative; display:block; width:100%; aspect-ratio:9/16; border-radius:12px; overflow:hidden; border:2px solid var(--borde); }
+.opcion-apariencia.activa .mq-ap{ border-color:var(--stamp); box-shadow:0 0 0 3px color-mix(in srgb, var(--stamp) 25%, transparent); }
+
+.mqa-capa{ position:absolute; left:0; top:0; width:412px; height:732px; transform-origin:0 0; transform:scale(var(--k, .25)); display:flex; flex-direction:column; background:var(--ink); color:var(--text-light); font-family:var(--sans); }
+.mqa-capa.mitad-1{ clip-path:polygon(0 0, 62% 0, 38% 100%, 0 100%); }
+.mqa-capa.mitad-2{ clip-path:polygon(62% 0, 100% 0, 100% 100%, 38% 100%); }
+.mqa-barra{ flex:none; display:flex; align-items:center; justify-content:center; height:68px; background:var(--topbar-fondo); border-bottom:1px solid var(--borde-sutil); font-family:var(--fuente-marca, var(--sans)); font-weight:700; font-size:38px; text-transform:uppercase; white-space:nowrap; overflow:hidden; }
+.mqa-cuerpo{ flex:1; display:grid; grid-template-columns:1fr 1fr; align-content:center; gap:22px 26px; padding:0 20px; }
+.mqa-ficha{ display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; }
+.mqa-ficha .avatar-persona{ width:100%; max-width:none; border-radius:var(--r-avatar); font-size:2.4rem; }
+.mqa-ficha b{ max-width:100%; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mqa-pie{ flex:none; display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; padding:8px 10px 10px; background:var(--ink-2); border-top:1px solid var(--borde-sutil); }
+.mqa-pie span{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; height:58px; border-radius:var(--r-boton); background:var(--ink-3); font-size:11px; font-weight:600; }
+.mqa-pie svg{ width:22px; height:22px; }
+.login-bloque{ display:flex; flex-direction:column; align-items:center; width:100%; max-width:320px; }
+.btn-grande{ width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; background:var(--paper); color:var(--text-ink); border:none; border-radius:var(--r-tarjeta); padding:20px 16px; font-size:1.1rem; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.25); margin-bottom:14px; }
+.btn-grande span{ font-size:.82rem; font-weight:400; opacity:.75; }
+.titulo-recuperar{ margin:0 0 4px; font-weight:600; color:var(--text-light); font-size:.95rem; }
+.texto-recuperar{ margin:0 0 6px; color:var(--text-dim); font-size:.85rem; line-height:1.5; }
+#login-nubes .btn-google{ margin-top:10px; width:100%; justify-content:center; }
+.btn-empezar{ background:none; border:none; color:var(--text-dim); font-size:.95rem; font-weight:600; text-decoration:underline; cursor:pointer; padding:10px 14px; }
+/* Pantallas de inicio (idioma y login) en horizontal: dos columnas en vez de una torre. A la izquierda el icono y
+   los textos, a la derecha los botones (los de idioma en 2 columnas). Las filas "1fr" de arriba y abajo mantienen
+   la columna izquierda compacta y centrada aunque la de botones sea más alta. */
+@media (orientation:landscape) and (min-aspect-ratio:11/10){
+  #vista-idioma, #vista-login{ padding:14px 36px; }
+  .inicio-ajuste{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); grid-template-rows:1fr auto auto auto 1fr; column-gap:clamp(28px, 7vw, 80px); align-items:center; max-width:940px; margin:0 auto; }
+  .inicio-ajuste > .icono-login{ grid-column:1; grid-row:2; justify-self:center; width:clamp(72px, 30vh, 140px); height:clamp(72px, 30vh, 140px); margin-bottom:14px; }
+  #vista-login h1{ grid-column:1; grid-row:3; margin:0 0 8px; }
+  #vista-login p.lead{ grid-column:1; grid-row:4; max-width:none; margin:0; }
+  #login-inicio, #login-nubes{ grid-column:2; grid-row:1 / -1; max-width:none; }
+  #vista-idioma .lead-idiomas{ grid-column:1; grid-row:3; max-width:none; margin:0; }
+  #botones-idioma-inicio{ grid-column:2; grid-row:1 / -1; max-width:none; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #botones-idioma-inicio .btn-grande{ margin-bottom:0; }
+  .btn-grande{ padding:clamp(10px, 3.4vh, 20px) 16px; margin-bottom:clamp(8px, 2.2vh, 14px); }
+  .login-nota{ margin-top:8px; max-width:none; }
+}
+/* Barra inferior de la portada. Sus botones reutilizan .btn-icono-top, así que cada estilo los viste como los de arriba */
+/* Fondo de la barra = --ink-2 y de cada botón = --ink-3 (el mismo escalón que usan los grupos de Ajustes
+   sobre el fondo del modal) — con --topbar-fondo, muy parecido a --ink-3, los botones no se distinguían
+   nada de la barra en la mayoría de estilos. */
+.barra-inferior{ display:none; position:relative; flex:none; padding:8px 10px calc(10px + var(--safe-b)); background:var(--ink-2); border-top:1px solid var(--borde-sutil); }
+#vista-app:has(#pantalla-personas:not(.hidden)) .barra-inferior,
+#vista-app:has(#pantalla-persona:not(.hidden)) .barra-inferior{ display:block; }
+body.modo-seleccion .barra-inferior{ display:none; } /* la barra de selección (fija, abajo) la sustituye */
+/* La versión queda FUERA de la barra: flota justo encima de ella (a la derecha), sin hacerla más alta */
+.barra-inferior #version-pie{ position:absolute; right:14px; bottom:100%; margin-bottom:4px; font-size:.66rem; color:var(--text-dim); opacity:.75; pointer-events:none; }
+.barra-botones{ display:flex; gap:8px; }
+.btn-icono-top.btn-barra{ flex:1; min-width:0; width:auto; height:auto; border-radius:var(--r-boton); flex-direction:column; gap:4px; padding:9px 0 8px; font-family:inherit; font-size:.68rem; font-weight:600; background:var(--ink-3); position:relative; cursor:pointer; }
+.btn-icono-top.btn-barra svg{ width:24px; height:24px; flex:none; }
+@media (orientation:landscape) and (max-height:520px){
+  .barra-inferior{ padding-top:5px; padding-bottom:calc(6px + var(--safe-b)); }
+  /* el punto de aviso de Ajustes va a la derecha del nombre */
+  .barra-botones #bar-ajustes.aviso-nube::after{ position:static; flex:none; margin-left:-2px; top:auto; right:auto; }
+  .btn-icono-top.btn-barra{ flex-direction:row; justify-content:center; gap:8px; padding:6px 0; font-size:.78rem; }
+  .btn-icono-top.btn-barra svg{ width:20px; height:20px; }
+}
+/* El aviso ("Toast") sube para no quedar tapado por la barra */
+body:has(#pantalla-personas:not(.hidden)) .toast{ bottom:calc(122px + var(--safe-b)); }
+#btn-ajustes.aviso-nube::after, #bar-ajustes.aviso-nube::after{ content:''; position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; background:var(--stamp); border:2px solid var(--ink-2); }
+
+/* Alto de la app: 100dvh, pero sin pasarse nunca del alto real medido por JS (--alto-app, ver
+   ajustarAltoApp). En la app instalada en Android la ventana cambia de tamaño justo después de
+   abrir (barras del sistema) y en algunos móviles 100dvh se queda con el valor de antes: la app
+   medía más que la pantalla y la barra de abajo quedaba metida detrás de la de navegación. */
+#vista-app{ height:100dvh; height:min(100dvh, var(--alto-app, 100dvh)); overflow:hidden; display:flex; flex-direction:column; max-width:560px; margin:0 auto; }
+@media (orientation:landscape){
+  #vista-app{ max-width:100%; }
+}
+
+.topbar{
+  position:sticky; top:0; z-index:10;
+  display:flex; align-items:center; gap:10px;
+  padding:calc(12px + var(--safe-t)) 16px 12px;
+  background:var(--topbar-fondo); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--borde-sutil);
+  /* Mismo fallo de renderizado que en los avatares: position:sticky +
+     backdrop-filter puede dejar una línea sin pintar bien justo en el
+     borde superior, pegada a la barra de estado de Android. Forzar su
+     propia capa de composición evita el hueco. */
+  transform:translateZ(0);
+}
+/* La versión va abajo a la derecha de la pantalla principal, fuera de la barra de arriba */
+#version-pie{ position:fixed; right:14px; bottom:calc(8px + var(--safe-b)); font-size:.66rem; color:var(--text-dim); opacity:.75; pointer-events:none; z-index:5; }
+.topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
+.topbar .marca span#titulo-topbar{
+  flex:1; min-width:0; line-height:1.15;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-family:var(--fuente-marca); letter-spacing:.01em;
+}
+/* Centrado solo en la portada (el nombre de la app); el nombre de una persona o categoría
+   se queda pegado al avatar, como estaba antes (ver ajustarTituloTopbar). */
+.topbar .marca span#titulo-topbar.centrado{ text-align:center; }
+/* Nombre largo: se reparte en dos líneas (ajustarTituloTopbar) */
+.topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.2; overflow:hidden; max-height:calc(2.4em + 7px); padding-bottom:5px; margin-bottom:-5px; }
+.topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:var(--r-avatar-mini); flex:none; box-shadow:none; }
+.btn-icono-top{
+  background:var(--ink-2); border:none; color:var(--text-light); width:44px; height:44px; border-radius:var(--r-redondo);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none; position:relative;
+}
+.btn-volver{
+  background:none; border:none; color:var(--text-light); width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; flex:none; margin-left:-6px;
+}
+.btn-volver:active{ background:var(--ink-2); }
+
+.banner-instalar{
+  display:flex; align-items:center; gap:10px;
+  background:var(--ink-2); border-bottom:1px solid var(--borde-sutil);
+  padding:10px 16px; font-size:.8rem; color:var(--text-dim);
+}
+.banner-instalar span{ flex:1; line-height:1.35; }
+.banner-instalar #btn-banner-instalar{
+  flex:none; background:var(--stamp); color:var(--sobre-acento); border:none; border-radius:calc(var(--r-boton) - 2px);
+  padding:8px 14px; font-size:.8rem; font-weight:600; cursor:pointer;
+}
+.btn-banner-cerrar{
+  flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+
+main{
+  flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain;
+  padding:18px 16px calc(24px + var(--safe-b));
+}
+@media (orientation:landscape){
+  main{ max-width:960px; margin:0 auto; width:100%; }
+}
+
+#pantalla-personas{ display:flex; flex-direction:column; min-height:100%; }
+.grid-personas{
+  display:grid; grid-template-columns:repeat(2, 1fr); gap:10px 18px; position:relative;
+}
+@media (orientation:landscape){
+  .grid-personas{ grid-template-columns:repeat(4, 1fr); }
+}
+.grid-personas.pocas{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  width:100%; max-width:260px; margin:auto;
+}
+.grid-personas.centrado{ margin:auto 0; }
+.grid-personas.vacio{ display:flex; margin:auto; width:100%; }
+.grid-personas.pocas.tres{ gap:14px; max-width:200px; }
+.grid-personas.pocas.tres .avatar-persona{ max-width:150px; }
+@media (orientation:landscape){
+  .grid-personas.pocas{ flex-direction:row; justify-content:center; max-width:none; }
+  .grid-personas.pocas .persona-tile{ width:210px; }
+  .grid-personas.pocas.tres{ max-width:none; gap:24px; }
+  .grid-personas.pocas.tres .persona-tile{ width:150px; }
+}
+
+.grid-personas.modo-categorias{ display:flex; flex-direction:column; gap:12px; max-width:none; width:100%; margin:0; }
+.categoria-barra{
+  display:flex; align-items:center; width:100%; min-height:64px; padding:16px 20px; border-radius:var(--r-tarjeta);
+  border:none; cursor:pointer; color:#fff; font-family:var(--serif); font-weight:600; font-size:1.08rem;
+  text-align:left; box-shadow:0 6px 16px rgba(0,0,0,.22);
+  touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+}
+.categoria-barra.arrastrando-tile{
+  z-index:30; cursor:grabbing; transition:none; pointer-events:none;
+  box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
+}
+.categoria-barra-nombre{
+  flex:1; min-width:0; background:none; border:none; color:inherit; font:inherit;
+  text-align:left; cursor:pointer; padding:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.icon-btn-cat-bar{
+  flex:none; width:32px; height:32px; margin-left:8px; border-radius:50%; border:none; cursor:pointer;
+  background:rgba(255,255,255,.22); color:#fff; display:flex; align-items:center; justify-content:center;
+}
+.icon-btn-cat-bar:active{ background:rgba(255,255,255,.4); }
+
+/* Rueda de color para elegir el de una categoría: un círculo con todo el abanico de tonos
+   (conic-gradient), sin barra de saturación ni de brillo aparte — solo importa en qué ángulo
+   se toca, la saturación y la luminosidad quedan fijas para que el texto blanco de encima
+   (fichas, chips, la propia barra) siempre tenga contraste de sobra. */
+.rueda-color-cont{ position:relative; width:220px; height:220px; margin:4px auto 20px; touch-action:none; }
+.rueda-color{
+  width:100%; height:100%; border-radius:50%; cursor:pointer; touch-action:none;
+  background:
+    radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 100%),
+    conic-gradient(from 0deg, hsl(0 92% 45%), hsl(60 92% 45%), hsl(120 92% 45%), hsl(180 92% 45%), hsl(240 92% 45%), hsl(300 92% 45%), hsl(360 92% 45%));
+  box-shadow:0 6px 18px rgba(0,0,0,.28);
+}
+.rueda-color-selector{
+  position:absolute; width:24px; height:24px; margin:-12px; border-radius:50%;
+  border:3px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.3);
+  pointer-events:none;
+}
+.rueda-color-muestra{ width:100%; height:52px; border-radius:var(--r-campo); margin:0 0 20px; border:1px solid var(--borde); }
+.categoria-barra-nueva{
+  display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:56px;
+  padding:14px 20px; border-radius:var(--r-tarjeta); border:2px dashed var(--borde); background:none;
+  color:var(--text-dim); cursor:pointer; font-family:var(--serif); font-weight:600; font-size:1rem;
+}
+.categoria-barra-nueva:active{ background:var(--ink-2); }
+
+.persona-tile{
+  color:var(--text-light);
+  touch-action:none;
+  -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+  display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px; width:100%; min-width:0;
+}
+/* El hueco del nombre mide SIEMPRE una línea (--altura-nombre), sea el nombre largo o corto: así
+   todas las fichas de persona miden lo mismo y la separación de una a la siguiente no cambia
+   según cuánto ocupe el nombre. Los estilos que le cambian la letra o le ponen marco/relleno
+   al nombre redefinen --altura-nombre con la altura de su línea más lo que añaden. */
+.persona-tile-clic{
+  background:none; border:none; color:inherit; font:inherit; cursor:pointer; padding:0;
+  display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto var(--altura-nombre, calc(.95rem * 1.2));
+  justify-items:center; row-gap:10px; width:100%; min-width:0;
+}
+.persona-tile-clic > .nombre-persona{ align-self:start; }
+.acciones-persona-tile{ display:flex; gap:8px; }
+.icon-btn-persona-tile{
+  width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--ink-3); color:var(--text-dim); display:flex; align-items:center; justify-content:center;
+}
+.icon-btn-persona-tile:active{ background:var(--ink-2); color:var(--text-light); }
+.icon-btn-persona-tile:last-child{ color:#E0897A; }
+.avatar-persona.avatar-nueva-persona{
+  background:none !important; box-shadow:none; border:2px dashed var(--borde); color:var(--text-dim);
+}
+.avatar-persona{
+  width:100%; aspect-ratio:1/1; max-width:210px; border-radius:var(--r-avatar); flex:none;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--serif); font-weight:600; font-size:clamp(1.8rem, 9vw, 2.6rem); color:var(--ink);
+  background-size:cover; background-position:center;
+  box-shadow:var(--sombra-ficha);
+  position:relative;
+  /* En algunos móviles Android, el navegador a veces deja una línea
+     fina sin recortar en el borde redondeado (se ve un hilo del fondo
+     de la página por encima de la foto), que desaparece con cualquier
+     repintado forzado (p. ej. cambiar de tema) y vuelve más tarde.
+     Forzar aquí su propia capa de composición evita que reutilice un
+     recorte "sucio" de una capa vecina. */
+  transform:translateZ(0);
+}
+.aviso-caducidad-persona{
+  position:absolute; bottom:8%; right:8%; width:34%; height:34%; min-width:26px; min-height:26px; max-width:42px; max-height:42px;
+  border-radius:50%; border:2px solid var(--ink); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+}
+.aviso-caducidad-persona.aviso{ background:#C77B22; }
+.aviso-caducidad-persona.caducado{ background:#E5342A; }
+.persona-tile .nombre-persona{
+  font-size:.95rem; font-weight:600; text-align:center; max-width:100%; line-height:1.2;
+  overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1;
+}
+.persona-tile.arrastrando-tile{
+  z-index:30; cursor:grabbing; transition:none; pointer-events:none;
+}
+.persona-tile.arrastrando-tile .avatar-persona{
+  box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
+}
+
+/* Aviso de la primera vez en cada modo de inicio: cómo cambiar al otro (el icono es el mismo del botón de la barra de abajo) */
+.tutorial-modo{ display:flex; align-items:center; gap:12px; margin:0 0 18px; padding:12px 14px; background:var(--ink-2); border:1px solid var(--borde); border-radius:var(--r-tarjeta); color:var(--text-light); font-size:.9rem; line-height:1.45; }
+.tutorial-modo .tuto-texto{ flex:1; min-width:0; }
+.tutorial-modo .tuto-icono{ display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin:0 2px; border-radius:var(--r-redondo); background:var(--ink-3); vertical-align:middle; }
+.tutorial-modo .tuto-cerrar{ flex:none; background:var(--stamp); border:none; border-radius:var(--r-boton); color:var(--sobre-acento); font-weight:700; font-size:.88rem; padding:8px 12px; cursor:pointer; }
+.estado-vacio{ text-align:center; padding:60px 20px; color:var(--text-dim); }
+.estado-vacio svg{ opacity:.4; margin-bottom:14px; }
+/* Dibujo del botón dentro de una frase (mismo aspecto que el botón de la barra de arriba) */
+.estado-vacio .icono-boton-inline{ border:none; padding:0; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; margin:2px 4px; border-radius:var(--r-redondo); background:var(--ink-2); color:var(--text-light); vertical-align:middle; }
+.estado-vacio .icono-boton-inline:active{ background:var(--ink-3); }
+.estado-vacio .icono-boton-inline svg{ opacity:1; margin:0; }
+.estado-vacio p{ margin:0 0 18px; font-size:.9rem; line-height:1.5; }
+.estado-vacio .btn-primario{ display:inline-block; width:auto; padding:11px 22px; }
+/* Primer botón de "añadir" cuando aún no hay nada: la ficha de persona o el botón de categoría, centrados bajo el texto */
+.estado-vacio .persona-tile{ width:150px; margin:8px auto 0; }
+.estado-vacio :is(.persona-tile, .categoria-barra-nueva) svg{ opacity:1; margin:0; }
+.estado-vacio .categoria-barra-nueva{ width:100%; max-width:320px; margin:8px auto 0; justify-content:center; display:flex; align-items:center; gap:8px; }
+
+.estado-carga{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:80px 20px; color:var(--text-dim); gap:14px; text-align:center;
+}
+.spinner{ width:24px; height:24px; border-radius:50%; border:2.5px solid var(--borde); border-top-color:var(--seal); animation:girar .8s linear infinite; }
+@keyframes girar{ to{ transform:rotate(360deg); } }
+
+.chips-categorias{
+  display:flex; gap:7px; overflow-x:auto; padding:6px; margin:-6px -6px 14px;
+  -ms-overflow-style:none; scrollbar-width:none;
+  /* el padding de 6px por los cuatro lados (compensado con margen negativo arriba/lados, para que
+     no se note el hueco) es sitio de sobra para el aro del chip activo — si no, overflow-x:auto
+     también recorta en vertical y por los lados, y el aro se veía cortado. */
+}
+.chips-categorias::-webkit-scrollbar{ display:none; }
+.chips-categorias.chips-personas{ gap:4px; margin-bottom:10px; }
+.chips-personas .opcion-persona{ width:80px; }
+.chips-personas .opcion-persona .avatar-persona{ width:60px; height:60px; }
+.chips-personas .avatar-todos{ background:var(--ink-3); color:var(--text-light); }
+/* Al deslizar a otra persona/categoría (o a otra página de un documento, en el visor) el
+   contenido entra desde el lado hacia el que se ha deslizado */
+#pantalla-persona.desliza-der, #visor-cuerpo.desliza-der{ animation:entra-der .26s ease-out; }
+#pantalla-persona.desliza-izq, #visor-cuerpo.desliza-izq{ animation:entra-izq .26s ease-out; }
+@keyframes entra-der{ from{ transform:translateX(44px); opacity:0; } to{ transform:none; opacity:1; } }
+@keyframes entra-izq{ from{ transform:translateX(-44px); opacity:0; } to{ transform:none; opacity:1; } }
+@media (prefers-reduced-motion:reduce){ #pantalla-persona.desliza-der, #pantalla-persona.desliza-izq, #visor-cuerpo.desliza-der, #visor-cuerpo.desliza-izq{ animation:none; } }
+
+.aviso-caducidad-banner{
+  display:flex; align-items:center; justify-content:center; padding:11px 14px; margin:-4px 0 16px;
+  border-radius:var(--r-boton); font-size:.85rem; font-weight:600; color:#fff; text-align:center;
+}
+.aviso-caducidad-banner{ cursor:pointer; gap:8px; }
+.aviso-caducidad-banner .banner-placa{ display:inline-flex; align-items:center; gap:8px; }
+.categoria-barra .aviso-caducidad-persona{ position:static; flex:none; width:32px; height:32px; min-width:0; min-height:0; max-width:none; max-height:none; margin-left:8px; cursor:pointer; }
+.aviso-caducidad-banner:active{ filter:brightness(.92); }
+.aviso-caducidad-banner .banner-flecha{ font-size:1.3em; line-height:1; margin-top:-2px; }
+.aviso-caducidad-banner.aviso{ background:#B06A17; }
+.aviso-caducidad-banner.caducado{ background:#C92A20; }
+
+.chip{
+  flex:none; display:flex; align-items:center; gap:6px;
+  background:var(--ink-2); border:1px solid transparent; color:var(--text-dim);
+  padding:7px 13px; border-radius:var(--r-chip); font-size:.8rem; cursor:pointer; white-space:nowrap;
+}
+.chip.activo{ background:var(--ink-3); color:var(--text-light); border-color:var(--stamp); font-weight:700; box-shadow:0 0 0 1px var(--stamp); }
+/* Chip de una categoría real (no "Todos"): fondo sólido de su propio color, igual de
+   intenso que los botones grandes de categoría de la pantalla de inicio (.categoria-barra).
+   La que está activa se distingue con un aro doble bien marcado (no solo un cambio de opacidad,
+   que con colores ya vivos apenas se notaba) y la letra en negrita. */
+.chip-categoria{ color:#fff; filter:saturate(.35) brightness(.8); }
+.chip-categoria.activo{ filter:none; font-weight:700; box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4.5px rgba(255,255,255,.95); }
+
+.grupo-documentos{ margin-bottom:26px; }
+.grupo-documentos:last-child{ margin-bottom:0; }
+.titulo-grupo{
+  font-size:.88rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--text-dim); margin:0 0 10px; padding-left:2px;
+  display:flex; align-items:center; gap:7px;
+}
+.titulo-grupo .punto-grupo{ width:8px; height:8px; border-radius:50%; background:currentColor; flex:none; }
+.titulo-grupo .avatar-mini-grupo{ width:30px; height:30px; max-width:none; border-radius:50%; flex:none; box-shadow:none; }
+.grupo-documentos.plegable > .titulo-grupo{ cursor:pointer; min-height:36px; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+.titulo-grupo .cuenta-grupo{ font-weight:600; }
+.titulo-grupo .flecha-grupo{ flex:none; margin-left:4px; transition:transform .18s; }
+.grupo-documentos.plegado{ margin-bottom:8px; }
+.grupo-documentos.plegado > .lista-docs{ display:none; }
+.grupo-documentos.plegado .flecha-grupo{ transform:rotate(-90deg); }
+.doc-fila.destacada{ animation:destacar-doc 1.8s ease-out; }
+@keyframes destacar-doc{ 0%,45%{ box-shadow:0 0 0 4px var(--stamp); } 100%{ box-shadow:0 0 0 4px transparent; } }
+
+/* Las fichas de una misma categoría comparten color de fondo, así que hace falta un hueco
+   claro entre un documento y el siguiente para que no parezcan uno solo. Las páginas de un
+   mismo documento (modo desplegado) sí van muy juntas: así se agrupan a simple vista. */
+.lista-docs{ display:flex; flex-direction:column; gap:5px; }
+.lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:19px; }
+@media (orientation:landscape){
+  .lista-docs{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+  /* En apaisado las fichas ya van en dos columnas, cada una con su hueco a los lados: no
+     hace falta el margen extra (y además descuadraría las filas de la cuadrícula). */
+  .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:0; }
+  /* En apaisado todas las fichas vuelven a la proporción fija, aunque
+     la foto sea vertical (el !important pisa el aspect-ratio que el
+     JS le pone a las verticales para el modo vertical de la pantalla),
+     enseñando solo la parte de arriba de la foto en vez de recortar
+     por el centro. */
+  .doc-fila .miniatura{ aspect-ratio:16/10 !important; }
+  .doc-fila .miniatura img{ object-position:top; }
+}
+
+.doc-fila{
+  display:flex; flex-direction:column; width:100%;
+  background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2));
+  border:none; border-radius:var(--r-tarjeta); overflow:hidden;
+  /* Sombra suave: dos fichas seguidas del mismo color se leen como dos tarjetas separadas
+     y no como una mancha continua. Los estilos que ponen su propia sombra la pisan. */
+  box-shadow:0 5px 12px rgba(0,0,0,.24);
+  cursor:pointer; text-align:left;
+}
+/* Aviso de caducidad: como cada ficha ya lleva el color de su categoría, el aviso no puede ser un color de
+   fondo. Es un sello de tinta en la esquina de la miniatura (como un sello de aduana sobre un documento
+   caducado), con la palabra "CADUCADO" o "POR CADUCAR". La ficha conserva el color de su categoría. */
+.cinta-caducidad{
+  position:absolute; top:12px; left:12px; z-index:2; pointer-events:none;
+  display:inline-flex; align-items:center; padding:6px 12px; border:3px solid currentColor; border-radius:8px;
+  font-family:var(--sans); font-size:.92rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+  transform:rotate(-8deg); background:rgba(0,0,0,.85);
+  box-shadow:0 0 0 1px color-mix(in srgb, currentColor 30%, transparent) inset, 0 2px 6px rgba(0,0,0,.5);
+}
+.cinta-caducidad.caducado{ color:#FF5449; }
+.cinta-caducidad.aviso{ color:#FFC24B; font-size:.8rem; }
+.doc-fila .miniatura{
+  width:auto; margin:8px 8px 0; aspect-ratio:16/10; position:relative;
+  background:var(--ink-3); overflow:hidden; display:flex; align-items:center; justify-content:center;
+  border-radius:var(--r-miniatura);
+}
+.doc-fila .miniatura img{
+  width:100%; height:100%; object-fit:cover; pointer-events:none;
+  -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
+}
+.doc-fila .miniatura .icono-pdf{ color:var(--text-dim); }
+/* Selección de documentos: tres señales a la vez para que se note de un vistazo —el círculo
+   de arriba a la derecha (vacío mientras no está marcado, relleno y con el visto cuando sí),
+   el aro alrededor de la ficha entera y un velo de color sobre la miniatura. */
+.check-seleccion{
+  display:none; position:absolute; top:9px; right:9px; z-index:2; width:38px; height:38px; border-radius:50%;
+  background:rgba(0,0,0,.38); border:3px solid #fff; color:var(--sobre-acento);
+  box-shadow:0 2px 8px rgba(0,0,0,.45);
+  align-items:center; justify-content:center;
+  transition:background .14s ease, border-color .14s ease, transform .14s ease;
+}
+.check-seleccion svg{
+  width:22px; height:22px; stroke-width:3.4; opacity:0; transform:scale(.4);
+  transition:opacity .14s ease, transform .14s cubic-bezier(.2,.9,.3,1.3);
+}
+body.modo-seleccion .check-seleccion{ display:flex; }
+.doc-fila.seleccionada .check-seleccion{ background:var(--stamp); border-color:#fff; transform:scale(1.08); }
+.doc-fila.seleccionada .check-seleccion svg{ opacity:1; transform:none; }
+.doc-fila.seleccionada{ outline:4px solid var(--stamp); outline-offset:1px; }
+.doc-fila.seleccionada .miniatura::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:color-mix(in srgb, var(--stamp) 30%, transparent);
+}
+.barra-seleccion{
+  position:fixed; left:0; right:0; bottom:0; z-index:45;
+  display:flex; align-items:center; gap:12px;
+  background:var(--ink-2); border-top:1px solid var(--borde-sutil);
+  padding:12px 16px calc(12px + var(--safe-b));
+}
+.barra-seleccion span{ flex:1; font-size:.88rem; color:var(--text-light); }
+.barra-seleccion .btn-primario{ width:auto; padding:10px 20px; }
+.barra-seleccion .btn-primario:disabled{ opacity:.5; }
+.doc-fila .miniatura .skeleton{
+  position:absolute; inset:0; background:linear-gradient(90deg, var(--ink-3) 25%, var(--ink-2) 37%, var(--ink-3) 63%);
+  background-size:400% 100%; animation:brillo 1.4s ease infinite;
+}
+@keyframes brillo{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+
+.doc-fila .info{
+  padding:12px 14px 14px; min-width:0;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.doc-fila .doc-nombre{ font-size:.95rem; font-weight:600; color:var(--text-light); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; }
+.doc-fila .badge-mini{
+  display:inline-block; flex:none; font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:var(--r-chip);
+  background:var(--ink-3); color:var(--text-dim);
+}
+
+/* Días que faltan / desde cuándo caducó: fondo oscuro semitransparente para leerse sobre el color de la categoría */
+.doc-fila .badge-mini.aviso, .doc-fila .badge-mini.caducado{ background:rgba(0,0,0,.3); color:#fff; }
+
+#visor-completo{
+  position:fixed; inset:0; background:#0A0F14; z-index:60;
+  display:flex; flex-direction:column;
+}
+.visor-topbar{
+  display:flex; align-items:center; gap:10px;
+  padding:calc(12px + var(--safe-t)) 12px 12px;
+}
+.visor-topbar .espaciador{ flex:1; }
+.visor-actualizar{
+  flex:none; display:flex; align-items:center; justify-content:center; gap:10px; margin:10px 12px calc(12px + var(--safe-b, 0px));
+  padding:13px 16px; border:none; border-radius:var(--r-boton); color:#fff; font:inherit; font-size:.92rem; font-weight:600; cursor:pointer;
+}
+.visor-actualizar.caducado{ background:#C92A20; }
+.visor-actualizar.aviso{ background:#B06A17; }
+.visor-actualizar small{ font-weight:500; opacity:.9; }
+.visor-topbar .titulo{ font-size:.85rem; color:var(--text-light); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:45vw; }
+.visor-cuerpo{
+  flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0 12px;
+  touch-action:none; /* el zoom con doble toque/pellizco lo gestiona activarZoomVisor() a mano, sin el del navegador */
+  background:#0A0F14; /* mismo fondo que #visor-completo, a prueba de que algún repintado deje ver lo de detrás */
+}
+.visor-cuerpo img{
+  max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; pointer-events:none;
+  -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none;
+  /* Capa de composición propia para la imagen: sin esto, al hacer zoom con el pellizco (sobre todo
+     quitando zoom) el navegador puede dejar restos/rayas del fotograma anterior en el hueco que
+     queda alrededor de la imagen en vez de repintarlo limpio. (will-change, no transform:translateZ(0)
+     a secas en la hoja de estilos — activarZoomVisor pone su propio transform por JS en cada
+     cambio, y lo pisaría sin enterarse.) */
+  will-change:transform;
+}
+.visor-pdf{ display:flex; flex-direction:column; align-items:center; gap:16px; color:var(--text-dim); text-align:center; padding:20px; }
+@media (orientation:landscape) and (max-height:520px){
+  .visor-topbar{ padding-top:8px; padding-bottom:8px; }
+}
+
+.input-busqueda{
+  flex:1; min-width:0; background:var(--ink-3); border:1px solid var(--borde); color:var(--text-light);
+  border-radius:var(--r-campo); padding:10px 12px; font-size:.92rem; -webkit-appearance:none; appearance:none;
+}
+.input-busqueda::-webkit-search-decoration, .input-busqueda::-webkit-search-cancel-button,
+.input-busqueda::-webkit-search-results-button, .input-busqueda::-webkit-search-results-decoration{
+  -webkit-appearance:none; appearance:none;
+}
+.busqueda-resultados{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; padding:8px 16px calc(16px + var(--safe-b)); }
+
+.galeria-paginas{
+  flex:1; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; padding:4px 12px calc(16px + var(--safe-b));
+  display:flex; flex-direction:column; gap:10px;
+}
+@media (orientation:landscape){
+  .galeria-paginas{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+  .galeria-pagina .miniatura{ aspect-ratio:16/10 !important; }
+  .galeria-pagina .miniatura img{ object-position:top; }
+}
+.galeria-pagina{
+  display:flex; flex-direction:column; width:100%; background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2));
+  border:none; border-radius:var(--r-tarjeta); overflow:hidden; cursor:pointer; text-align:left;
+  touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+}
+/* El touch-action:none de arriba es imprescindible: esta ficha vive DENTRO de su propio
+   contenedor con scroll (galeria-cuerpo, a diferencia de las fichas de persona/categoría, que
+   scrollean por "main" y no por su propia cuadrícula) — sin él, el navegador coge el gesto para
+   hacer scroll nativo a mitad de la pulsación larga y deja de entregar pointermove a partir de
+   ahí (el arrastre parecía "activarse" pero nunca intercambiaba las fichas). */
+/* Mantener pulsada una página para arrastrarla y cambiar el orden (habilitarArrastreTiles) */
+.galeria-pagina.arrastrando-tile{
+  z-index:30; cursor:grabbing; transition:none; pointer-events:none;
+  box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
+}
+.galeria-pagina .miniatura{
+  width:auto; margin:8px 8px 0; aspect-ratio:16/10; position:relative;
+  background:var(--ink-3); overflow:hidden; display:flex; align-items:center; justify-content:center;
+  border-radius:var(--r-miniatura);
+}
+.galeria-pagina .miniatura img{ width:100%; height:100%; object-fit:cover; pointer-events:none; }
+.galeria-pagina .miniatura .icono-pdf{ color:var(--text-dim); }
+.galeria-pagina-nombre{
+  padding:10px 12px 12px; margin:0; font-size:.88rem; font-weight:600; color:var(--text-light);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.modal-fondo{
+  position:fixed; inset:0; background:rgba(10,15,20,.62); display:flex; align-items:flex-end; justify-content:center;
+  z-index:65; backdrop-filter:blur(2px);
+}
+@media (min-width:600px){ .modal-fondo{ align-items:center; } }
+.modal{
+  background:var(--ink-2); color:var(--text-light); width:100%; max-width:440px;
+  border-radius:var(--r-modal) var(--r-modal) 0 0; padding:22px 22px calc(22px + var(--safe-b)); max-height:88dvh; overflow-y:auto;
+}
+@media (min-width:600px){ .modal{ border-radius:var(--r-modal); } }
+.modal h3{ margin:0 0 18px; font-size:1.1rem; font-weight:600; }
+.campo{ margin-bottom:16px; }
+/* Fecha: se escribe a la izquierda, botón de calendario a la derecha (el <input type="date"> real va oculto) */
+.campo-fecha{ position:relative; display:flex; gap:8px; align-items:stretch; border-radius:var(--r-campo); }
+.campo-fecha .fecha-marco{ position:relative; flex:1; min-width:0; display:flex; }
+/* Letra de ancho fijo: cada cifra ocupa siempre el mismo hueco y las barras quedan siempre en la misma columna */
+.campo .campo-fecha .fecha-texto{ flex:1; min-width:0; width:auto; font-family:ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', monospace; font-size:.95rem; letter-spacing:.04em; }
+/* Capa con el formato en gris, encima del campo (no recibe toques): la parte ya escrita se oculta y el resto se ve */
+.campo-fecha .fecha-fantasma{
+  position:absolute; inset:0; padding:11px 12px; border:1px solid transparent; display:flex; align-items:center; white-space:pre;
+  font-family:ui-monospace, 'SF Mono', Menlo, Consolas, 'Roboto Mono', monospace; font-size:.95rem; letter-spacing:.04em; color:var(--text-dim); opacity:.7; pointer-events:none;
+}
+.campo-fecha .fantasma-escrito{ visibility:hidden; }
+.campo-fecha .fantasma-barra{ color:var(--text-light); opacity:.75; }
+.campo-fecha .fecha-calendario{
+  flex:none; width:46px; border:1px solid var(--borde); border-radius:var(--r-campo); background:var(--ink-3);
+  color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+}
+.campo-fecha .fecha-calendario:active{ background:var(--ink-2); }
+.campo .campo-fecha .fecha-oculta{ position:absolute; right:0; bottom:0; width:1px; height:1px; padding:0; border:0; opacity:0; pointer-events:none; }
+.campo-fecha.fecha-error .fecha-texto{ border-color:#E5342A; box-shadow:0 0 0 2px rgba(229,52,42,.35); }
+.campo label{ display:block; font-size:.8rem; color:var(--text-dim); margin-bottom:6px; }
+.campo input[type=text], .campo input[type=date], .campo input[type=search], .campo select{
+  width:100%; background:var(--ink-3); border:1px solid var(--borde);
+  color:var(--text-light); border-radius:var(--r-campo); padding:11px 12px; font-size:.92rem;
+}
+.campo input[type=search]{
+  -webkit-appearance:none; appearance:none;
+}
+.campo input[type=search]::-webkit-search-decoration,
+.campo input[type=search]::-webkit-search-cancel-button,
+.campo input[type=search]::-webkit-search-results-button,
+.campo input[type=search]::-webkit-search-results-decoration{
+  -webkit-appearance:none; appearance:none;
+}
+.check-aviso{
+  display:flex; align-items:center; gap:10px; margin:2px 0 16px;
+  font-size:.86rem; color:var(--text-light); cursor:pointer;
+}
+.check-aviso input{ width:19px; height:19px; flex:none; accent-color:var(--stamp); }
+
+#lista-paginas-subida:not(:empty){ margin-bottom:10px; }
+.pagina-subida-fila{ display:flex; align-items:center; gap:10px; padding:6px 0; }
+.pagina-subida-miniatura{
+  width:42px; height:42px; border-radius:8px; overflow:hidden; flex:none;
+  background:var(--ink-3); display:flex; align-items:center; justify-content:center; color:var(--text-dim);
+}
+.pagina-subida-miniatura img{ width:100%; height:100%; object-fit:cover; }
+.input-nombre-pagina-subida{
+  flex:1; min-width:0; background:var(--ink-3); border:1px solid var(--borde); border-radius:calc(var(--r-campo) - 1px);
+  padding:8px 10px; font-size:.85rem; color:var(--text-light);
+}
+.btn-quitar-pagina-subida{ flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer; }
+#btn-anadir-pagina-subida{ margin-bottom:16px; }
+
+/* Selector de persona al subir desde una categoría */
+.selector-personas{ position:relative; }
+.selector-personas .fila-personas{
+  display:flex; gap:10px; overflow-x:auto; padding:8px 10px 10px; scroll-snap-type:x proximity;
+  -ms-overflow-style:none; scrollbar-width:none; overscroll-behavior-x:contain;
+}
+.selector-personas .fila-personas::-webkit-scrollbar{ display:none; }
+.opcion-persona{
+  flex:none; width:88px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 2px 4px;
+  background:none; border:2px solid transparent; border-radius:14px; color:var(--text-dim); cursor:pointer; scroll-snap-align:center;
+}
+.opcion-persona .avatar-persona{ width:68px; height:68px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
+.opcion-persona .op-nombre{ font-size:.78rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.opcion-persona.activa{ border-color:var(--stamp); color:var(--text-light); background:color-mix(in srgb, var(--stamp) 12%, transparent); }
+.opcion-persona.activa .op-nombre{ font-weight:700; }
+.opcion-categoria{
+  flex:none; max-width:170px; padding:9px 16px; border-radius:999px; border:2px solid transparent; cursor:pointer;
+  background:var(--color-categoria, var(--ink-3)); color:#fff; font-size:.85rem; font-weight:600; filter:saturate(.35) brightness(.8);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; scroll-snap-align:center;
+}
+.opcion-categoria.activa{ filter:none; border-color:var(--text-light); box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4px var(--stamp); }
+.selector-personas .flecha-personas{ top:34px; }
+.selector-categorias .flecha-personas{ top:12px; }
+/* Opción "Nueva" al final de cada fila: trazo discontinuo y un "+" */
+.opcion-persona.opcion-nueva .avatar-persona{ background:none !important; border:2px dashed var(--borde-fuerte); color:var(--text-dim); }
+.opcion-categoria.opcion-nueva{ background:none; border:2px dashed var(--borde-fuerte); color:var(--text-dim); opacity:1; }
+/* Avisos de que se puede desplazar: flechas y un degradado en el borde por el que hay más personas */
+.flecha-personas{
+  position:absolute; top:34px; z-index:2; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--ink-3); color:var(--text-light); font-size:1.35rem; line-height:1; padding:0 0 3px;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+.flecha-personas.izq{ left:-6px; }
+.flecha-personas.der{ right:-6px; }
+.selector-personas::before, .selector-personas::after{
+  content:''; position:absolute; top:0; bottom:0; width:34px; z-index:1; pointer-events:none; opacity:0; transition:opacity .15s;
+}
+.selector-personas::before{ left:0; background:linear-gradient(90deg, var(--ink-2), transparent); }
+.selector-personas::after{ right:0; background:linear-gradient(270deg, var(--ink-2), transparent); }
+.selector-personas.mas-izq::before, .selector-personas.mas-der::after{ opacity:1; }
+.selector-foto{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+.selector-foto .avatar-persona{ width:64px; height:64px; font-size:1.3rem; border-radius:var(--r-avatar-mini); }
+.selector-foto .btn-secundario{ flex:none; width:auto; padding:9px 16px; font-size:.82rem; }
+.acciones-foto{ display:flex; gap:8px; flex-wrap:wrap; }
+.grid-iconos-avatar{ display:grid; grid-template-columns:repeat(6, 1fr); gap:8px; margin:0 0 18px; }
+.img-letra{ display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; pointer-events:none; }
+.opcion-icono{
+  aspect-ratio:1/1; border-radius:50%; border:2px solid transparent; background:var(--ink-3);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; overflow:hidden;
+}
+.opcion-icono.activo{ border-color:var(--stamp); }
+
+.recorte-marco{
+  width:220px; height:220px; margin:0 auto 18px; border-radius:32px; overflow:hidden;
+  position:relative; background:var(--ink-3); touch-action:none; cursor:grab;
+}
+.recorte-marco img{
+  position:absolute; top:0; left:0; pointer-events:none; -webkit-user-drag:none;
+  max-width:none; max-height:none;
+}
+.recorte-ayuda{ text-align:center; color:var(--text-dim); font-size:.78rem; margin:0 0 18px; }
+.recorte-controles{ margin:0 0 6px; }
+.recorte-giro{ display:flex; align-items:center; gap:10px; margin:0 0 6px; }
+.recorte-giro button{
+  flex:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--borde); background:none;
+  color:var(--text-light); display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.recorte-giro button:active{ background:var(--ink-3); }
+.recorte-giro-barra{ flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.recorte-giro-grados{ font-size:.78rem; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+.recorte-giro-barra input[type=range]{ width:100%; margin:0; height:28px; accent-color:var(--stamp); touch-action:pan-y; }
+.recorte-auto{
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 12px;
+  min-height:34px; margin:-8px 0 14px; font-size:.78rem; color:var(--text-dim); text-align:center;
+}
+.recorte-auto button{
+  background:none; border:1px solid var(--borde); color:var(--text-light); border-radius:var(--r-pill);
+  padding:6px 14px; font:inherit; font-size:.78rem; cursor:pointer;
+}
+.recorte-auto button:active{ background:var(--ink-3); }
+.recorte-auto-texto{ display:inline-flex; align-items:center; gap:8px; }
+.recorte-auto-punto{
+  width:12px; height:12px; border-radius:50%; border:2px solid var(--borde); border-top-color:var(--stamp);
+  animation:girar-recorte .8s linear infinite;
+}
+@keyframes girar-recorte{ to{ transform:rotate(360deg); } }
+.esquinas-marco{
+  position:relative; margin:0 auto 14px; border-radius:10px; overflow:hidden; background:#000;
+  touch-action:none; -webkit-user-select:none; user-select:none;
+}
+.esquinas-marco img{ display:block; width:100%; height:100%; pointer-events:none; -webkit-user-drag:none; }
+.esquinas-svg{ position:absolute; inset:0; touch-action:none; }
+.esquinas-borde{ fill:none; stroke:#fff; stroke-width:5; stroke-linejoin:round; }
+.esquinas-poligono{ fill:rgba(255,255,255,.10); stroke:var(--stamp); stroke-width:2.5; stroke-linejoin:round; }
+.esquinas-punto{ fill:var(--stamp); stroke:#fff; stroke-width:2.5; cursor:grab; }
+.esquinas-lupa{
+  position:absolute; top:8px; width:104px; height:104px; border-radius:50%; display:none; pointer-events:none;
+  border:3px solid #fff; background-repeat:no-repeat; box-shadow:0 4px 14px rgba(0,0,0,.55);
+}
+.esquinas-lupa::before, .esquinas-lupa::after{ content:''; position:absolute; background:var(--stamp); }
+.esquinas-lupa::before{ left:50%; top:calc(50% - 9px); width:2px; height:18px; margin-left:-1px; }
+.esquinas-lupa::after{ top:50%; left:calc(50% - 9px); height:2px; width:18px; margin-top:-1px; }
+@media (prefers-reduced-motion:reduce){ .recorte-auto-punto{ animation:none; } }
+
+.modal-acciones{ display:flex; gap:10px; margin-top:20px; }
+.btn-primario, .btn-secundario{ border:none; border-radius:var(--r-boton); padding:12px; font-size:.92rem; font-weight:600; cursor:pointer; width:100%; }
+.modal-acciones .btn-primario, .modal-acciones .btn-secundario{ flex:1; width:auto; }
+.btn-primario{ background:var(--stamp); color:var(--sobre-acento); }
+.btn-primario:disabled, .btn-primario.inactivo{ opacity:.5; cursor:default; }
+/* Campo que falta por rellenar al intentar guardar: parpadea en rojo */
+.parpadeo-falta{ animation:parpadeo-falta 1.4s ease-in-out; }
+@keyframes parpadeo-falta{
+  0%, 40%, 80%, 100%{ box-shadow:0 0 0 0 rgba(229,52,42,0); }
+  15%, 55%, 95%{ box-shadow:0 0 0 3px #E5342A, 0 0 16px rgba(229,52,42,.65); }
+}
+@media (prefers-reduced-motion:reduce){ .parpadeo-falta{ animation:none; box-shadow:0 0 0 3px #E5342A; } }
+.btn-secundario{ background:transparent; color:var(--text-dim); border:1px solid var(--borde); }
+.btn-peligro{ background:var(--stamp); color:var(--sobre-acento); }
+/* Botón final de "Borrar todo y cerrar sesión": apagado hasta escribir la palabra, y al escribirla se rellena en rojo */
+#triple-final:disabled{ opacity:.4; cursor:default; }
+#triple-final.listo{ background:var(--stamp) !important; color:var(--sobre-acento) !important; border-color:var(--stamp) !important; font-weight:700; }
+
+.opcion-menu{
+  display:flex; align-items:center; gap:12px; background:none; border:none; color:var(--text-light);
+  text-align:left; padding:13px 6px; font-size:.92rem; cursor:pointer; border-radius:calc(var(--r-boton) - 2px);
+}
+.opcion-menu:active{ background:var(--ink-3); }
+.opcion-menu.peligro{ color:#E0897A; }
+
+
+.toast{
+  position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%);
+  background:var(--paper); color:var(--text-ink); padding:11px 20px; border-radius:var(--r-pill);
+  font-size:.85rem; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.3); z-index:80;
+  opacity:0; transition:opacity .25s ease, transform .25s ease; pointer-events:none; max-width:88vw; text-align:center;
+}
+.toast.visible{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+.toast.error{ background:var(--stamp); color:var(--sobre-acento); }
+/* ---- Pantalla de Estilos: maqueta de cada estilo (usa las variables del propio estilo) ---- */
+.icono-accion.estilo{ background:linear-gradient(135deg, var(--stamp) 0 50%, var(--seal) 50% 100%); }
+.lista-estilos{ display:flex; flex-direction:column; gap:14px; }
+.opcion-estilo .texto-tema{ padding-right:44px; }
+/* Maqueta fiel: la pantalla de inicio de verdad dentro de un marco, con el estilo puesto, a escala */
+.mq-estilo{ display:block; position:relative; width:100%; aspect-ratio:412 / 470; border-radius:14px; overflow:hidden; border:1px solid var(--borde); background:var(--ink); }
+.mq-estilo iframe{ position:absolute; left:0; top:0; width:412px; height:560px; border:0; transform-origin:0 0; transform:scale(var(--k, .8)); pointer-events:none; background:transparent; }
+.icono-accion.idioma{ background:linear-gradient(135deg, var(--azul), var(--morado)); }
+.icono-accion.letra{ background:linear-gradient(135deg, #3D6E99, #6B4FA8); font-family:var(--serif); font-weight:700; font-size:1.05rem; color:#fff; }
+.icono-accion.sigla{ overflow:hidden; padding:0; }
+.icono-accion.sigla .bandera-idioma{ width:100%; height:100%; border-radius:0; box-shadow:none; }
+
+/* ==================== ESTILOS (skins) ====================
+   Cada estilo redefine colores (oscuro y claro), forma (radios), letra y algunos detalles.
+   El atributo data-skin va en <html>; también en las maquetas de la pantalla de Estilos. */
+/* ---- clasico ---- */
+[data-skin="clasico"]{ --ink:#14202E; --ink-2:#1E2F42; --ink-3:#28405A; --paper:#F2EEE3; --text-ink:#1E2A38; --stamp:#C1502E; --sobre-acento:#F2EEE3; --text-light:#EDE9DE; --text-dim:#9FB0C3; --seal:#5C8374; --amber:#C48A2E; --azul:#4A7BA6; --morado:#8A6FB0; --stamp-dark:#9C3D24; --borde-sutil:rgba(255,255,255,.06); --borde:rgba(255,255,255,.14); --borde-fuerte:rgba(255,255,255,.22); --topbar-fondo:rgba(40,64,90,.92); 
+  --serif:'Source Serif 4', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Poppins', system-ui, sans-serif;
+  --r-pill:999px; --r-chip:999px; --r-avatar:32px; --r-avatar-mini:12px; --r-tarjeta:16px; --r-miniatura:11px;
+  --r-boton:10px; --r-campo:9px; --r-grupo:18px; --r-modal:18px; --r-caja:12px; --r-app-login:26px; --r-redondo:50%;
+  --sombra-ficha:0 10px 24px rgba(0,0,0,.32);
+}
+html[data-tema="claro"] [data-skin="clasico"], html[data-tema="claro"][data-skin="clasico"]{ --ink:#F2F3F5; --ink-2:#E6E7EB; --ink-3:#D8DADF; --paper:#F2EEE3; --text-ink:#1E2A38; --stamp:#C1502E; --sobre-acento:#F2EEE3; --text-light:#1E2A38; --text-dim:#5A606B; --seal:#5C8374; --amber:#C48A2E; --azul:#4A7BA6; --morado:#8A6FB0; --stamp-dark:#9C3D24; --borde-sutil:rgba(20,26,36,.07); --borde:rgba(20,26,36,.15); --borde-fuerte:rgba(20,26,36,.24); --topbar-fondo:rgba(216,218,223,.92);  }
+html[data-skin="clasico"]{ --fondo-login:var(--ink); }
+
+/* ---- pasaporte ---- */
+[data-skin="pasaporte"]{ --ink:#1C0F16; --ink-2:#2B1822; --ink-3:#3D2431; --paper:#F2E8D5; --text-ink:#2B1822; --stamp:#C9A45C; --sobre-acento:#1C0F16; --text-light:#F4EBDD; --text-dim:#C7AEB0; --seal:#86A88B; --amber:#D9A94E; --azul:#7E9CC0; --morado:#A88BC2; --stamp-dark:#A8863F; --borde-sutil:rgba(201,164,92,.13); --borde:rgba(201,164,92,.28); --borde-fuerte:rgba(201,164,92,.46); --topbar-fondo:rgba(43,24,34,.95); 
+  --serif:'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --sans:'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Cinzel', Georgia, serif;
+  --r-pill:5px; --r-chip:5px; --r-avatar:12px; --r-avatar-mini:8px; --r-tarjeta:6px; --r-miniatura:3px;
+  --r-boton:5px; --r-campo:5px; --r-grupo:8px; --r-modal:10px; --r-caja:7px; --r-app-login:16px; --r-redondo:10px;
+  --sombra-ficha:0 0 0 1px color-mix(in srgb, var(--stamp) 60%, transparent), 0 0 0 4px var(--ink), 0 0 0 5px color-mix(in srgb, var(--stamp) 35%, transparent), 0 14px 24px rgba(0,0,0,.28);
+}
+html[data-tema="claro"] [data-skin="pasaporte"], html[data-tema="claro"][data-skin="pasaporte"]{ --ink:#F6EEDF; --ink-2:#EFE4CE; --ink-3:#E3D5B8; --paper:#FFFBF3; --text-ink:#2A1520; --stamp:#7B1E34; --sobre-acento:#FBF2E2; --text-light:#2A1520; --text-dim:#6F5359; --seal:#4E7A5B; --amber:#9A6A18; --azul:#3F6A99; --morado:#74569C; --stamp-dark:#5C1526; --borde-sutil:rgba(123,30,52,.12); --borde:rgba(123,30,52,.24); --borde-fuerte:rgba(123,30,52,.40); --topbar-fondo:rgba(239,228,206,.95);  }
+html[data-skin="pasaporte"]{ --fondo-login:var(--ink); }
+html[data-skin="pasaporte"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 1L14.5 9.5L23 12L14.5 14.5L12 23L9.5 14.5L1 12L9.5 9.5Z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 1L14.5 9.5L23 12L14.5 14.5L12 23L9.5 14.5L1 12L9.5 9.5Z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
+html[data-skin="pasaporte"] .topbar{ border-bottom:1px solid var(--stamp); box-shadow:0 1px 0 var(--ink), 0 2px 0 color-mix(in srgb, var(--stamp) 40%, transparent); }
+html[data-skin="pasaporte"] .topbar .marca span#titulo-topbar{ font-weight:800; letter-spacing:.08em; }
+html[data-skin="pasaporte"] h1, html[data-skin="pasaporte"] h3, html[data-skin="pasaporte"] .ajustes-titulo{ font-weight:700; letter-spacing:.02em; }
+html[data-skin="pasaporte"] .modal h3{ font-size:1.35rem; }
+html[data-skin="pasaporte"] .ajustes .ajustes-titulo{ font-size:2rem; }
+html[data-skin="pasaporte"] .titulo-grupo{ font-family:var(--serif); font-size:1rem; letter-spacing:.18em; font-weight:700; }
+html[data-skin="pasaporte"] .doc-fila{ border:1px solid var(--borde); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
+html[data-skin="pasaporte"] .galeria-pagina{ border:1px solid var(--borde); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
+html[data-skin="pasaporte"] .doc-fila .miniatura, html[data-skin="pasaporte"] .galeria-pagina .miniatura{ outline:1px solid color-mix(in srgb, var(--stamp) 55%, transparent); outline-offset:-4px; }
+html[data-skin="pasaporte"] .doc-nombre, html[data-skin="pasaporte"] .persona-tile .nombre-persona{ font-family:var(--serif); font-size:1.12rem; font-weight:700; letter-spacing:.02em; }
+html[data-skin="pasaporte"] .categoria-barra{ font-family:var(--serif); font-size:1.25rem; font-weight:700; letter-spacing:.04em; box-shadow:inset 0 0 0 1px rgba(255,255,255,.35), 0 6px 14px rgba(0,0,0,.25); }
+html[data-skin="pasaporte"] .btn-primario, html[data-skin="pasaporte"] .btn-secundario{ letter-spacing:.06em; }
+html[data-skin="pasaporte"] .btn-primario{ border:1px solid var(--stamp-dark); }
+html[data-skin="pasaporte"] .chip{ border-color:var(--borde); letter-spacing:.03em; }
+html[data-skin="pasaporte"] .ajustes .grupo, html[data-skin="pasaporte"] .modal{ border-color:var(--borde); }
+html[data-skin="pasaporte"] .modal{ border-top:1px solid var(--stamp); }
+
+/* ---- carpeta ---- */
+[data-skin="carpeta"]{ --ink:#1D1811; --ink-2:#2A2318; --ink-3:#382F21; --paper:#F1E6C8; --text-ink:#2B2118; --stamp:#EC6A4F; --sobre-acento:#1D1811; --text-light:#EFE3C6; --text-dim:#B9A98A; --seal:#8DB58C; --amber:#D9A343; --azul:#7FA8CB; --morado:#B59AD0; --stamp-dark:#C9482F; --borde-sutil:rgba(239,227,198,.10); --borde:rgba(239,227,198,.24); --borde-fuerte:rgba(239,227,198,.42); --topbar-fondo:rgba(42,35,24,.97); 
+  --serif:'Bitter', 'Iowan Old Style', Georgia, serif;
+  --sans:-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --mono:'Courier Prime', ui-monospace, 'Courier New', monospace;
+  --fuente-marca:'Special Elite', ui-monospace, 'Courier New', monospace;
+  --r-pill:3px; --r-chip:9px 9px 0 0; --r-avatar:4px; --r-avatar-mini:4px; --r-tarjeta:3px; --r-miniatura:2px;
+  --r-boton:3px; --r-campo:3px; --r-grupo:4px; --r-modal:6px; --r-caja:4px; --r-app-login:8px; --r-redondo:6px;
+  --sombra-ficha:3px 4px 0 var(--borde-fuerte);
+}
+html[data-tema="claro"] [data-skin="carpeta"], html[data-tema="claro"][data-skin="carpeta"]{ --ink:#E6D5AE; --ink-2:#F1E6C8; --ink-3:#D8C596; --paper:#FBF4E1; --text-ink:#2B2118; --stamp:#B3261E; --sobre-acento:#FFF7E6; --text-light:#2B2118; --text-dim:#5E4F3A; --seal:#3F6041; --amber:#8F5F0C; --azul:#365F80; --morado:#65467E; --stamp-dark:#8A1C16; --borde-sutil:rgba(43,33,24,.20); --borde:rgba(43,33,24,.36); --borde-fuerte:rgba(43,33,24,.55); --topbar-fondo:rgba(216,197,150,.97);  }
+html[data-skin="carpeta"]{ --fondo-login:var(--ink); }
+html[data-skin="carpeta"] body{ background-image:repeating-linear-gradient(0deg, transparent 0 27px, color-mix(in srgb, var(--text-light) 5%, transparent) 27px 28px); }
+html[data-skin="carpeta"] .topbar{ border-bottom:3px double var(--text-light); }
+html[data-skin="carpeta"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:0; }
+html[data-skin="carpeta"] h1, html[data-skin="carpeta"] h3{ font-weight:700; }
+html[data-skin="carpeta"] .titulo-grupo, html[data-skin="carpeta"] .campo label, html[data-skin="carpeta"] .ajustes .etiqueta, html[data-skin="carpeta"] .badge-mini, html[data-skin="carpeta"] .btn-prov, html[data-skin="carpeta"] .estado-prov, html[data-skin="carpeta"] .recorte-giro-grados{ font-family:var(--mono); }
+html[data-skin="carpeta"] .titulo-grupo{ font-weight:700; letter-spacing:.06em; }
+html[data-skin="carpeta"] .chip{ font-family:var(--mono); font-weight:700; border:1.5px solid var(--borde); border-bottom:0; padding-bottom:8px; }
+html[data-skin="carpeta"] .chip.activo{ background:var(--ink-2); border-color:var(--text-light); }
+html[data-skin="carpeta"] .chips-categorias{ border-bottom:1.5px solid var(--text-light); }
+html[data-skin="carpeta"] .doc-fila{ border:2px dashed var(--borde-fuerte); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); box-shadow:2px 3px 0 var(--borde); }
+html[data-skin="carpeta"] .galeria-pagina{ border:2px dashed var(--borde-fuerte); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); box-shadow:2px 3px 0 var(--borde); }
+html[data-skin="carpeta"] .doc-nombre, html[data-skin="carpeta"] .persona-tile .nombre-persona{ font-family:var(--serif); font-weight:700; }
+html[data-skin="carpeta"] .avatar-persona{ border:2px solid var(--text-light); }
+html[data-skin="carpeta"] .categoria-barra{ font-family:var(--serif); font-weight:700; border:2px dashed rgba(255,255,255,.55); box-shadow:2px 3px 0 var(--borde-fuerte); }
+html[data-skin="carpeta"] .btn-primario, html[data-skin="carpeta"] .btn-secundario{ font-family:var(--mono); font-weight:700; letter-spacing:.02em; border:2px solid var(--text-light); box-shadow:2px 3px 0 var(--text-light); }
+html[data-skin="carpeta"] .btn-primario{ border-color:var(--stamp-dark); box-shadow:2px 3px 0 var(--stamp-dark); }
+html[data-skin="carpeta"] .btn-primario:active, html[data-skin="carpeta"] .btn-secundario:active{ transform:translate(2px,3px); box-shadow:none; }
+html[data-skin="carpeta"] .ajustes .grupo{ border:2px solid var(--text-light); box-shadow:3px 4px 0 var(--borde-fuerte); }
+html[data-skin="carpeta"] .modal{ border-top:3px solid var(--text-light); }
+html[data-skin="carpeta"] .campo input, html[data-skin="carpeta"] .campo select, html[data-skin="carpeta"] .input-busqueda{ border:1.5px solid var(--text-light); }
+
+/* ---- nordico ---- */
+[data-skin="nordico"]{ --ink:#121917; --ink-2:#1A2321; --ink-3:#25312E; --paper:#E6EFEC; --text-ink:#16201E; --stamp:#6CC0AA; --sobre-acento:#0D1513; --text-light:#E6EFEC; --text-dim:#94A7A2; --seal:#7CC5AF; --amber:#E0B054; --azul:#7FAAD0; --morado:#A79CD8; --stamp-dark:#4FA18B; --borde-sutil:rgba(230,239,236,.07); --borde:rgba(230,239,236,.14); --borde-fuerte:rgba(230,239,236,.24); --topbar-fondo:rgba(26,35,33,.82); 
+  --serif:'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --sans:'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Josefin Sans', system-ui, sans-serif;
+  --r-pill:999px; --r-chip:999px; --r-avatar:34%; --r-avatar-mini:30%; --r-tarjeta:22px; --r-miniatura:16px;
+  --r-boton:14px; --r-campo:14px; --r-grupo:24px; --r-modal:30px; --r-caja:14px; --r-app-login:30px; --r-redondo:50%;
+  --sombra-ficha:0 16px 36px rgba(20,36,32,.16);
+}
+html[data-tema="claro"] [data-skin="nordico"], html[data-tema="claro"][data-skin="nordico"]{ --ink:#F5F7F5; --ink-2:#FFFFFF; --ink-3:#E9EEEB; --paper:#FFFFFF; --text-ink:#1E2A29; --stamp:#2A7767; --sobre-acento:#FFFFFF; --text-light:#1E2A29; --text-dim:#5C6C69; --seal:#3F8D78; --amber:#A9721A; --azul:#3F76A4; --morado:#6E63A8; --stamp-dark:#1F5C4F; --borde-sutil:rgba(30,42,41,.06); --borde:rgba(30,42,41,.12); --borde-fuerte:rgba(30,42,41,.20); --topbar-fondo:rgba(245,247,245,.82);  }
+html[data-skin="nordico"]{ --fondo-login:var(--ink); }
+html[data-skin="nordico"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L16.5 9L13.8 9L18 15L14.5 15L18.5 21L5.5 21L9.5 15L6 15L10.2 9L7.5 9Z M11 21L13 21L13 23L11 23Z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 2L16.5 9L13.8 9L18 15L14.5 15L18.5 21L5.5 21L9.5 15L6 15L10.2 9L7.5 9Z M11 21L13 21L13 23L11 23Z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
+html[data-skin="nordico"] .topbar{ border-bottom:none; box-shadow:0 1px 0 var(--borde-sutil); backdrop-filter:blur(16px); }
+html[data-skin="nordico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.1em; }
+html[data-skin="nordico"] h1, html[data-skin="nordico"] h3{ font-weight:600; letter-spacing:-.02em; }
+html[data-skin="nordico"] .titulo-grupo{ text-transform:none; letter-spacing:0; font-weight:500; font-size:.98rem; }
+html[data-skin="nordico"] .btn-icono-top{ background:var(--ink-3); }
+html[data-skin="nordico"] .doc-fila, html[data-skin="nordico"] .galeria-pagina{ box-shadow:0 10px 30px rgba(20,36,32,.07); border:1px solid var(--borde-sutil); }
+html[data-skin="nordico"] .doc-fila .info{ padding:14px 18px 18px; }
+html[data-skin="nordico"] .doc-nombre, html[data-skin="nordico"] .persona-tile .nombre-persona{ font-weight:500; }
+html[data-skin="nordico"] .categoria-barra{ box-shadow:0 12px 26px rgba(20,36,32,.16); }
+html[data-skin="nordico"] .btn-primario, html[data-skin="nordico"] .btn-secundario{ border-radius:999px; padding:14px; font-weight:500; }
+html[data-skin="nordico"] .ajustes .grupo{ border:none; box-shadow:0 10px 30px rgba(20,36,32,.08); }
+html[data-skin="nordico"] .chip{ border-color:var(--borde); background:transparent; }
+html[data-skin="nordico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); border-color:var(--stamp); }
+html[data-skin="nordico"] .modal{ box-shadow:0 -20px 60px rgba(20,36,32,.18); }
+
+/* ---- pixeles ---- */
+[data-skin="pixeles"]{ --ink:#1A1C2C; --ink-2:#29366F; --ink-3:#333C57; --paper:#F4F4F4; --text-ink:#1A1C2C; --stamp:#FFCD75; --sobre-acento:#1A1C2C; --text-light:#F4F4F4; --text-dim:#B4C7D6; --seal:#38B764; --amber:#EF7D57; --azul:#41A6F6; --morado:#A56BE8; --stamp-dark:#E0A94F; --borde-sutil:rgba(244,244,244,.12); --borde:#566C86; --borde-fuerte:#94B0C2; --topbar-fondo:#29366F; --borde-px:#94B0C2;
+  --serif:'Pixelify Sans', ui-monospace, 'Courier New', monospace;
+  --sans:'Pixelify Sans', ui-monospace, 'Courier New', monospace;
+  --mono:'Press Start 2P', 'Pixelify Sans', ui-monospace, monospace;
+  --fuente-marca:'Silkscreen', ui-monospace, monospace;
+  --r-pill:0; --r-chip:0; --r-avatar:0; --r-avatar-mini:0; --r-tarjeta:0; --r-miniatura:0;
+  --r-boton:0; --r-campo:0; --r-grupo:0; --r-modal:0; --r-caja:0; --r-app-login:0; --r-redondo:0;
+  --sombra-ficha:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), 8px 8px 0 0 rgba(0,0,0,.35);
+}
+html[data-tema="claro"] [data-skin="pixeles"], html[data-tema="claro"][data-skin="pixeles"]{ --ink:#C6D89A; --ink-2:#DCE8B4; --ink-3:#B1C585; --paper:#E9F2CC; --text-ink:#0F380F; --stamp:#306230; --sobre-acento:#E9F2CC; --text-light:#0F380F; --text-dim:#365A26; --seal:#306230; --amber:#6F520A; --azul:#24616F; --morado:#5B3E80; --stamp-dark:#0F380F; --borde-sutil:rgba(15,56,15,.22); --borde:rgba(15,56,15,.55); --borde-fuerte:#0F380F; --topbar-fondo:#9BBC0F; --borde-px:#0F380F; }
+html[data-skin="pixeles"]{ --fondo-login:var(--ink); }
+html[data-skin="pixeles"] body{ background-image:conic-gradient(rgba(127,127,127,.07) 25%, transparent 0 50%, rgba(127,127,127,.07) 0 75%, transparent 0); background-size:8px 8px; }
+/* Borde de 4 px con las esquinas escalonadas (como en los videojuegos de 8 bits) + relieve abajo a la derecha */
+html[data-skin="pixeles"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .categoria-barra-nueva, .ajustes .grupo, .btn-primario, .btn-secundario, .btn-grande, .btn-google, .chip, .btn-icono-top, .btn-prov, .input-busqueda, .campo input, .campo select, .opcion-tema, .toast, .aviso-caducidad-banner){
+  border:none; box-shadow:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), inset -4px -4px 0 0 rgba(0,0,0,.26);
+}
+html[data-skin="pixeles"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .ajustes .grupo){ margin-left:4px; margin-right:4px; width:calc(100% - 8px); }
+/* El botón de conectar/desconectar de cada nube, con el mismo borde pixelado de 4px que el
+   resto, queda demasiado grande junto al email y "Ver carpeta" y se los come — aquí más
+   pequeño y con un borde más fino, solo para este botón. */
+html[data-skin="pixeles"] .btn-prov{
+  padding:5px 8px;
+  box-shadow:0 -2px 0 0 var(--borde-px), 0 2px 0 0 var(--borde-px), -2px 0 0 0 var(--borde-px), 2px 0 0 0 var(--borde-px), inset -2px -2px 0 0 rgba(0,0,0,.26);
+}
+html[data-skin="pixeles"] .doc-fila .miniatura, html[data-skin="pixeles"] .galeria-pagina .miniatura{ box-shadow:0 0 0 2px var(--borde-px); margin:10px 10px 0; }
+html[data-skin="pixeles"] .btn-primario:active, html[data-skin="pixeles"] .btn-secundario:active, html[data-skin="pixeles"] .btn-icono-top:active, html[data-skin="pixeles"] .chip:active{ transform:translate(2px,2px); box-shadow:0 -4px 0 0 var(--borde-px), 0 4px 0 0 var(--borde-px), -4px 0 0 0 var(--borde-px), 4px 0 0 0 var(--borde-px), inset 4px 4px 0 0 rgba(0,0,0,.26); }
+html[data-skin="pixeles"] .topbar{ border-bottom:4px solid var(--borde-px); backdrop-filter:none; box-shadow:0 4px 0 rgba(0,0,0,.25); }
+html[data-skin="pixeles"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.02em; }
+html[data-skin="pixeles"] .titulo-grupo, html[data-skin="pixeles"] .campo label, html[data-skin="pixeles"] .ajustes .etiqueta, html[data-skin="pixeles"] .badge-mini, html[data-skin="pixeles"] .chip, html[data-skin="pixeles"] .btn-primario, html[data-skin="pixeles"] .btn-secundario, html[data-skin="pixeles"] .btn-prov, html[data-skin="pixeles"] .toast, html[data-skin="pixeles"] .recorte-giro-grados{ font-family:var(--mono); font-size:.62rem; line-height:1.7; letter-spacing:0; font-weight:400; }
+html[data-skin="pixeles"] .titulo-grupo{ font-size:.66rem; color:var(--text-light); }
+html[data-skin="pixeles"] .btn-primario, html[data-skin="pixeles"] .btn-secundario{ padding:15px 8px; }
+html[data-skin="pixeles"] .chip{ padding:9px 12px; margin:6px 5px 10px 4px; }
+html[data-skin="pixeles"] .chips-categorias{ padding:6px; }
+html[data-skin="pixeles"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
+html[data-skin="pixeles"] h1, html[data-skin="pixeles"] h3{ font-weight:700; letter-spacing:0; }
+html[data-skin="pixeles"] .modal h3{ font-size:1.25rem; }
+html[data-skin="pixeles"] .doc-nombre, html[data-skin="pixeles"] .persona-tile .nombre-persona{ font-weight:700; font-size:1.05rem; }
+html[data-skin="pixeles"] #version-pie, html[data-skin="pixeles"] .version-fila{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
+/* La letra pixelada se lee mejor en peso normal: en negrita la C se cierra y parece una O */
+html[data-skin="pixeles"] *{ font-weight:400 !important; }
+html[data-skin="pixeles"] .modal{ border-top:4px solid var(--borde-px); }
+html[data-skin="pixeles"] .ajustes .grupo > * + *{ border-top:4px solid var(--borde-sutil); }
+html[data-skin="pixeles"] .doc-fila.aviso, html[data-skin="pixeles"] .doc-fila.caducado{ margin-bottom:4px; }
+html[data-skin="pixeles"] .icono-accion, html[data-skin="pixeles"] .marca-prov{ box-shadow:0 0 0 2px var(--borde-px); }
+html[data-skin="pixeles"] .opcion-tema .marca-tema, html[data-skin="pixeles"] .btn-icono-top{ border-radius:0; }
+html[data-skin="pixeles"] .persona-tile .avatar-persona{ margin:4px 4px 0; width:calc(100% - 8px); }
+
+/* ---- neon ---- */
+[data-skin="neon"]{ --ink:#0B0714; --ink-2:#150D24; --ink-3:#211339; --paper:#F5EEFF; --text-ink:#150D24; --stamp:#FF2E97; --sobre-acento:#14001F; --text-light:#F5EEFF; --text-dim:#B9A9DB; --seal:#19F0E6; --amber:#FFD23F; --azul:#4C93FF; --morado:#B266FF; --stamp-dark:#D6207A; --borde-sutil:rgba(245,238,255,.08); --borde:rgba(178,102,255,.38); --borde-fuerte:rgba(25,240,230,.55); --topbar-fondo:rgba(21,13,36,.92); --neon-glow:58%;
+  --serif:'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  --sans:'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Yellowtail', cursive;
+  --r-pill:999px; --r-chip:999px; --r-avatar:26px; --r-avatar-mini:12px; --r-tarjeta:16px; --r-miniatura:10px;
+  --r-boton:12px; --r-campo:12px; --r-grupo:18px; --r-modal:22px; --r-caja:12px; --r-app-login:26px; --r-redondo:50%;
+  --sombra-ficha:0 0 0 2px var(--stamp), 0 0 26px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent);
+}
+html[data-tema="claro"] [data-skin="neon"], html[data-tema="claro"][data-skin="neon"]{ --ink:#F3EEFF; --ink-2:#FFFFFF; --ink-3:#E4D9FF; --paper:#FFFFFF; --text-ink:#1B0B36; --stamp:#D6007A; --sobre-acento:#FFFFFF; --text-light:#1B0B36; --text-dim:#5A4A82; --seal:#007F86; --amber:#9A6300; --azul:#1F5FD6; --morado:#7A2FD6; --stamp-dark:#A80060; --borde-sutil:rgba(27,11,54,.08); --borde:rgba(27,11,54,.18); --borde-fuerte:rgba(27,11,54,.32); --topbar-fondo:rgba(228,217,255,.92); --neon-glow:24%; }
+html[data-skin="neon"]{ --fondo-login:var(--ink); }
+html[data-tema="claro"][data-skin="neon"] .titulo-grupo{ color:#00636A; }
+:is(html[data-skin="chicle"], html[data-skin="neon"]) .chip.chip-categoria{ color:#fff; }
+html[data-skin="neon"]{ font-size:106%; }
+html[data-skin="neon"] body{ background-image:radial-gradient(520px 420px at 0% 0%, color-mix(in srgb, var(--stamp) 18%, transparent), transparent 70%), radial-gradient(560px 460px at 100% 100%, color-mix(in srgb, var(--seal) 14%, transparent), transparent 70%); background-repeat:no-repeat; }
+html[data-skin="neon"]{ --fondo-login:radial-gradient(520px 460px at 10% 0%, color-mix(in srgb, var(--stamp) 22%, transparent), transparent 70%), radial-gradient(560px 480px at 100% 100%, color-mix(in srgb, var(--seal) 18%, transparent), transparent 70%), var(--ink); }
+html[data-skin="neon"] .topbar{ border-bottom:1px solid var(--stamp); box-shadow:0 2px 18px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+html[data-skin="neon"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:0; color:var(--seal); text-shadow:0 0 12px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+html[data-skin="neon"] h1, html[data-skin="neon"] h3, html[data-skin="neon"] .ajustes-titulo{ font-weight:800; letter-spacing:.02em; text-shadow:0 0 14px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+html[data-skin="neon"] .modal h3{ font-size:1.05rem; }
+html[data-skin="neon"] .titulo-grupo{ font-family:var(--serif); font-weight:600; letter-spacing:.16em; color:var(--seal); text-shadow:0 0 10px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+html[data-skin="neon"] .btn-icono-top{ background:transparent; border:1.5px solid var(--seal); color:var(--seal); box-shadow:0 0 12px color-mix(in srgb, var(--seal) var(--neon-glow), transparent), inset 0 0 8px color-mix(in srgb, var(--seal) 18%, transparent); }
+html[data-skin="neon"] .btn-volver{ color:var(--seal); }
+html[data-skin="neon"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .ajustes .grupo, .opcion-tema){
+  border:1.5px solid color-mix(in srgb, var(--seal) 75%, transparent);
+  box-shadow:0 0 16px color-mix(in srgb, var(--seal) var(--neon-glow), transparent), inset 0 0 14px color-mix(in srgb, var(--seal) 10%, transparent);
+}
+html[data-skin="neon"] .doc-fila:nth-child(even), html[data-skin="neon"] .galeria-pagina:nth-child(even){ border-color:color-mix(in srgb, var(--stamp) 75%, transparent); box-shadow:0 0 16px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent), inset 0 0 14px color-mix(in srgb, var(--stamp) 10%, transparent); }
+html[data-skin="neon"] .opcion-tema.activa{ border-color:var(--stamp); box-shadow:0 0 22px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+html[data-skin="neon"] .doc-nombre, html[data-skin="neon"] .persona-tile .nombre-persona{ font-weight:600; font-size:1.06rem; letter-spacing:.02em; }
+html[data-skin="neon"] .avatar-persona{ background-blend-mode:normal; }
+html[data-skin="neon"] .btn-primario{ letter-spacing:.14em; text-transform:uppercase; font-family:var(--serif); font-weight:800; font-size:.78rem; box-shadow:0 0 20px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+html[data-skin="neon"] .btn-secundario{ letter-spacing:.12em; text-transform:uppercase; font-family:var(--serif); font-weight:600; font-size:.76rem; color:var(--seal); border-color:var(--seal); box-shadow:0 0 12px color-mix(in srgb, var(--seal) calc(var(--neon-glow) - 10%), transparent); }
+html[data-skin="neon"] .btn-prov{ border-color:var(--seal); color:var(--seal); }
+html[data-skin="neon"] .btn-prov.primario{ color:var(--sobre-acento); box-shadow:0 0 14px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+html[data-skin="neon"] .chip{ border-color:color-mix(in srgb, var(--seal) 70%, transparent); background:transparent; color:var(--text-light); }
+html[data-skin="neon"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); border-color:var(--stamp); box-shadow:0 0 14px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+html[data-skin="neon"] .campo input, html[data-skin="neon"] .campo select, html[data-skin="neon"] .input-busqueda{ border-color:color-mix(in srgb, var(--morado) 70%, transparent); }
+html[data-skin="neon"] .campo input:focus, html[data-skin="neon"] .input-busqueda:focus{ outline:none; border-color:var(--seal); box-shadow:0 0 14px color-mix(in srgb, var(--seal) var(--neon-glow), transparent); }
+html[data-skin="neon"] .modal{ border-top:1px solid var(--stamp); box-shadow:0 -8px 40px color-mix(in srgb, var(--stamp) calc(var(--neon-glow) - 18%), transparent); }
+html[data-skin="neon"] .toast{ box-shadow:0 0 22px color-mix(in srgb, var(--stamp) var(--neon-glow), transparent); }
+
+/* ---- chicle ---- */
+[data-skin="chicle"]{ --ink:#1E0B2E; --ink-2:#2E1246; --ink-3:#421B63; --paper:#FFEFFA; --text-ink:#2A0838; --stamp:#FF6BBA; --sobre-acento:#2A0838; --text-light:#FFEFFA; --text-dim:#DDBDEB; --seal:#4DF0C8; --amber:#FFD84D; --azul:#6BC1FF; --morado:#C39BFF; --stamp-dark:#C24A98; --borde-sutil:rgba(255,239,250,.10); --borde:rgba(255,107,186,.50); --borde-fuerte:rgba(77,240,200,.65); --topbar-fondo:#FF6BBA; --c1:#FF6BBA; --c2:#4DF0C8; --c3:#FFD84D; --c4:#6BC1FF; --c5:#C39BFF;
+  --serif:'Fredoka', 'Nunito', system-ui, sans-serif;
+  --sans:'Fredoka', 'Nunito', system-ui, sans-serif;
+  --fuente-marca:'Bagel Fat One', system-ui, sans-serif;
+  --r-pill:999px; --r-chip:999px; --r-avatar:50%; --r-avatar-mini:50%; --r-tarjeta:28px; --r-miniatura:20px;
+  --r-boton:999px; --r-campo:20px; --r-grupo:28px; --r-modal:34px; --r-caja:50%; --r-app-login:42px; --r-redondo:50%;
+  --sombra-ficha:0 0 0 5px var(--ink-2), 0 0 0 9px var(--stamp), 0 14px 22px color-mix(in srgb, var(--stamp) 40%, transparent);
+}
+html[data-tema="claro"] [data-skin="chicle"], html[data-tema="claro"][data-skin="chicle"]{ --ink:#FFF0F8; --ink-2:#FFFFFF; --ink-3:#FFE0F0; --paper:#FFFFFF; --text-ink:#3B0A45; --stamp:#FF5DAF; --sobre-acento:#3B0A45; --text-light:#3B0A45; --text-dim:#7A3F78; --seal:#0E9E86; --amber:#D98200; --azul:#2F86F0; --morado:#8E52F0; --stamp-dark:#CC2E86; --borde-sutil:rgba(59,10,69,.10); --borde:rgba(255,93,175,.55); --borde-fuerte:#FF5DAF; --topbar-fondo:#FF5DAF; --c1:#FF5DAF; --c2:#19C7A0; --c3:#FFB300; --c4:#5AAEFF; --c5:#B58CFF; }
+html[data-skin="chicle"]{ --fondo-login:var(--ink); }
+html[data-skin="chicle"]{ --fondo-login:radial-gradient(420px 380px at 8% 0%, color-mix(in srgb, var(--c1) 50%, transparent), transparent 70%), radial-gradient(440px 400px at 100% 18%, color-mix(in srgb, var(--c4) 46%, transparent), transparent 70%), radial-gradient(520px 440px at 40% 110%, color-mix(in srgb, var(--c3) 46%, transparent), transparent 70%), var(--ink); }
+/* Cada elemento repetido toma un caramelo distinto: rosa, menta, limón, celeste y lila */
+html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+1){ --caramelo:var(--c1); }
+html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+2){ --caramelo:var(--c2); }
+html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+3){ --caramelo:var(--c3); }
+html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+4){ --caramelo:var(--c4); }
+html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+5){ --caramelo:var(--c5); }
+html[data-skin="chicle"] body{ background-image:radial-gradient(circle, color-mix(in srgb, var(--c1) 30%, transparent) 4px, transparent 4.6px), radial-gradient(circle, color-mix(in srgb, var(--c4) 28%, transparent) 4px, transparent 4.6px); background-size:52px 52px; background-position:0 0, 26px 26px; }
+html[data-skin="chicle"] .topbar{ background:linear-gradient(90deg, var(--c1), var(--c5) 55%, var(--c4)); border-bottom:4px solid var(--ink-2); box-shadow:0 6px 0 color-mix(in srgb, var(--c1) 40%, transparent); backdrop-filter:none; }
+html[data-skin="chicle"] .topbar .marca, html[data-skin="chicle"] .btn-volver{ color:var(--sobre-acento); }
+html[data-skin="chicle"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.02em; }
+html[data-skin="chicle"] .btn-volver:active{ background:rgba(255,255,255,.35); }
+html[data-skin="chicle"] .btn-icono-top{ background:var(--paper); color:var(--sobre-acento); box-shadow:0 4px 0 rgba(42,8,56,.30); }
+html[data-skin="chicle"] .btn-icono-top:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(42,8,56,.30); }
+html[data-skin="chicle"] .topbar .avatar-persona{ box-shadow:0 0 0 3px var(--paper); }
+html[data-skin="chicle"] h1, html[data-skin="chicle"] h3{ font-weight:700; letter-spacing:0; }
+html[data-skin="chicle"] .persona-tile .avatar-persona{ box-shadow:0 0 0 5px var(--ink), 0 0 0 9px var(--caramelo, var(--stamp)), 0 14px 22px color-mix(in srgb, var(--caramelo, var(--stamp)) 42%, transparent); }
+html[data-skin="chicle"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin-top:8px; padding:3px 14px; border-radius:999px; background:var(--caramelo, var(--stamp)); color:var(--sobre-acento); font-weight:600; font-size:1rem; }
+html[data-skin="chicle"] .titulo-grupo{ display:inline-flex; width:fit-content; padding:5px 14px 5px 11px; border-radius:999px; background:var(--caramelo, var(--c1)); color:var(--sobre-acento); font-size:.82rem; font-weight:700; letter-spacing:.05em; box-shadow:0 3px 0 rgba(0,0,0,.16); }
+html[data-skin="chicle"] .titulo-grupo .punto-grupo{ background:var(--sobre-acento); }
+html[data-skin="chicle"] .doc-fila{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
+html[data-skin="chicle"] .galeria-pagina{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
+html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina):active{ transform:translateY(4px); box-shadow:0 2px 0 var(--caramelo, var(--c1)); }
+html[data-skin="chicle"] .lista-docs, html[data-skin="chicle"] .galeria-paginas{ gap:16px; }
+html[data-skin="chicle"] .categoria-barra{ border:3px solid #fff; box-shadow:0 6px 0 rgba(0,0,0,.20); font-weight:700; }
+html[data-skin="chicle"] .doc-nombre{ font-weight:600; font-size:1.02rem; }
+html[data-skin="chicle"] .chips-categorias{ padding:6px 6px 9px; }
+html[data-skin="chicle"] .chip{ border:3px solid var(--caramelo, var(--c1)); background:var(--ink-2); color:var(--text-light); font-weight:600; padding:5px 14px; }
+html[data-skin="chicle"] .chip.activo{ background:var(--caramelo, var(--c1)); color:var(--sobre-acento); box-shadow:0 4px 0 color-mix(in srgb, var(--caramelo, var(--c1)) 55%, #000); }
+html[data-skin="chicle"] .btn-primario{ font-weight:700; font-size:1rem; padding:14px; box-shadow:0 5px 0 var(--stamp-dark); }
+html[data-skin="chicle"] .btn-secundario{ font-weight:600; font-size:1rem; padding:14px; border:3px solid var(--c1); background:var(--ink-2); color:var(--text-light); box-shadow:0 5px 0 color-mix(in srgb, var(--c1) 60%, transparent); }
+html[data-skin="chicle"] .btn-primario:active, html[data-skin="chicle"] .btn-secundario:active{ transform:translateY(4px); box-shadow:0 1px 0 var(--stamp-dark); }
+html[data-skin="chicle"] .btn-prov{ border:2px solid var(--c4); color:var(--text-light); font-weight:600; }
+html[data-skin="chicle"] .btn-prov.primario{ color:var(--sobre-acento); border-color:var(--stamp); box-shadow:0 3px 0 var(--stamp-dark); }
+html[data-skin="chicle"] :is(.btn-grande, .btn-google){ border:3px solid var(--c1); box-shadow:0 6px 0 var(--c1); }
+html[data-skin="chicle"] .ajustes > .grupo{ --g:var(--c1); }
+html[data-skin="chicle"] .ajustes > .grupo:nth-child(even){ --g:var(--c2); }
+html[data-skin="chicle"] .ajustes > .grupo:nth-child(4n){ --g:var(--c5); }
+html[data-skin="chicle"] .bloque-copias .grupo{ --g:var(--c4); }
+html[data-skin="chicle"] .ajustes .grupo{ border:3px solid var(--g, var(--c1)); box-shadow:0 6px 0 var(--g, var(--c1)); background:var(--ink-2); margin-bottom:6px; }
+html[data-skin="chicle"] .ajustes .grupo > * + *{ border-top:2px dashed color-mix(in srgb, var(--g, var(--c1)) 65%, transparent); }
+html[data-skin="chicle"] .icono-accion{ box-shadow:0 3px 0 rgba(0,0,0,.20); }
+html[data-skin="chicle"] .opcion-tema{ border-width:3px; }
+html[data-skin="chicle"] .modal{ background:linear-gradient(90deg, var(--c1), var(--c3), var(--c2), var(--c4), var(--c5)) top / 100% 8px no-repeat, var(--ink-2); padding-top:30px; box-shadow:0 -10px 34px color-mix(in srgb, var(--c1) 35%, transparent); }
+html[data-skin="chicle"] .campo input, html[data-skin="chicle"] .campo select, html[data-skin="chicle"] .input-busqueda{ border:3px solid color-mix(in srgb, var(--c1) 70%, transparent); background:var(--ink-3); padding-left:16px; }
+html[data-skin="chicle"] .campo input:focus, html[data-skin="chicle"] .input-busqueda:focus{ outline:none; border-color:var(--c4); }
+html[data-skin="chicle"] .toast{ background:var(--c3); color:var(--sobre-acento); border:3px solid var(--paper); box-shadow:0 5px 0 rgba(0,0,0,.20); }
+html[data-skin="chicle"] .toast.error{ background:var(--stamp); }
+
+/* ---- bosque ---- */
+[data-skin="bosque"]{ --ink:#0F1E19; --ink-2:#172D26; --ink-3:#213D34; --paper:#F0EBD9; --text-ink:#10231C; --stamp:#EE9B4A; --sobre-acento:#10231C; --text-light:#F0EBD9; --text-dim:#A6BCB0; --seal:#7DB896; --amber:#E7B24B; --azul:#7EA5C8; --morado:#B399D3; --stamp-dark:#D0813A; --borde-sutil:rgba(240,235,217,.08); --borde:rgba(240,235,217,.17); --borde-fuerte:rgba(240,235,217,.28); --topbar-fondo:rgba(23,45,38,.95); 
+  --serif:'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --sans:'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Fraunces', Georgia, serif;
+  --r-pill:999px; --r-chip:999px; --r-avatar:46px 10px 46px 10px; --r-avatar-mini:16px 4px 16px 4px; --r-tarjeta:24px 6px 24px 6px; --r-miniatura:16px 4px 16px 4px;
+  --r-boton:999px; --r-campo:16px; --r-grupo:24px 8px 24px 8px; --r-modal:30px; --r-caja:12px 4px 12px 4px; --r-app-login:34px 8px 34px 8px; --r-redondo:50%;
+  --sombra-ficha:0 14px 28px rgba(0,0,0,.26);
+}
+html[data-tema="claro"] [data-skin="bosque"], html[data-tema="claro"][data-skin="bosque"]{ --ink:#F1EEDF; --ink-2:#FAF7EC; --ink-3:#E4E0CB; --paper:#FBF8EE; --text-ink:#17291F; --stamp:#D9822B; --sobre-acento:#17291F; --text-light:#17291F; --text-dim:#52665A; --seal:#3F7A5A; --amber:#9C6A12; --azul:#3E6C93; --morado:#6F5798; --stamp-dark:#B96A1E; --borde-sutil:rgba(23,41,31,.09); --borde:rgba(23,41,31,.18); --borde-fuerte:rgba(23,41,31,.30); --topbar-fondo:rgba(228,224,203,.95);  }
+html[data-skin="bosque"]{ --fondo-login:var(--ink); }
+html[data-skin="bosque"] body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background-color:color-mix(in srgb, var(--text-light) 6%, transparent); mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 21C7 17 4 12 8 6c3-3 8-3 11 0-1 8-5 13-7 15z'/%3E%3C/g%3E%3C/svg%3E"); -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg transform='translate(20,20)'%3E%3Cpath fill='%23fff' d='M12 21C7 17 4 12 8 6c3-3 8-3 11 0-1 8-5 13-7 15z'/%3E%3C/g%3E%3C/svg%3E"); mask-repeat:repeat; -webkit-mask-repeat:repeat; mask-size:64px 64px; -webkit-mask-size:64px 64px; }
+html[data-skin="bosque"] .topbar{ border-bottom:none; box-shadow:0 8px 24px rgba(0,0,0,.18); }
+html[data-skin="bosque"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:0; }
+html[data-skin="bosque"] h1, html[data-skin="bosque"] h3{ font-weight:700; letter-spacing:-.01em; }
+html[data-skin="bosque"] .titulo-grupo{ font-family:var(--serif); text-transform:none; font-style:italic; font-weight:600; letter-spacing:0; font-size:1.05rem; }
+html[data-skin="bosque"] .doc-fila{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border:1px solid var(--borde); }
+html[data-skin="bosque"] .galeria-pagina{ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border:1px solid var(--borde); }
+html[data-skin="bosque"] .doc-nombre, html[data-skin="bosque"] .persona-tile .nombre-persona{ font-family:var(--serif); font-weight:600; font-size:1.02rem; }
+html[data-skin="bosque"] .categoria-barra{ font-family:var(--serif); font-weight:600; box-shadow:0 10px 22px rgba(0,0,0,.24); }
+html[data-skin="bosque"] .btn-primario, html[data-skin="bosque"] .btn-secundario{ padding:14px; font-weight:700; }
+html[data-skin="bosque"] .chip{ border-color:var(--borde); }
+html[data-skin="bosque"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); border-color:var(--stamp); }
+html[data-skin="bosque"] .ajustes .grupo{ border-color:var(--borde); }
+html[data-skin="bosque"] .modal{ border-top:1px solid var(--borde); }
+html[data-skin="bosque"] .campo input, html[data-skin="bosque"] .campo select, html[data-skin="bosque"] .input-busqueda{ padding-left:16px; }
+
+/* Altura del hueco del nombre en cada estilo (ver .persona-tile-clic) */
+html[data-skin="pasaporte"] .persona-tile-clic{ --altura-nombre:calc(1.12rem * 1.2); }
+html[data-skin="neon"] .persona-tile-clic{ --altura-nombre:calc(1.06rem * 1.2); }
+html[data-skin="bosque"] .persona-tile-clic{ --altura-nombre:calc(1.02rem * 1.2); }
+html[data-skin="pixeles"] .persona-tile-clic{ --altura-nombre:calc(1.05rem * 1.2); }
+html[data-skin="chicle"] .persona-tile-clic{ --altura-nombre:calc(.95rem * 1.2 + 14px); }
+html[data-skin="comic"] .persona-tile-clic{ --altura-nombre:calc(1.3rem * 1.2 + 16px); }
+/* ---- comic ----
+   Blanco y negro de viñeta. Tema claro: hoja blanca con trama de puntos ("papel pintado" de
+   tebeo) y tinta negra. Tema oscuro: el negativo — fondo negro y tinta blanca. Todo va con
+   contorno grueso y sombra dura, y lo que en la app es de colores (categorías, personas, avisos)
+   se pasa a grises/rayado para que no se cuele ningún color. Solo las fotos de los documentos
+   conservan el suyo, porque hay que poder leerlas. --trama es el color de los puntitos. */
+[data-skin="comic"]{ --ink:#0A0A0A; --ink-2:#121212; --ink-3:#2A2A2A; --paper:#FFFFFF; --text-ink:#000000; --stamp:#FFFFFF; --sobre-acento:#000000; --text-light:#FFFFFF; --text-dim:#C8C8C8; --seal:#FFFFFF; --amber:#B5B5B5; --azul:#DADADA; --morado:#8F8F8F; --stamp-dark:#D0D0D0; --borde-sutil:rgba(255,255,255,.30); --borde:#FFFFFF; --borde-fuerte:#FFFFFF; --topbar-fondo:#0A0A0A; --trama:rgba(255,255,255,.17);
+  --serif:'Bangers', 'Comic Sans MS', 'Marker Felt', cursive;
+  --sans:'Comic Neue', 'Comic Sans MS', 'Marker Felt', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Luckiest Guy', 'Comic Sans MS', 'Marker Felt', cursive;
+  --r-pill:14px; --r-chip:18px; --r-avatar:8px; --r-avatar-mini:6px; --r-tarjeta:6px; --r-miniatura:3px;
+  --r-boton:8px; --r-campo:6px; --r-grupo:6px; --r-modal:8px; --r-caja:6px; --r-app-login:10px; --r-redondo:50%;
+  --sombra-ficha:5px 5px 0 var(--text-light);
+}
+html[data-tema="claro"] [data-skin="comic"], html[data-tema="claro"][data-skin="comic"]{ --ink:#FFFFFF; --ink-2:#FFFFFF; --ink-3:#E4E4E4; --paper:#FFFFFF; --text-ink:#000000; --stamp:#000000; --sobre-acento:#FFFFFF; --text-light:#000000; --text-dim:#3A3A3A; --seal:#000000; --amber:#5C5C5C; --azul:#2E2E2E; --morado:#7A7A7A; --stamp-dark:#000000; --borde-sutil:rgba(0,0,0,.30); --borde:#000000; --borde-fuerte:#000000; --topbar-fondo:#FFFFFF; --trama:rgba(0,0,0,.21); }
+html[data-skin="comic"]{ --fondo-login:radial-gradient(circle, var(--trama) 2px, transparent 2.6px) 0 0 / 18px 18px, radial-gradient(circle, var(--trama) 2px, transparent 2.6px) 9px 9px / 18px 18px, var(--ink); }
+/* El papel pintado: dos capas de puntos desplazadas media casilla forman una red en rombo */
+html[data-skin="comic"] body{ background-image:radial-gradient(circle, var(--trama) 1.7px, transparent 2.2px), radial-gradient(circle, var(--trama) 1.7px, transparent 2.2px); background-size:16px 16px; background-position:0 0, 8px 8px; }
+/* Letra de tebeo: Bangers solo trae un peso, así que nada de negritas falsas */
+html[data-skin="comic"] :is(h1, h2, h3, .topbar .marca, .categoria-barra, .persona-tile .nombre-persona, .titulo-grupo, .doc-nombre, .chip, .btn-primario, .btn-secundario, .btn-grande, .titular-sello, .ajustes-titulo, .aviso-caducidad-banner){ font-family:var(--serif); font-weight:400; letter-spacing:.05em; }
+html[data-skin="comic"] .topbar{ background-image:radial-gradient(circle, var(--trama) 1.1px, transparent 1.6px); background-size:6px 6px; border-bottom:4px solid var(--text-light); backdrop-filter:none; }
+html[data-skin="comic"] .topbar .marca{ font-size:1.4rem; }
+html[data-skin="comic"] .topbar .marca span#titulo-topbar{ font-weight:400; letter-spacing:.05em; }
+html[data-skin="comic"] .btn-icono-top{ border:3px solid var(--text-light); background:var(--ink-2); box-shadow:3px 3px 0 var(--text-light); }
+html[data-skin="comic"] .btn-icono-top:active{ transform:translate(3px,3px); box-shadow:none; }
+/* Personas: recuadro con su rótulo debajo, en gris (aunque la persona tenga color o foto) */
+html[data-skin="comic"] .avatar-persona{ border:3px solid var(--text-light); }
+html[data-skin="comic"] .persona-tile .avatar-persona{ border-width:4px; box-shadow:5px 5px 0 var(--text-light); }
+html[data-skin="comic"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin:9px auto 0; padding:1px 12px 0; background:var(--ink-2); color:var(--text-light); border:3px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1.3rem; }
+/* Rótulo de cada grupo de documentos: como el recuadro de texto de una viñeta */
+html[data-skin="comic"] .titulo-grupo{ display:inline-flex; width:fit-content; margin-bottom:14px; padding:3px 12px 1px; background:var(--ink-2); color:var(--text-light); border:3px solid var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1.2rem; text-transform:none; letter-spacing:.06em; }
+/* Fichas: viñetas con contorno grueso y sombra dura. El color de la categoría pasa a un velo gris
+   con trama, por detrás del contenido (isolation + z-index:-1 lo dejan sobre el fondo y bajo el texto). */
+html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); isolation:isolate; position:relative; }
+html[data-skin="comic"] :is(.doc-fila, .galeria-pagina){ background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); border-radius:8px 14px 9px 13px / 13px 9px 14px 8px; }
+/* Trama de puntos suave y un degradado apenas perceptible por encima del color de la categoría (el color se mantiene uniforme) */
+html[data-skin="comic"] :is(.doc-fila, .galeria-pagina)::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle, rgba(0,0,0,.13) 1.1px, transparent 1.6px) 0 0 / 7px 7px, linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)); }
+html[data-skin="comic"] :is(.doc-fila, .galeria-pagina):active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--text-light); }
+html[data-skin="comic"] .lista-docs{ gap:11px; }
+html[data-skin="comic"] .lista-docs .doc-fila.inicio-doc:not(:first-child){ margin-top:13px; }
+html[data-skin="comic"] .doc-fila .miniatura, html[data-skin="comic"] .galeria-pagina .miniatura{ border:3px solid var(--text-light); margin:10px 10px 0; }
+html[data-skin="comic"] .doc-nombre{ font-size:1.25rem; }
+html[data-skin="comic"] .doc-fila .badge-mini:not(.aviso):not(.caducado){ border:2px solid var(--text-light); background:var(--ink-3); color:var(--text-light); }
+html[data-skin="comic"] .doc-fila .badge-mini{ font-weight:700; border-radius:10px; }
+/* Avisos de caducidad sin rojo ni naranja: "por caducar" = fondo rayado, "caducado" = fondo macizo */
+html[data-skin="comic"] .aviso-caducidad-banner{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-size:1.05rem; margin-bottom:18px; }
+/* Barras de categoría de la portada: en gris, con trama que se desvanece hacia la izquierda */
+/* Barras de categoría: la pintura (color + pinceladas + contorno + sombra) va en ::before, que es lo que se
+   deforma con el filtro suave; el texto queda encima, nítido. El color llega por --color-categoria. */
+html[data-skin="comic"] .categoria-barra{ background:transparent !important; box-shadow:none; border:none; isolation:isolate; position:relative; font-size:1.5rem; letter-spacing:.06em; text-shadow:2px 2px 0 #000; }
+html[data-skin="comic"] .categoria-barra:nth-child(3n+2)::before{ filter:url(#trazo-b); }
+html[data-skin="comic"] .categoria-barra:nth-child(3n+3)::before{ filter:url(#trazo-c); }
+html[data-skin="comic"] .categoria-barra::before{ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; border:3px solid var(--text-light); border-radius:10px 6px 12px 7px / 7px 12px 6px 10px; box-shadow:5px 5px 0 var(--text-light); filter:url(#trazo-a);
+  background:
+    radial-gradient(circle, rgba(0,0,0,.13) 1.3px, transparent 1.8px) 0 0 / 8px 8px,
+    linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)),
+    var(--color-categoria, #888); }
+html[data-skin="comic"] .categoria-barra > *{ position:relative; }
+html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); }
+html[data-skin="comic"] .categoria-barra:active::before{ box-shadow:2px 2px 0 var(--text-light); }
+/* Filtro de categorías: globitos de texto (los de categoría, en gris) */
+html[data-skin="comic"] .chips-categorias{ padding:6px 6px 9px; }
+html[data-skin="comic"] .chip{ border:3px solid var(--text-light); background:var(--ink-2); color:var(--text-light); box-shadow:3px 3px 0 var(--text-light); font-size:1rem; padding:4px 14px 2px; }
+html[data-skin="comic"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
+html[data-skin="comic"] .chip.chip-categoria{ filter:url(#trazo-chip-a); color:#fff; text-shadow:1px 1px 0 #000; opacity:.95; }
+html[data-skin="comic"] .chip.chip-categoria:nth-child(even){ filter:url(#trazo-chip-b); }
+html[data-skin="comic"] .chip.chip-categoria.activo{ opacity:1; box-shadow:3px 3px 0 var(--text-light), inset 0 0 0 2px #fff; }
+/* Botones */
+html[data-skin="comic"] :is(.btn-primario, .btn-secundario){ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-size:1.2rem; padding:11px 12px 9px; }
+html[data-skin="comic"] .btn-primario{ background:var(--stamp); color:var(--sobre-acento); }
+html[data-skin="comic"] .btn-secundario{ background:var(--ink-2); color:var(--text-light); }
+html[data-skin="comic"] :is(.btn-primario, .btn-secundario):active{ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--text-light); }
+html[data-skin="comic"] :is(.btn-grande, .btn-google){ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); }
+html[data-skin="comic"] .btn-prov{ border:3px solid var(--text-light); background:var(--ink-2); color:var(--text-light); font-weight:700; box-shadow:2px 2px 0 var(--text-light); }
+html[data-skin="comic"] .btn-prov.primario{ background:var(--stamp); color:var(--sobre-acento); }
+/* Ajustes y ventanas */
+html[data-skin="comic"] .ajustes .grupo{ border:3px solid var(--text-light); box-shadow:5px 5px 0 var(--text-light); background:var(--ink-2); margin-bottom:8px; }
+html[data-skin="comic"] .ajustes .grupo > * + *{ border-top:3px solid var(--text-light); }
+html[data-skin="comic"] .fila-cat .icono-accion{ color:#fff; }
+html[data-skin="comic"] .opcion-tema{ border:3px solid var(--text-light); }
+html[data-skin="comic"] .opcion-tema.activa{ box-shadow:5px 5px 0 var(--text-light); }
+html[data-skin="comic"] .modal{ border-top:5px solid var(--text-light); }
+html[data-skin="comic"] .barra-seleccion{ border-top:4px solid var(--text-light); background:var(--ink-2); }
+html[data-skin="comic"] :is(.campo input, .campo select, .input-busqueda){ border:3px solid var(--text-light); background:var(--ink-2); font-weight:700; }
+/* Texto suelto sobre el papel pintado: un halo del color del fondo para que los puntitos no lo estorben */
+html[data-skin="comic"] :is(#vista-login p, .estado-vacio p){ font-weight:700; text-shadow:0 0 3px var(--ink), 0 0 6px var(--ink), 0 0 9px var(--ink); }
+html[data-skin="comic"] .icono-login{ border:4px solid var(--text-light); box-shadow:6px 6px 0 var(--text-light); }
+html[data-skin="comic"] .toast{ border:3px solid var(--text-light); box-shadow:4px 4px 0 var(--text-light); font-family:var(--sans); font-weight:700; }
+/* Nada de color suelto: logos y marcas en gris, y los rojos/naranjas fijos pasan a negro/blanco */
+html[data-skin="comic"] :is(.icono-login, .marca-prov, .icono-accion.tema){ filter:grayscale(1) contrast(1.1); }
+html[data-skin="comic"] .icono-accion:not(.sigla):not(.tema){ background:var(--stamp); color:var(--sobre-acento); border:2px solid var(--text-light); }
+html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong, .opcion-menu.peligro, .icon-btn-persona-tile:last-child){ color:var(--text-light); }
+html[data-skin="comic"] :is(.estado-prov.aviso, .fila-accion.salir strong){ font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+html[data-skin="comic"] .aviso-caducidad-persona{ border:2px solid var(--text-light); font-family:var(--serif); }
+
+/* ---- metálico ----
+   Paneles de nave espacial: metal remachado, una sola esquina cortada (con su propio marco,
+   no un canto desnudo) en botones y fichas, placas de nombre con "tornillos" a los lados,
+   avatares como portillas y letra técnica (Share Tech Mono / Orbitron para el título). */
+/* La fila del nombre no reserva siempre dos líneas (con un nombre corto quedaba un hueco grande
+   y vacío antes de los botones de editar/eliminar, y parecía que fueran de la ficha de abajo):
+   crece solo lo que el nombre necesite —una línea si cabe en una, dos si hace falta— con
+   minmax(mínimo de una línea, auto). El tope de dos líneas sigue en .nombre-persona (max-height),
+   así que nunca pasa de ahí. */
+html[data-skin="metalico"] .persona-tile-clic{
+  --altura-nombre:calc(.78rem * 1.2 + 8px); /* una línea + el relleno vertical de la placa (4px arriba y abajo) */
+  grid-template-rows:auto minmax(var(--altura-nombre), auto);
+}
+[data-skin="metalico"]{
+  --ink:#24272B; --ink-2:#2F3236; --ink-3:#3A3E43; --paper:#E7E9EC; --text-ink:#1A1C1F;
+  --stamp:#E8B923; --sobre-acento:#1A1C1F; --text-light:#DDE1E5; --text-dim:#B3BAC2;
+  --seal:#4FD8B8; --amber:#E8B923; --azul:#5B8DEF; --morado:#9C6FE0; --stamp-dark:#B38A13;
+  --borde-sutil:rgba(255,255,255,.08); --borde:#565C62; --borde-fuerte:#C3C9CF; --topbar-fondo:rgba(47,50,54,.92);
+  --serif:'Share Tech Mono', ui-monospace, 'Courier New', monospace;
+  --sans:'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fuente-marca:'Orbitron', var(--sans);
+  --r-pill:6px; --r-chip:6px; --r-avatar:50%; --r-avatar-mini:50%; --r-tarjeta:6px; --r-miniatura:4px;
+  --r-boton:6px; --r-campo:5px; --r-grupo:8px; --r-modal:10px; --r-caja:6px; --r-app-login:14px; --r-redondo:50%;
+}
+html[data-tema="claro"] [data-skin="metalico"], html[data-tema="claro"][data-skin="metalico"]{
+  --ink:#D9DCDF; --ink-2:#CBCFD3; --ink-3:#BDC1C6; --paper:#F2F3F5; --text-ink:#1A1C1F;
+  --stamp:#C9891B; --text-light:#1A1C1F; --text-dim:#474C52;
+  --seal:#0E7A5F; --amber:#C9891B; --azul:#2F5FC0; --morado:#6A3FC0; --stamp-dark:#8A6212;
+  --borde-sutil:rgba(26,28,31,.12); --borde:#7D848C; --borde-fuerte:#1A1C1F; --topbar-fondo:rgba(203,207,211,.92);
+}
+html[data-skin="metalico"]{ --fondo-login:var(--ink); --r-avatar:6px; --r-avatar-mini:6px; }
+html[data-skin="metalico"] :is(.titulo-grupo, .chips-personas .opcion-persona){ color:var(--text-light); }
+html[data-skin="metalico"] body{ background-image:linear-gradient(color-mix(in srgb, var(--ink) 55%, transparent), color-mix(in srgb, var(--ink) 55%, transparent)), url('skin-metalico-fondo.webp'); background-size:cover; background-position:center; background-repeat:no-repeat; }
+@media (orientation:portrait){
+  /* en vertical, "cover" recorta demasiado los laterales (justo donde están las dos tiras de luz
+     de la foto) porque la imagen es más ancha que la pantalla en proporción, y "contain" (probado
+     antes) deja una franja lisa demasiado grande arriba y abajo, sobre todo si encima hay barra de
+     categorías. Término medio: un poco más ancha que la pantalla (120%), así se recorta muy poco
+     de los lados (las tiras de luz quedan casi enteras) y el hueco que sobra en alto queda pequeño.
+     Ese hueco se manda entero abajo (background-position:top): centrado se repartía mitad arriba
+     mitad abajo, y la mitad de arriba quedaba detrás de la topbar —que aquí no lleva desenfoque
+     (backdrop-filter:none) y es algo transparente— así que se notaba el corte justo por debajo. */
+  html[data-skin="metalico"] body{ background-size:120% auto; background-position:top; }
+}
+html[data-skin="metalico"] .topbar{ border-bottom:none; backdrop-filter:none; }
+/* Misma cinta de aviso amarilla/negra que la barra de abajo, pegada al borde inferior (el sitio
+   donde estaba el border-bottom), dentro del propio padding de la topbar. */
+html[data-skin="metalico"] .topbar::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:6px;
+  background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px);
+}
+html[data-skin="metalico"] .topbar .marca span#titulo-topbar{ font-weight:700; letter-spacing:.03em; text-shadow:1px 1px 0 rgba(0,0,0,.35); }
+/* ===== El panel de metal (dibujo propio, en archivos aparte) =====
+   - skin-metalico-panel.webp: panel entero con el pozo central relleno de metal → botones de
+     icono (barra de abajo y los de arriba). El icono y el texto van GRABADOS en ese pozo.
+   - skin-metalico-marco.webp: el mismo panel con el pozo HUECO → avatares: la foto o el color
+     de la persona se ve por el hueco, como una pantalla metida en el metal.
+   - skin-metalico-placa(-marco).webp: versión sencilla de 120×120 para border-image a 9 trozos
+     (esquinas fijas, lados estirados; 160×160, rebanadas 44 44 34 34 porque la esquina de arriba-dcha.
+     lleva el chaflán y el del hueco, en paralelo) → fichas anchas, chips y botones de texto, que no tienen
+     la proporción del panel. La "-marco" deja el centro hueco para que se vea el color propio
+     de la ficha (categoría, documento, botón principal).
+   Proporción del panel: 900×720 (alto = 0,8 del ancho). El pozo ocupa del 16,7% al 83,3% en
+   horizontal y del 17,5% al 77% en vertical, y está centrado: en los botones basta con
+   centrar el icono y el texto.
+   Por qué WebP y no SVG: el dibujo lleva grano de metal cepillado (un filtro feTurbulence), que
+   es caro de recalcular — y como estas imágenes se ven a muchos tamaños distintos (el mismo
+   avatar de 44 a 210px, botones de varios tamaños...), el navegador no podía reutilizar un
+   mismo dibujo ya pintado entre un tamaño y otro y lo recalculaba una y otra vez: iba muy lento
+   en el móvil. Pintado una sola vez y guardado como imagen, el resultado se ve igual pero el
+   móvil solo tiene que colocarla, no recalcular nada. En PNG el grano pesaba muchísimo (2,7 MB
+   el panel); en WebP, con el mismo aspecto, pesa 50 veces menos. (skin-metalico-pozo.svg no
+   lleva ese filtro —es solo una forma plana, para recortar— así que se queda como SVG.) */
+html[data-skin="metalico"]{
+  --panel-metal:url('skin-metalico-panel.webp'); --marco-metal:url('skin-metalico-marco.webp');
+  --placa-metal:url('skin-metalico-placa.webp'); --placa-hueca:url('skin-metalico-placa-marco.webp');
+  /* Grabado: letra oscura y, con la luz viniendo de arriba, solo un filo fino de sombra encima
+     (medio píxel: en el móvil es un único píxel real) y el filo de abajo cogiendo brillo, todo en
+     vertical. Con desplazamientos en diagonal de 1px la letra pequeña se desdoblaba y se veía
+     borrosa. */
+  --grabado:#2b2f33;
+  --sombra-grabado:0 -.5px 0 rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.6);
+  --filtro-grabado:drop-shadow(0 -.5px 0 rgba(0,0,0,.35)) drop-shadow(0 1px 0 rgba(255,255,255,.6));
+}
+/* Botones de icono: el panel entero, con el icono (y el texto) grabados en el pozo */
+html[data-skin="metalico"] .btn-icono-top{
+  background:var(--panel-metal) center/100% 100% no-repeat; border:none; border-radius:0; box-shadow:none;
+  width:56px; height:auto; aspect-ratio:900/720; padding:0; color:var(--grabado);
+}
+html[data-skin="metalico"] .btn-icono-top > svg{ filter:var(--filtro-grabado); }
+html[data-skin="metalico"] .btn-icono-top.btn-barra{ width:auto; gap:2px; font-size:.66rem; font-weight:700; letter-spacing:.02em; line-height:1; text-shadow:var(--sombra-grabado); }
+html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:20px; height:20px; }
+/* En apaisado el panel entero (con su proporción casi cuadrada) hace la barra altísima y tapa los
+   nombres: los botones pasan a la placa alargada de metal (la de los botones secundarios, con su
+   chaflán), repartidos a todo el ancho, con el icono AL LADO del texto, grabados los dos. */
+@media (orientation:landscape) and (max-height:520px){
+  html[data-skin="metalico"] .barra-botones{ gap:8px; }
+  html[data-skin="metalico"] .btn-icono-top.btn-barra{
+    flex:1; width:auto; height:40px; aspect-ratio:auto; flex-direction:row; justify-content:center; gap:8px; padding:0 8px;
+    background:none; border-style:solid; border-width:9px; border-image:var(--placa-metal) 110 110 85 85 fill / 11.6px 11.6px 9px 9px stretch;
+    font-size:.8rem;
+  }
+  html[data-skin="metalico"] .btn-icono-top.btn-barra svg{ width:18px; height:18px; }
+  html[data-skin="metalico"] .barra-inferior.barra-inferior::before{ margin-bottom:5px; } /* clase doble: la regla general de la cinta va más abajo */
+}
+
+/* Avatares grandes de la portada: el marco con el pozo hueco por encima (::after) y la foto o
+   el color de la persona recortado al hueco (content-box). El color va en línea con el atajo
+   "background:", que vuelve a poner el recorte por defecto: por eso el !important.
+   El relleno en % se calcularía sobre el contenedor, no sobre el avatar: --av es el ancho real
+   del avatar (100% del hueco, con su tope de 210px, o 150px cuando hay tres personas). El
+   relleno deja la zona de la foto EXACTAMENTE del tamaño del pozo, que es CUADRADO (600×600
+   del dibujo de 900×891 de skin-metalico-marco.svg): las fotos de persona son cuadradas en
+   todos los estilos, así que la misma foto encaja entera aquí y en cualquier otro estilo. Solo
+   el chaflán de adorno tapa su esquina de arriba a la derecha. */
+html[data-skin="metalico"] .avatar-persona{ border:2px solid var(--borde-fuerte); }
+html[data-skin="metalico"] .persona-tile .avatar-persona{
+  --av:min(100%, 210px);
+  border:none; border-radius:0; box-shadow:none; aspect-ratio:900/891;
+  padding:calc(var(--av) * .14) calc(var(--av) * .1667) calc(var(--av) * .1833) calc(var(--av) * .1667);
+  background-clip:content-box !important; background-origin:content-box !important;
+  /* el hueco para la foto es un rectángulo y el chaflán grande se come su esquina de arriba a
+     la derecha: con esta máscara (el propio marco + la forma del pozo) no asoma nada fuera */
+  -webkit-mask:var(--marco-metal) center/100% 100% no-repeat, url('skin-metalico-pozo.svg') center/100% 100% no-repeat;
+  mask:var(--marco-metal) center/100% 100% no-repeat, url('skin-metalico-pozo.svg') center/100% 100% no-repeat;
+}
+html[data-skin="metalico"] .grid-personas.pocas.tres .persona-tile .avatar-persona{ --av:min(100%, 150px); }
+html[data-skin="metalico"] .persona-tile .avatar-persona::after{
+  content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:var(--marco-metal) center/100% 100% no-repeat;
+}
+html[data-skin="metalico"] .persona-tile .avatar-persona > :not(.aviso-caducidad-persona){ position:relative; z-index:2; }
+html[data-skin="metalico"] .persona-tile .avatar-persona .aviso-caducidad-persona{ z-index:3; }
+
+/* Fichas anchas, chips y botones de texto: placa a 9 trozos. --bm es el grosor del marco; el
+   recorte (clip-path) quita las esquinas que quedan fuera del canto —la grande arriba a la
+   derecha mide 30/34 del marco, las pequeñas 6/34— para que el color propio no asome por ahí;
+   un píxel más hondo que el dibujo, si no asoma un hilo de color por el suavizado del canto. */
+html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-secundario, .btn-grande, .btn-google, .chip){
+  border-style:solid; border-width:var(--bm); border-radius:0; box-shadow:none;
+  clip-path:polygon(calc(var(--bm) * .18 + .5px) 0, calc(100% - var(--bm) * .88 - 1px) 0, 100% calc(var(--bm) * .88 + 1px), 100% calc(100% - var(--bm) * .18 - .5px),
+    calc(100% - var(--bm) * .18 - .5px) 100%, calc(var(--bm) * .18 + .5px) 100%, 0 calc(100% - var(--bm) * .18 - .5px), 0 calc(var(--bm) * .18 + .5px));
+}
+html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina){ --bm:14px; }
+html[data-skin="metalico"] .categoria-barra{ --bm:12px; padding:4px 10px; }
+html[data-skin="metalico"] :is(.btn-primario, .btn-secundario){ --bm:11px; padding:2px 6px; }
+html[data-skin="metalico"] :is(.btn-grande, .btn-google){ --bm:14px; }
+html[data-skin="metalico"] .chip{ --bm:8px; padding:0 6px; }
+/* Con su propio color dentro (la placa hueca): categorías, documentos, el botón principal
+   (ámbar), el chip activo y los chips de categoría.
+   border-image-slice va en PÍXELES DEL PROPIO ARCHIVO, no en unidades del dibujo original: el
+   dibujo se hizo sobre un lienzo de 160×160, pero skin-metalico-placa(-marco).webp se generó ya
+   pintado a 400×400 (×2,5, para que se viera nítido) — por eso el recorte es 110/85 (44/34 del
+   dibujo × 2,5), no 44/34. border-image-WIDTH (lo de después de la barra) es aparte, en px de
+   pantalla, y no cambia con la resolución del archivo. Si se vuelve a rasterizar con otra escala
+   (ver rasterizar.js, scratchpad de la sesión del 2026-09-28), estos números hay que recalcularlos. */
+html[data-skin="metalico"] :is(.doc-fila, .galeria-pagina, .categoria-barra, .btn-primario, .btn-grande, .btn-google, .chip.activo, .chip.chip-categoria){
+  border-image:var(--placa-hueca) 110 110 85 85 / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch;
+}
+/* Metal por dentro, con el texto grabado: botón secundario y chips sin seleccionar */
+html[data-skin="metalico"] :is(.btn-secundario, .chip:not(.activo):not(.chip-categoria)){
+  border-image:var(--placa-metal) 110 110 85 85 fill / calc(var(--bm) * 1.294) calc(var(--bm) * 1.294) var(--bm) var(--bm) stretch; background:none;
+  color:var(--grabado); text-shadow:var(--sombra-grabado); font-weight:700;
+}
+/* Barras de categoría: chaflán más hondo, con su propia placa (dibujada sobre un lienzo de
+   160×160, chaflán de 60 y hueco achaflanado en paralelo, pero guardada ya pintada a 400×400,
+   ×2,5 — de ahí que el recorte sea 185/85 y no 74/34, igual que arriba). A 0,36 px de PANTALLA
+   por unidad de DIBUJO: rebanadas de 74 → 26,6px (arriba y dcha., donde cabe el chaflán) y
+   34 → 12,2px (abajo e izq.); el recorte del propio elemento quita la esquina que queda fuera:
+   60 → 21,6px, y las pequeñas 6 → 2,2px. El grosor real del marco (--bm, 12px) no cambia: la
+   parte de más de arriba y la dcha. es hueco y deja ver el color.
+   (Clase repetida a propósito: la regla general de las placas con color es un :is() que incluye
+   .chip.activo, y :is() toma la especificidad de su argumento más fuerte — dos clases —, así
+   que con una sola clase esta regla perdía aunque vaya después.) */
+html[data-skin="metalico"] .categoria-barra.categoria-barra{
+  border-image:url('skin-metalico-placa-cat.webp') 185 185 85 85 / 26.6px 26.6px 12.2px 12.2px stretch;
+  clip-path:polygon(2.7px 0, calc(100% - 22.6px) 0, 100% 22.6px, 100% calc(100% - 2.7px), calc(100% - 2.7px) 100%, 2.7px 100%, 0 calc(100% - 2.7px), 0 2.7px);
+}
+html[data-skin="metalico"] .chip.activo{ background:var(--stamp); color:var(--sobre-acento); }
+html[data-skin="metalico"] .categoria-barra{ font-weight:700; letter-spacing:.04em; text-transform:uppercase; font-size:.98rem; text-shadow:1px 1px 0 rgba(0,0,0,.4); }
+html[data-skin="metalico"] .doc-nombre, html[data-skin="metalico"] .titulo-grupo, html[data-skin="metalico"] .ajustes-titulo{ font-weight:700; letter-spacing:.02em; }
+
+/* Placa de nombre remachada: un "tornillo" a cada lado, como una etiqueta atornillada */
+html[data-skin="metalico"] .persona-tile .nombre-persona{
+  /* El nombre no se recorta a una línea: cabe hasta en DOS (por eso --altura-nombre reserva sitio
+     para dos, ver más abajo). Si aun así no cupiera, se recorta con puntos suspensivos —
+     -webkit-line-clamp cuando el navegador lo aplique, y el tope de altura (max-height) siempre,
+     que es lo que de verdad evita que una tercera línea asome por debajo de la placa: al ser un
+     elemento de la rejilla (grid) de la ficha, el navegador "bloquea" el display a flow-root, y
+     con flow-root -webkit-line-clamp no hace nada por sí solo. */
+  position:relative; display:-webkit-box; width:fit-content; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+  line-height:1.2; max-height:calc(.78rem * 1.2 * 2 + 8px);
+  max-width:100%; font-size:.78rem; font-weight:700; text-align:center;
+  text-transform:uppercase; letter-spacing:.04em; padding:4px 16px; border-radius:3px;
+  background:linear-gradient(165deg, var(--ink-3), var(--ink-2) 60%, var(--ink) 100%);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.18), inset -1px -1px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.35);
+}
+html[data-skin="metalico"] .persona-tile .nombre-persona::before, html[data-skin="metalico"] .persona-tile .nombre-persona::after{
+  content:''; position:absolute; top:50%; transform:translateY(-50%); width:5px; height:5px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #cfd4d9, #4a4f55 60%, #1c1e21 100%); box-shadow:inset 0 0 1px #000, 0 1px 1px rgba(0,0,0,.5);
+}
+html[data-skin="metalico"] .persona-tile .nombre-persona::before{ left:4px; }
+html[data-skin="metalico"] .persona-tile .nombre-persona::after{ right:4px; }
+
+html[data-skin="metalico"] .ajustes .grupo{ border:1px solid var(--borde-fuerte); box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
+html[data-skin="metalico"] .modal{ border-top:2px solid var(--borde-fuerte); }
+html[data-skin="metalico"] .campo input, html[data-skin="metalico"] .campo select, html[data-skin="metalico"] .input-busqueda{ background:var(--ink); border:1px solid var(--borde); }
+html[data-skin="metalico"] .btn-prov{ border:1px solid var(--borde-fuerte); }
+html[data-skin="metalico"] .toast{ border:1px solid var(--borde-fuerte); }
+/* Cinta de aviso (amarillo/negro) sobre la barra inferior, como en una escotilla de acceso */
+html[data-skin="metalico"] .barra-inferior{ background:linear-gradient(180deg, var(--ink-3), var(--ink-2) 45%, var(--ink) 100%); border-top:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.1); }
+html[data-skin="metalico"] .barra-inferior::before{ content:''; display:block; height:6px; margin:-8px -10px 8px; background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px); }
+
+/* Menús de opciones de documento, página y persona (mismo diseño que Ajustes) */
+html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.ajustes .texto-menu{ margin:-8px 0 0; color:var(--text-dim); font-size:.85rem; line-height:1.45; }
+.fila-accion.fila-cat{ grid-template-columns:38px minmax(0,1fr) auto; }
+.fila-accion .marca-actual{ display:flex; color:var(--seal); }
+
