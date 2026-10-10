@@ -10,12 +10,12 @@ module.exports = {
     });
     await nav.ejecutar(`abrirPersona('p1'); abrirVisor(datos.documentos[1], 0); 0`);
     c(await nav.ejecutar(`!document.querySelector('#visor-actualizar')`), 'Sale la barra de actualizar en un documento sin caducidad');
-    await nav.ejecutar(`volverAtras(); 0`); await new Promise((r) => setTimeout(r, 300));
+    await nav.ejecutar(`volverAtras(); 0`); await new Promise((r) => setTimeout(r, 800));
     await nav.ejecutar(`abrirVisor(datos.documentos[0], 0); 0`); await new Promise((r) => setTimeout(r, 500));
     c(await nav.ejecutar(`!!document.querySelector('#visor-actualizar')`), 'Falta la barra de actualizar en un documento caducado');
     await nav.tocar('#visor-ajustes');
     c(await nav.ejecutar(`!!document.querySelector('#op-actualizar-doc')`), 'Falta la opción en el menú del documento');
-    await nav.ejecutar(`volverAtras(); 0`); await new Promise((r) => setTimeout(r, 300));
+    await nav.ejecutar(`volverAtras(); 0`); await new Promise((r) => setTimeout(r, 800));
     await nav.tocar('#visor-actualizar');
     c(await nav.ejecutar(`document.querySelector('#modal-guardar-actualizar').classList.contains('inactivo')`), 'Guardar debería estar inactivo sin fotos');
     await nav.ejecutar(`(() => { const inp = document.querySelector('#input-archivo-actualizar'); const dt = new DataTransfer(); dt.items.add(new File(['%PDF-1.4'], 'nuevo.pdf', { type: 'application/pdf' })); inp.files = dt.files; inp.dispatchEvent(new Event('change')); return 0; })()`);

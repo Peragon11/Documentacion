@@ -1162,11 +1162,11 @@ html[data-tema="claro"] [data-skin="chicle"], html[data-tema="claro"][data-skin=
 html[data-skin="chicle"]{ --fondo-login:var(--ink); }
 html[data-skin="chicle"]{ --fondo-login:radial-gradient(420px 380px at 8% 0%, color-mix(in srgb, var(--c1) 50%, transparent), transparent 70%), radial-gradient(440px 400px at 100% 18%, color-mix(in srgb, var(--c4) 46%, transparent), transparent 70%), radial-gradient(520px 440px at 40% 110%, color-mix(in srgb, var(--c3) 46%, transparent), transparent 70%), var(--ink); }
 /* Cada elemento repetido toma un caramelo distinto: rosa, menta, limón, celeste y lila */
-html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+1){ --caramelo:var(--c1); }
-html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+2){ --caramelo:var(--c2); }
-html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+3){ --caramelo:var(--c3); }
-html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+4){ --caramelo:var(--c4); }
-html[data-skin="chicle"] :is(.galeria-pagina, .chip, .grupo-documentos, .persona-tile):nth-child(5n+5){ --caramelo:var(--c5); }
+html[data-skin="chicle"] :is(.chip, .persona-tile):nth-child(5n+1){ --caramelo:var(--c1); }
+html[data-skin="chicle"] :is(.chip, .persona-tile):nth-child(5n+2){ --caramelo:var(--c2); }
+html[data-skin="chicle"] :is(.chip, .persona-tile):nth-child(5n+3){ --caramelo:var(--c3); }
+html[data-skin="chicle"] :is(.chip, .persona-tile):nth-child(5n+4){ --caramelo:var(--c4); }
+html[data-skin="chicle"] :is(.chip, .persona-tile):nth-child(5n+5){ --caramelo:var(--c5); }
 html[data-skin="chicle"] body{ background-image:radial-gradient(circle, color-mix(in srgb, var(--c1) 30%, transparent) 4px, transparent 4.6px), radial-gradient(circle, color-mix(in srgb, var(--c4) 28%, transparent) 4px, transparent 4.6px); background-size:52px 52px; background-position:0 0, 26px 26px; }
 html[data-skin="chicle"] .topbar{ background:linear-gradient(90deg, var(--c1), var(--c5) 55%, var(--c4)); border-bottom:4px solid var(--ink-2); box-shadow:0 6px 0 color-mix(in srgb, var(--c1) 40%, transparent); backdrop-filter:none; }
 html[data-skin="chicle"] .topbar .marca, html[data-skin="chicle"] .btn-volver{ color:var(--sobre-acento); }
@@ -1178,11 +1178,12 @@ html[data-skin="chicle"] .topbar .avatar-persona{ box-shadow:0 0 0 3px var(--pap
 html[data-skin="chicle"] h1, html[data-skin="chicle"] h3{ font-weight:700; letter-spacing:0; }
 html[data-skin="chicle"] .persona-tile .avatar-persona{ box-shadow:0 0 0 5px var(--ink), 0 0 0 9px var(--caramelo, var(--stamp)), 0 14px 22px color-mix(in srgb, var(--caramelo, var(--stamp)) 42%, transparent); }
 html[data-skin="chicle"] .persona-tile .nombre-persona{ width:fit-content; max-width:100%; margin-top:8px; padding:3px 14px; border-radius:999px; background:var(--caramelo, var(--stamp)); color:var(--sobre-acento); font-weight:600; font-size:1rem; }
-html[data-skin="chicle"] .titulo-grupo{ display:inline-flex; width:fit-content; padding:5px 14px 5px 11px; border-radius:999px; background:var(--caramelo, var(--c1)); color:var(--sobre-acento); font-size:.82rem; font-weight:700; letter-spacing:.05em; box-shadow:0 3px 0 rgba(0,0,0,.16); }
-html[data-skin="chicle"] .titulo-grupo .punto-grupo{ background:var(--sobre-acento); }
-html[data-skin="chicle"] .doc-fila{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
-html[data-skin="chicle"] .galeria-pagina{ border:3px solid var(--caramelo, var(--c1)); box-shadow:0 6px 0 var(--caramelo, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 75%, var(--ink-2)); }
-html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina):active{ transform:translateY(4px); box-shadow:0 2px 0 var(--caramelo, var(--c1)); }
+/* Los documentos (y sus títulos de grupo) llevan el color de su categoría; las personas no llevan color propio dentro de las categorías */
+html[data-skin="chicle"] .titulo-grupo{ display:inline-flex; width:fit-content; padding:5px 14px 5px 11px; border-radius:999px; background:var(--color-categoria, var(--c1)); color:#fff; text-shadow:0 1px 0 rgba(0,0,0,.28); font-size:.82rem; font-weight:700; letter-spacing:.05em; box-shadow:0 3px 0 rgba(0,0,0,.16); }
+html[data-skin="chicle"] .titulo-grupo .punto-grupo{ background:#fff; }
+html[data-skin="chicle"] .titulo-grupo:has(.avatar-mini-grupo){ padding:0; background:none; box-shadow:none; color:var(--text-light); text-shadow:none; letter-spacing:.03em; }
+html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina){ border:3px solid var(--color-categoria, var(--c1)); box-shadow:0 6px 0 var(--color-categoria, var(--c1)); background:color-mix(in srgb, var(--color-categoria, var(--ink-2)) 60%, var(--ink-2)); }
+html[data-skin="chicle"] :is(.doc-fila, .galeria-pagina):active{ transform:translateY(4px); box-shadow:0 2px 0 var(--color-categoria, var(--c1)); }
 html[data-skin="chicle"] .lista-docs, html[data-skin="chicle"] .galeria-paginas{ gap:16px; }
 html[data-skin="chicle"] .categoria-barra{ border:3px solid #fff; box-shadow:0 6px 0 rgba(0,0,0,.20); font-weight:700; }
 html[data-skin="chicle"] .doc-nombre{ font-weight:600; font-size:1.02rem; }

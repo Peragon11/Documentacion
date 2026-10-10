@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.4';
+const VERSION_APP = '3.7.5';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2350,9 +2350,9 @@ const ICONO_AJUSTES = '<svg width="24" height="24" viewBox="0 0 24 24" fill="non
 // significado: "Buscar" pasa a ser "Compartir" (entra en modo selección para elegir qué compartir;
 // así "Subir", en su mismo sitio de siempre —el segundo hueco—, no se mueve entre pantallas),
 // "Categorías/Personas" pasa a ser "Desplegar/Replegar" (abre o cierra los grupos de documentos) y "Ajustes" pasa a ser "Exportar"
-// (solo dentro de una persona: es lo único que le queda; en una categoría —todas las personas a la
-// vez— sigue siendo "Ajustes", porque ahí abre los ajustes generales). Se llama al entrar o salir de
-// una persona/categoría, y también cada vez que cambia el propio estado de desplegado/replegado.
+// (en una persona exporta sus documentos; en una categoría, los de esa categoría de todas las personas que
+// los tengan). Se llama al entrar o salir de una persona/categoría, y también cada vez que cambia el propio
+// estado de desplegado/replegado.
 function sincronizarBarraInferior() {
   const enDocs = personaActivaId !== null || categoriaGlobalActivaId !== null;
   const btnBuscar = $('#bar-buscar');
@@ -2364,13 +2364,8 @@ function sincronizarBarraInferior() {
     const desplegado = obtenerVistaDocsGuardada() === 'desplegado';
     btnVista.innerHTML = ICONOS_MENU.vista + '<span>' + (desplegado ? 'Replegar' : 'Desplegar') + '</span>';
     btnVista.setAttribute('aria-label', desplegado ? 'Replegar todo' : 'Desplegar todo');
-    if (personaActivaId !== null) {
-      btnAjustes.innerHTML = ICONOS_MENU.exportar + '<span>Exportar</span>';
-      btnAjustes.setAttribute('aria-label', 'Exportar copia');
-    } else {
-      btnAjustes.innerHTML = ICONO_AJUSTES + '<span>Ajustes</span>';
-      btnAjustes.setAttribute('aria-label', 'Ajustes');
-    }
+    btnAjustes.innerHTML = ICONOS_MENU.exportar + '<span>Exportar</span>';
+    btnAjustes.setAttribute('aria-label', 'Exportar copia');
   } else {
     btnBuscar.innerHTML = ICONO_BUSCAR + '<span>Buscar</span>';
     btnBuscar.setAttribute('aria-label', 'Buscar documento');
@@ -2549,12 +2544,14 @@ alTocarBoton($('#bar-vista'), () => {
     alternarVistaInicio();
   }
 });
-// Dentro de una persona ya solo queda "Exportar copia" (Subir y Seleccionar tienen botón propio);
-// dentro de una categoría (todas las personas a la vez) no queda nada propio, así que abre los
-// ajustes generales, igual que en la portada.
+// En la portada abre los Ajustes; dentro de una persona o de una categoría, "Exportar copia" (de esa persona, o de
+// esa categoría con los documentos de todas las personas que la tengan).
 alTocarBoton($('#bar-ajustes'), () => {
   if (!enPantallaDocumentos()) { abrirAjustes(true); return; }
-  if (categoriaGlobalActivaId !== null) { abrirAjustes(true); return; }
+  if (categoriaGlobalActivaId !== null) {
+    abrirModalExportar(null, datos.categorias.find((c) => c.id === categoriaGlobalActivaId) || null);
+    return;
+  }
   const persona = datos.personas.find((p) => p.id === personaActivaId);
   if (persona) abrirModalExportar(persona);
 });
@@ -4522,6 +4519,7 @@ function renderizarDocumentos() {
 
     const grupo = document.createElement('div');
     grupo.className = 'grupo-documentos';
+    grupo.style.setProperty('--color-categoria', cat.color);
     grupo.innerHTML = `<h3 class="titulo-grupo"><span class="punto-grupo" style="color:${cat.color}"></span>${escapeHtml(cat.nombre)}</h3><div class="lista-docs"></div>`;
     const listaEl = grupo.querySelector('.lista-docs');
     docs.forEach((doc) => listaEl.appendChild(crearTarjetaDoc(doc)));
@@ -6715,6 +6713,21 @@ function abrirApariencia() {
   });
 }
 
+// "Administrar personas" y "Administrar categorías" (Ajustes). El menú de Ajustes se cierra a mano (sin
+// history.go real) porque justo después se empuja una capa nueva: cerrar con history.go (asíncrono) y abrir con
+// history.pushState (síncrono) a la vez deja la pila descuadrada del historial real. La nueva capa hace que el
+// botón atrás salga primero del modo administrar y se quede en la vista normal, en vez de salir de la app.
+function entrarModoAdministrar(modo) {
+  cerrarModal();
+  pilaNavegacion.pop();
+  modoInicio = modo;
+  guardarModoInicio(modoInicio);
+  if (modo === 'personas') modoEdicionPersonas = true; else modoEdicionCategorias = true;
+  actualizarBotonAlternarVista();
+  renderizarPantallaInicio();
+  pushNavegacion(salirModoAdministrarInicio);
+}
+
 function abrirAjustes(animar = true) {
   const temaActual = obtenerTemaGuardado();
   abrirModal(`
@@ -6782,32 +6795,8 @@ function abrirAjustes(animar = true) {
     // Si el sello detecta cosas por sincronizar, se lanza la sincronización ya.
     if (hayProveedores() && totalPendientes() > 0 && !respaldoEnCurso) programarRespaldo(400);
   }
-  $('#op-administrar-personas').addEventListener('click', () => {
-    // Cierra este menú de Ajustes a mano (sin history.go real) porque
-    // justo después se empuja una capa nueva — ver la nota en
-    // abrirModalCategoriasGlobal (ya retirada) sobre por qué no conviene
-    // encadenar cerrarCapas con un pushNavegacion inmediato.
-    cerrarModal();
-    pilaNavegacion.pop();
-    modoInicio = 'personas';
-    guardarModoInicio(modoInicio);
-    modoEdicionPersonas = true;
-    actualizarBotonAlternarVista();
-    renderizarPantallaInicio();
-    // Así el botón atrás sale primero del modo administrar y se queda en
-    // la vista normal, en vez de salir directamente de la app.
-    pushNavegacion(salirModoAdministrarInicio);
-  });
-  $('#op-categorias').addEventListener('click', () => {
-    cerrarModal();
-    pilaNavegacion.pop();
-    modoInicio = 'categorias';
-    guardarModoInicio(modoInicio);
-    modoEdicionCategorias = true;
-    actualizarBotonAlternarVista();
-    renderizarPantallaInicio();
-    pushNavegacion(salirModoAdministrarInicio);
-  });
+  $('#op-administrar-personas').addEventListener('click', () => entrarModoAdministrar('personas'));
+  $('#op-categorias').addEventListener('click', () => entrarModoAdministrar('categorias'));
   $('#op-apariencia').addEventListener('click', abrirApariencia);
   $('#op-estilo').addEventListener('click', abrirEstilos);
   $('#op-texto').addEventListener('click', abrirTamanoTexto);
@@ -6862,10 +6851,13 @@ function nombreArchivoExportacion(nombrePersona = null) {
 // [archivo 1][archivo 2]... — cada documento de la cabecera guarda su
 // tamaño en bytes para poder trocear los archivos al leerlos, en el mismo
 // orden en que aparecen. Es un formato propio, solo esta app lo entiende.
-async function generarArchivoExportacion(personaId = null) {
-  const documentosAExportar = personaId ? datos.documentos.filter((d) => d.personaId === personaId) : datos.documentos;
-  const personasAExportar = personaId ? datos.personas.filter((p) => p.id === personaId) : datos.personas;
-  const categoriasAExportar = personaId
+async function generarArchivoExportacion(personaId = null, categoriaId = null) {
+  const documentosAExportar = datos.documentos.filter((d) => (!personaId || d.personaId === personaId) && (!categoriaId || d.categoria === categoriaId));
+  // Al importar, un documento solo entra si su persona también viene en el archivo: van las que tienen documentos que exportar.
+  const personasAExportar = personaId || categoriaId
+    ? datos.personas.filter((p) => documentosAExportar.some((d) => d.personaId === p.id))
+    : datos.personas;
+  const categoriasAExportar = personaId || categoriaId
     ? datos.categorias.filter((c) => documentosAExportar.some((d) => d.categoria === c.id))
     : datos.categorias;
 
@@ -6926,12 +6918,16 @@ function leerPaqueteExportacion(buffer) {
   };
 }
 
-function abrirModalExportar(persona = null) {
-  const titulo = persona ? trad('Exportar copia de {nombre}', { nombre: escapeHtml(persona.nombre) }) : 'Exportar copia';
+function abrirModalExportar(persona = null, categoria = null) {
+  const sujeto = persona || categoria; // lo que se exporta: una persona, una categoría (de todas las personas) o, sin nada, todo
+  const titulo = sujeto ? trad('Exportar copia de {nombre}', { nombre: escapeHtml(sujeto.nombre) }) : 'Exportar copia';
+  const negrita = (n) => `<strong style="color:var(--text-light)">${escapeHtml(n)}</strong>`;
   const introQuien = persona
-    ? trad('con los documentos de {nombre} (no con el resto de personas que tengas guardadas)', { nombre: `<strong style="color:var(--text-light)">${escapeHtml(persona.nombre)}</strong>` })
-    : trad('con todas las personas, categorías y documentos que tienes guardados');
-  const patronNombre = persona ? `${escapeHtml(persona.nombre)}_00h00m_día-mes-año.txt` : 'copia_00h00m_día-mes-año.txt';
+    ? trad('con los documentos de {nombre} (no con el resto de personas que tengas guardadas)', { nombre: negrita(persona.nombre) })
+    : categoria
+      ? trad('con los documentos de {nombre} de todas las personas que los tengan (no con el resto de categorías que tengas guardadas)', { nombre: negrita(categoria.nombre) })
+      : trad('con todas las personas, categorías y documentos que tienes guardados');
+  const patronNombre = sujeto ? `${escapeHtml(sujeto.nombre)}_00h00m_día-mes-año.txt` : 'copia_00h00m_día-mes-año.txt';
 
   abrirModal(`
     <h3>${titulo}</h3>
@@ -6957,9 +6953,11 @@ function abrirModalExportar(persona = null) {
   $('#btn-generar-exportacion').addEventListener('click', async () => {
     const hayAlgoQueExportar = persona
       ? datos.documentos.some((d) => d.personaId === persona.id)
-      : datos.personas.length;
+      : categoria
+        ? datos.documentos.some((d) => d.categoria === categoria.id)
+        : datos.personas.length;
     if (!hayAlgoQueExportar) {
-      mostrarToast(persona ? trad('{nombre} todavía no tiene documentos guardados.', { nombre: persona.nombre }) : 'No hay nada que exportar todavía.', true);
+      mostrarToast(sujeto ? trad('{nombre} todavía no tiene documentos guardados.', { nombre: sujeto.nombre }) : 'No hay nada que exportar todavía.', true);
       return;
     }
     try {
@@ -6975,8 +6973,8 @@ function abrirModalExportar(persona = null) {
         <h3>${titulo}</h3>
         <div class="estado-carga"><div class="spinner"></div><span>Generando el archivo, un momento…</span></div>
       `;
-      const bytes = await generarArchivoExportacion(persona ? persona.id : null);
-      const nombre = nombreArchivoExportacion(persona ? persona.nombre : null);
+      const bytes = await generarArchivoExportacion(persona ? persona.id : null, categoria ? categoria.id : null);
+      const nombre = nombreArchivoExportacion(sujeto ? sujeto.nombre : null);
       // Chrome solo permite compartir archivos de ciertos tipos por
       // navigator.share() (imagen, PDF, audio, vídeo, texto...); un tipo
       // inventado se rechaza siempre. Se declara como texto para que

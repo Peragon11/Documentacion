@@ -81,11 +81,24 @@ async function abrirNavegador({ ancho = 412, alto = 860 } = {}) {
   const nav = {
     enviar, ejecutar, errores, peticiones,
     // Abre la app con unos datos y ajustes de partida (cada navegador empieza con el almacenamiento vacío)
-    async abrirApp(base, datos, extra = {}, ruta = 'index.html') {
+    // Por defecto sin service worker: al instalarse recarga la página sola y las pruebas se descolocarían (solo la de "sin conexión" lo necesita)
+    async abrirApp(base, datos, extra = {}, ruta = 'index.html', { sw = false } = {}) {
+      if (!sw) await enviar('Page.addScriptToEvaluateOnNewDocument', { source: 'if (navigator.serviceWorker) navigator.serviceWorker.register = () => new Promise(() => {});' });
       await enviar('Page.addScriptToEvaluateOnNewDocument', { source: semilla(datos, extra) });
       await enviar('Page.navigate', { url: base + ruta });
-      await espera(1800);
+      await espera(1200);
+      await this.esperarDatos(datos);
       await ejecutar(MINIATURA + ' 0');
+    },
+    // La app lee los datos de IndexedDB de forma asíncrona: se espera a que estén todos antes de tocar nada
+    async esperarDatos(datos) {
+      if (!datos) return;
+      const quiero = JSON.stringify([datos.personas.length, datos.documentos.length]);
+      for (let i = 0; i < 80; i++) {
+        const hay = await ejecutar('typeof datos === "undefined" ? null : JSON.stringify([datos.personas.length, datos.documentos.length])').catch(() => null);
+        if (hay === quiero) return;
+        await espera(100);
+      }
     },
     async recargar(ms = 1800) { await enviar('Page.reload'); await espera(ms); await ejecutar(MINIATURA + ' 0'); },
     // Toque con el dedo (touchstart + touchend) en el centro del elemento
