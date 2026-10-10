@@ -1,4 +1,4 @@
-const CACHE = 'documentacion-shell-v8'; // v8: app.css/app.js separados de index.html y tipografías propias
+const CACHE = 'documentacion-shell-v9'; // v9: icono nuevo (más claro)
 const SHELL = ['./index.html', './app.css', './app.js', './idiomas.js', './manifest.json', './icono.png', './icono_maskable.png', './icono_notificacion.png',
   './fuentes/base.css', './fuentes/Poppins-600-latin.woff2', './fuentes/Poppins-600-latin-ext.woff2', './fuentes/Poppins-700-latin.woff2',
   './fuentes/Poppins-700-latin-ext.woff2', './fuentes/SourceSerif4-500-latin.woff2', './fuentes/SourceSerif4-500-latin-ext.woff2',
