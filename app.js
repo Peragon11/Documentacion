@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.5';
+const VERSION_APP = '3.7.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -16,7 +16,7 @@ const MAPA_EXTENSIONES_MIME = { 'image/jpeg': '.jpg', 'image/png': '.png', 'imag
 
 const COLORES_AVATAR = ['#5C8374', '#4A7BA6', '#C1502E', '#8A6FB0', '#C48A2E'];
 
-const ICONOS_AVATAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => ({ id: l, nombre: l, img: 'letras/' + l + '.webp' }));
+const ICONOS_AVATAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('').map((l) => ({ id: l, nombre: l, img: 'letras/' + l + '.webp' }));
 function htmlIconoAvatar(id) {
   const ic = ICONOS_AVATAR.find((i) => i.id === id);
   if (!ic) return '';

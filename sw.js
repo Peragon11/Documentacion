@@ -1,9 +1,9 @@
-const CACHE = 'documentacion-shell-v9'; // v9: icono nuevo (más claro)
+const CACHE = 'documentacion-shell-v10'; // v10: avatares con números (letras/0-9.webp)
 const SHELL = ['./index.html', './app.css', './app.js', './idiomas.js', './manifest.json', './icono.png', './icono_maskable.png', './icono_notificacion.png',
   './fuentes/base.css', './fuentes/Poppins-600-latin.woff2', './fuentes/Poppins-600-latin-ext.woff2', './fuentes/Poppins-700-latin.woff2',
   './fuentes/Poppins-700-latin-ext.woff2', './fuentes/SourceSerif4-500-latin.woff2', './fuentes/SourceSerif4-500-latin-ext.woff2',
   './skin-metalico-panel.webp', './skin-metalico-marco.webp', './skin-metalico-placa.webp', './skin-metalico-placa-marco.webp', './skin-metalico-pozo.svg', './skin-metalico-placa-cat.webp', './skin-metalico-fondo.webp',
-  ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => './letras/' + l + '.webp')];
+  ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('').map((l) => './letras/' + l + '.webp')];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -34,7 +34,7 @@ self.addEventListener('fetch', (event) => {
   // aquí abajo (red primero) se volvían a pedir por internet CADA VEZ que se abría la app, aunque no
   // hubiera cambiado nada — eso es lo que se notaba lento, no el peso de los archivos.
   const inmutable = url.pathname.endsWith('/opencv.js') || /\/skin-metalico-[^/]+\.(webp|svg)$/.test(url.pathname)
-    || /\/letras\/[A-Z]\.webp$/.test(url.pathname) || /\/fuentes\/[^/]+\.(woff2|css)$/.test(url.pathname);
+    || /\/letras\/[A-Z0-9]\.webp$/.test(url.pathname) || /\/fuentes\/[^/]+\.(woff2|css)$/.test(url.pathname);
   if (inmutable) {
     event.respondWith(
       caches.match(event.request).then((guardado) => guardado || fetch(event.request).then((res) => {

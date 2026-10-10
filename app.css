@@ -1465,6 +1465,8 @@ html[data-skin="metalico"] .persona-tile .avatar-persona{
   -webkit-mask:var(--marco-metal) center/100% 100% no-repeat, url('skin-metalico-pozo.svg') center/100% 100% no-repeat;
   mask:var(--marco-metal) center/100% 100% no-repeat, url('skin-metalico-pozo.svg') center/100% 100% no-repeat;
 }
+/* La letra del avatar llena todo el cuadrado del pozo, pero el pozo tiene el chaflán arriba a la derecha: se recorta con su misma forma (la de FORMA_POZO_METALICO en app.js) */
+html[data-skin="metalico"] .persona-tile .avatar-persona > .img-letra{ clip-path:polygon(3.33% 0, 61.33% 0, 100% 34.33%, 100% 96.67%, 96.67% 100%, 3.33% 100%, 0 96.67%, 0 3.33%); border-radius:0; }
 html[data-skin="metalico"] .grid-personas.pocas.tres .persona-tile .avatar-persona{ --av:min(100%, 150px); }
 html[data-skin="metalico"] .persona-tile .avatar-persona::after{
   content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
