@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.8.1';
+const VERSION_APP = '3.9.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -42,7 +42,7 @@ let categoriaActiva = 'todos';
 let personaFiltroActiva = 'todos';
 let modoSeleccionDocs = false;
 const docsSeleccionados = new Set();
-let paginasSubidaPendientes = []; // [{ archivo, nombre }] — páginas añadidas en "Subir documento" antes de guardar
+let paginasSubidaPendientes = []; // [{ archivo, sufijo }] — páginas añadidas en "Subir documento" antes de guardar
 let fotoPendienteDataUrl = null;
 let iconoPendienteId = null;
 let promptInstalacionDiferido = null;
@@ -252,7 +252,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   $('#btn-banner-cerrar')?.addEventListener('click', () => $('#banner-instalar').classList.add('hidden'));
 
-  $('#version-pie').textContent = 'v' + VERSION_APP;
 
   if (appYaInstalada()) pedirPermisoNotificaciones();
   const huboCacheLocal = await datosLocalesListos();
@@ -1167,6 +1166,15 @@ function claveRuta(destino, pagina, doc) {
 // documento, porque en la nube todos los documentos de una persona y categoría comparten
 // carpeta: "DNI - Página 2", "DNI - Reverso". Si la página ya se llama como el documento
 // (la primera, normalmente) o ya empieza por su nombre, se deja tal cual.
+// Nombre de una página = nombre del documento (fijo) + lo que se escribe a continuación (puede quedar vacío).
+function nombreConSufijo(base, sufijo) {
+  const resto = (sufijo || '').trim();
+  return resto ? `${base} ${resto}` : base;
+}
+// Campo de texto con el nombre del documento delante, fijo y sin poder tocarse.
+function htmlNombreConPrefijo(prefijo, atributosInput) {
+  return `<div class="nombre-con-prefijo"><span class="prefijo-fijo" data-no-t>${escapeHtml(prefijo)}</span><input type="search" ${atributosInput}></div>`;
+}
 function nombreBaseRemoto(pagina, doc) {
   let base = (pagina.nombre || '').trim();
   const nombreDoc = doc && doc.nombre ? doc.nombre.trim() : '';
@@ -5533,7 +5541,7 @@ async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccio
     }
     $('#visor-descargar').addEventListener('click', () => {
       const a = document.createElement('a');
-      a.href = url; a.download = pagina.nombre || doc.nombre;
+      a.href = url; a.download = nombreArchivoParaCompartir(pagina);
       document.body.appendChild(a); a.click(); a.remove();
     });
     if (!esImagen) {
@@ -5649,11 +5657,14 @@ function agregarPagina(doc) {
   zona.appendChild(inputArchivo);
 
   function pedirNombreYSubir(archivo) {
+    // El nombre del documento va fijo delante; solo se escribe lo que sigue (vacío = la página se queda
+    // con el nombre del documento). Si ya hay páginas, por defecto lleva su número para no repetir nombre.
+    const sufijoInicial = doc.paginas.length ? String(doc.paginas.length + 1) : '';
     abrirModal(`
       <h3>Nombre de la página</h3>
       <div class="campo">
         <label for="input-nombre-pagina">Ej: Reverso, Página 2...</label>
-        <input type="search" id="input-nombre-pagina" name="q" value="${escapeHtml(trad('Página {n}', { n: doc.paginas.length + 1 }))}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
+        ${htmlNombreConPrefijo(doc.nombre, `id="input-nombre-pagina" name="q" value="${escapeHtml(sufijoInicial)}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly`)}
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -5663,10 +5674,10 @@ function agregarPagina(doc) {
     const input = $('#input-nombre-pagina');
     evitarBarraAutorrelleno(input);
     input.focus();
-    input.select();
+    input.setSelectionRange(input.value.length, input.value.length);
     $('#modal-cancelar').addEventListener('click', volverAtras);
     $('#modal-guardar-pagina').addEventListener('click', async () => {
-      const nombrePagina = input.value.trim() || trad('Página {n}', { n: doc.paginas.length + 1 });
+      const nombrePagina = nombreConSufijo(doc.nombre, input.value);
       const btn = $('#modal-guardar-pagina');
       btn.disabled = true; btn.textContent = 'Subiendo…';
       try {
@@ -5753,7 +5764,10 @@ function abrirMenuPagina(doc, indicePagina) {
   `);
   activarArrastreParaCerrar($('.cabecera-hoja'));
   $('#op-renombrar-doc').addEventListener('click', () => {
-    abrirModalRenombrar(variasPaginas ? 'Nombre de la página' : 'Cambiar nombre', pagina.nombre || doc.nombre, (nuevo) => {
+    const actual = pagina.nombre || doc.nombre;
+    // En un documento de varias páginas el nombre del documento va fijo delante y solo se cambia el resto.
+    const sufijoActual = actual.toLowerCase().startsWith(doc.nombre.toLowerCase()) ? actual.slice(doc.nombre.length).trim() : actual;
+    abrirModalRenombrar(variasPaginas ? 'Nombre de la página' : 'Cambiar nombre', variasPaginas ? sufijoActual : actual, (nuevo) => {
       pagina.nombre = nuevo;
       if (!variasPaginas) doc.nombre = nuevo;
       guardarMetadatos().then(() => {
@@ -5763,7 +5777,7 @@ function abrirMenuPagina(doc, indicePagina) {
         if (titulo) titulo.textContent = pagina.nombre;
         mostrarToast('Nombre actualizado');
       });
-    });
+    }, 60, null, null, variasPaginas ? doc.nombre : null);
   });
   $('#op-actualizar-doc').addEventListener('click', () => abrirModalActualizar(doc));
   $('#op-categoria-doc').addEventListener('click', () => abrirModalCategoriaDoc(doc));
@@ -6232,28 +6246,30 @@ function abrirModalSubida(previo) {
   abrirModal(`
     <h3>Subir documento</h3>
     <div id="seccion-normal-subida">
-      <div id="lista-paginas-subida"></div>
-      <button class="btn-secundario" id="btn-anadir-pagina-subida" type="button">+ Añadir foto o PDF</button>
       <div class="campo">
         <label for="input-nombre">Nombre del documento</label>
         <input type="search" id="input-nombre" name="q" placeholder="Ej: DNI" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
-      <div class="campo">
-        <label>Persona</label>
-        ${datos.personas.length ? htmlSelectorPersonas(datos.personas) : `<p style="color:var(--text-dim);font-size:.85rem;margin:0;">Todavía no tienes a nadie añadido.</p>`}
-      </div>
-      <div class="campo">
-        <label>Categoría</label>
-        ${htmlSelectorCategorias(datos.categorias)}
-        ${datos.categorias.length ? '' : '<p style="color:var(--text-dim);font-size:.8rem;margin:4px 0 0;">Crea una categoría con «Nueva» para poder guardar el documento.</p>'}
-      </div>
-      <div class="campo">
-        <label>Fecha de caducidad (opcional)</label>
-        ${htmlCampoFecha('input-caducidad', '')}
+      <div id="resto-subida" class="hidden">
+        <div id="lista-paginas-subida"></div>
+        <button class="btn-secundario" id="btn-anadir-pagina-subida" type="button">+ Añadir primera página</button>
+        <div class="campo">
+          <label>Persona</label>
+          ${datos.personas.length ? htmlSelectorPersonas(datos.personas) : `<p style="color:var(--text-dim);font-size:.85rem;margin:0;">Todavía no tienes a nadie añadido.</p>`}
+        </div>
+        <div class="campo">
+          <label>Categoría</label>
+          ${htmlSelectorCategorias(datos.categorias)}
+          ${datos.categorias.length ? '' : '<p style="color:var(--text-dim);font-size:.8rem;margin:4px 0 0;">Crea una categoría con «Nueva» para poder guardar el documento.</p>'}
+        </div>
+        <div class="campo">
+          <label>Fecha de caducidad (opcional)</label>
+          ${htmlCampoFecha('input-caducidad', '')}
+        </div>
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
-        <button class="btn-primario inactivo" id="modal-guardar" aria-disabled="true">Guardar</button>
+        <button class="btn-primario inactivo" id="modal-guardar" aria-disabled="true">Crear documento</button>
       </div>
     </div>
     <div id="zona-recorte-subida" class="hidden"></div>
@@ -6274,18 +6290,17 @@ function abrirModalSubida(previo) {
       return `
         <div class="pagina-subida-fila">
           <div class="pagina-subida-miniatura">${esImagen ? `<img data-i="${i}" alt="">` : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}</div>
-          <input type="search" class="input-nombre-pagina-subida" name="q" enterkeyhint="enter" value="${escapeHtml(pagina.nombre)}" data-indice="${i}" placeholder="Nombre de esta página" autocomplete="off" autocapitalize="sentences" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
+          ${htmlNombreConPrefijo($('#input-nombre').value.trim(), `class="input-nombre-pagina-subida" name="q" enterkeyhint="enter" value="${escapeHtml(pagina.sufijo)}" data-indice="${i}" placeholder="Ej: Anverso" autocomplete="off" autocapitalize="sentences" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other"`)}
           <button type="button" class="btn-quitar-pagina-subida" data-indice="${i}" aria-label="Quitar página">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>`;
     }).join('');
+    $('#btn-anadir-pagina-subida').textContent = paginasSubidaPendientes.length ? '+ Añadir otra página' : '+ Añadir primera página';
     listaPaginas.querySelectorAll('img[data-i]').forEach((img) => ponerMiniaturaTemporal(img, paginasSubidaPendientes[Number(img.dataset.i)].archivo));
     $$('.input-nombre-pagina-subida').forEach((input) => {
       input.addEventListener('input', () => {
-        const pendiente = paginasSubidaPendientes[Number(input.dataset.indice)];
-        pendiente.nombre = input.value;
-        pendiente.manual = true; // ya no sigue al nombre del documento
+        paginasSubidaPendientes[Number(input.dataset.indice)].sufijo = input.value;
       });
     });
     $$('.btn-quitar-pagina-subida').forEach((btn) => {
@@ -6303,9 +6318,9 @@ function abrirModalSubida(previo) {
     // página: se deja vacío para que se escriba a mano, con el campo y su marcador de posición
     // tal cual, en vez de rellenarlo solo con algo que luego hay que borrar.
     const numero = paginasSubidaPendientes.length + 1;
-    const nombreDoc = $('#input-nombre').value.trim();
-    const nombrePagina = numero === 1 ? nombreDoc : trad('Página {n}', { n: numero });
-    paginasSubidaPendientes.push({ archivo, nombre: nombrePagina });
+    // El nombre de la página es el del documento (fijo, delante) más un sufijo que se escribe a mano:
+    // la primera sin sufijo, las siguientes con su número para no repetir nombre.
+    paginasSubidaPendientes.push({ archivo, sufijo: numero === 1 ? '' : String(numero) });
     renderizarListaPaginasSubida();
     actualizarBotonGuardar();
   }
@@ -6337,23 +6352,21 @@ function abrirModalSubida(previo) {
     });
   });
 
-  // La primera página se guarda (también en la nube) con el nombre del documento, mientras
-  // no se le haya puesto otro a mano: así lo que se escribe aquí es lo que se ve en Drive.
+  // El nombre del documento va fijo delante de cada página: si se cambia aquí, se cambia en todas.
   $('#input-nombre').addEventListener('input', () => {
-    const primera = paginasSubidaPendientes[0];
     const nombreDoc = $('#input-nombre').value.trim();
-    if (primera && !primera.manual && nombreDoc) {
-      primera.nombre = nombreDoc;
-      const campo = listaPaginas.querySelector('.input-nombre-pagina-subida[data-indice="0"]');
-      if (campo) campo.value = nombreDoc;
-    }
+    listaPaginas.querySelectorAll('.prefijo-fijo').forEach((p) => { p.textContent = nombreDoc; });
     actualizarBotonGuardar();
   });
   evitarBarraAutorrelleno($('#input-nombre'));
+  $('#input-nombre').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && $('#resto-subida').classList.contains('hidden')) intentarGuardarDocumento();
+  });
   $('#modal-cancelar').addEventListener('click', volverAtras);
   $('#modal-guardar').addEventListener('click', intentarGuardarDocumento);
 
   if (previo) {
+    mostrarRestoSubida(); // venía del paso 2 (crear persona o categoría): el nombre ya estaba puesto
     $('#input-nombre').value = previo.nombre;
     ponerCampoFecha('input-caducidad', previo.caducidad);
     renderizarListaPaginasSubida();
@@ -6374,9 +6387,22 @@ function abrirModalSubida(previo) {
   });
 }
 
+// Paso 2 de "Subir documento": con el nombre ya puesto, aparecen las páginas, la persona, la categoría y la caducidad.
+function mostrarRestoSubida() {
+  $('#resto-subida').classList.remove('hidden');
+  $('#modal-guardar').textContent = 'Guardar';
+  actualizarBotonGuardar();
+}
+
 function actualizarBotonGuardar() {
   const btn = $('#modal-guardar');
   if (!btn) return;
+  if ($('#resto-subida').classList.contains('hidden')) {
+    const sinNombre = !$('#input-nombre').value.trim();
+    btn.classList.toggle('inactivo', sinNombre);
+    btn.setAttribute('aria-disabled', sinNombre ? 'true' : 'false');
+    return;
+  }
   const faltaPersona = !valorSelectorFila($('#input-persona')); // sin ninguna persona creada / elegida
   const faltaCategoria = !valorSelectorFila($('#input-categoria')); // hay que elegir (o crear) una categoría
   const incompleto = faltaPersona || faltaCategoria || !campoFechaValido('input-caducidad') || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
@@ -6402,6 +6428,12 @@ function parpadearFalta(el) {
   setTimeout(() => el.classList.remove('parpadeo-falta'), 1500);
 }
 function intentarGuardarDocumento() {
+  if ($('#resto-subida').classList.contains('hidden')) {
+    if (!$('#input-nombre').value.trim()) { parpadearFalta($('#input-nombre')); return; }
+    $('#input-nombre').blur();
+    mostrarRestoSubida();
+    return;
+  }
   const faltan = camposQueFaltanSubida();
   if (!faltan.length) { guardarDocumentoNuevo(); return; }
   faltan.forEach(parpadearFalta);
@@ -6423,7 +6455,7 @@ async function guardarDocumentoNuevo() {
   try {
     const paginas = [];
     for (const [indice, pendiente] of paginasSubidaPendientes.entries()) {
-      const nombrePagina = indice === 0 && !pendiente.manual ? nombre : (pendiente.nombre.trim() || nombre);
+      const nombrePagina = nombreConSufijo(nombre, pendiente.sufijo);
       const archivoId = await guardarArchivoLocal(pendiente.archivo);
       paginas.push({ archivoId, mimeType: pendiente.archivo.type, nombre: nombrePagina, remotos: {} });
     }
@@ -6496,12 +6528,15 @@ function evitarBarraAutorrelleno(input) {
   input.addEventListener('touchstart', activar, { once: true });
 }
 
-function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alCancelar = null, colorInicial = null) {
+// Con "prefijo" (nombre de página): ese texto va fijo delante, se edita solo lo que sigue (puede quedar vacío) y
+// alGuardar recibe el nombre completo.
+function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alCancelar = null, colorInicial = null, prefijo = null) {
+  const atributos = `id="input-renombrar" name="q" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly`;
   abrirModal(`
     <h3>${escapeHtml(titulo)}</h3>
     <div class="campo">
       <label for="input-renombrar">Nombre</label>
-      <input type="search" id="input-renombrar" name="q" maxlength="${maxLength}" value="${escapeHtml(valorActual)}" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
+      ${prefijo !== null ? htmlNombreConPrefijo(prefijo, atributos) : `<input type="search" ${atributos}>`}
     </div>
     ${colorInicial ? `<div class="campo" id="renombrar-color"><label>Color</label>${htmlRuedaColor(colorInicial)}</div>` : ''}
     <div class="modal-acciones">
@@ -6518,7 +6553,7 @@ function abrirModalRenombrar(titulo, valorActual, alGuardar, maxLength = 60, alC
   let colorElegido = colorInicial;
   if (colorInicial) montarRuedaColor($('#renombrar-color'), colorInicial, (color) => { colorElegido = color; }, null);
   const intentarGuardar = () => {
-    const nuevo = input.value.trim();
+    const nuevo = prefijo !== null ? nombreConSufijo(prefijo, input.value) : input.value.trim();
     if (!nuevo) { parpadearFalta(input); return; } // falta el nombre: parpadea el campo
     alGuardar(nuevo, colorElegido);
   };

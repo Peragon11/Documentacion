@@ -255,7 +255,6 @@ html[data-tema="claro"] .opcion-tema{ background:#fff; border-color:var(--borde-
 #vista-app:has(#pantalla-persona:not(.hidden)) .barra-inferior{ display:block; }
 body.modo-seleccion .barra-inferior{ display:none; } /* la barra de selección (fija, abajo) la sustituye */
 /* La versión queda FUERA de la barra: flota justo encima de ella (a la derecha), sin hacerla más alta */
-.barra-inferior #version-pie{ position:absolute; right:14px; bottom:100%; margin-bottom:4px; font-size:.66rem; color:var(--text-dim); opacity:.75; pointer-events:none; }
 .barra-botones{ display:flex; gap:8px; }
 .btn-icono-top.btn-barra{ flex:1; min-width:0; width:auto; height:auto; border-radius:var(--r-boton); flex-direction:column; gap:4px; padding:9px 0 8px; font-family:inherit; font-size:.68rem; font-weight:600; background:var(--ink-3); position:relative; cursor:pointer; }
 .btn-icono-top.btn-barra svg{ width:24px; height:24px; flex:none; }
@@ -292,7 +291,6 @@ body:has(#pantalla-personas:not(.hidden)) .toast{ bottom:calc(122px + var(--safe
   transform:translateZ(0);
 }
 /* La versión va abajo a la derecha de la pantalla principal, fuera de la barra de arriba */
-#version-pie{ position:fixed; right:14px; bottom:calc(8px + var(--safe-b)); font-size:.66rem; color:var(--text-dim); opacity:.75; pointer-events:none; z-index:5; }
 .topbar .marca{ display:flex; align-items:center; gap:8px; font-family:var(--serif); font-size:1.1rem; font-weight:600; flex:1; min-width:0; }
 .topbar .marca span#titulo-topbar{
   flex:1; min-width:0; line-height:1.15;
@@ -798,6 +796,20 @@ body.modo-seleccion .check-seleccion{ display:flex; }
   flex:1; min-width:0; background:var(--ink-3); border:1px solid var(--borde); border-radius:calc(var(--r-campo) - 1px);
   padding:8px 10px; font-size:.85rem; color:var(--text-light);
 }
+/* Nombre de una página: el nombre del documento va fijo delante (no se puede tocar) y solo se escribe lo que sigue. */
+.nombre-con-prefijo{
+  display:flex; align-items:center; flex:1; min-width:0; background:var(--ink-3); border:1px solid var(--borde);
+  border-radius:var(--r-campo); padding:0 10px; font-size:.9rem;
+}
+.nombre-con-prefijo:focus-within{ border-color:var(--seal); }
+.nombre-con-prefijo .prefijo-fijo{
+  flex:none; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:.35em;
+  color:var(--text-dim); user-select:none; -webkit-user-select:none;
+}
+.nombre-con-prefijo input[type=search]{
+  flex:1; min-width:0; width:auto; border:0 !important; background:transparent !important; box-shadow:none !important;
+  outline:none; padding:9px 0 !important; font-size:inherit; color:var(--text-light);
+}
 .btn-quitar-pagina-subida{ flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer; }
 #btn-anadir-pagina-subida{ margin-bottom:16px; }
 
@@ -1099,7 +1111,7 @@ html[data-skin="pixeles"] .chip.activo{ background:var(--stamp); color:var(--sob
 html[data-skin="pixeles"] h1, html[data-skin="pixeles"] h3{ font-weight:700; letter-spacing:0; }
 html[data-skin="pixeles"] .modal h3{ font-size:1.25rem; }
 html[data-skin="pixeles"] .doc-nombre, html[data-skin="pixeles"] .persona-tile .nombre-persona{ font-weight:700; font-size:1.05rem; }
-html[data-skin="pixeles"] #version-pie, html[data-skin="pixeles"] .version-fila{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
+html[data-skin="pixeles"] .version-fila{ font-family:var(--mono); font-size:.5rem; font-weight:400; }
 /* La letra pixelada se lee mejor en peso normal: en negrita la C se cierra y parece una O */
 html[data-skin="pixeles"] *{ font-weight:400 !important; }
 html[data-skin="pixeles"] .modal{ border-top:4px solid var(--borde-px); }

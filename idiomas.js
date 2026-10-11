@@ -277,7 +277,10 @@
 
     // ---- subir un documento
     [`+ Añadir foto o PDF`, `+ Add photo or PDF`, `+ Afegeix una foto o PDF`, `+ Aggiungi foto o PDF`, `+ Ajouter une photo ou un PDF`, `+ Foto oder PDF hinzufügen`],
-    [`Nombre del documento`, `Document name`, `Nom del document`, `Nome del documento`, `Nom du document`, `Dokumentname`],
+    [`+ Añadir primera página`, `+ Add first page`, `+ Afegeix la primera pàgina`, `+ Aggiungi la prima pagina`, `+ Ajouter la première page`, `+ Erste Seite hinzufügen`],
+    [`+ Añadir otra página`, `+ Add another page`, `+ Afegeix una altra pàgina`, `+ Aggiungi un'altra pagina`, `+ Ajouter une autre page`, `+ Weitere Seite hinzufügen`],
+    [`Crear documento`, `Create document`, `Crea el document`, `Crea documento`, `Créer le document`, `Dokument erstellen`],
+    [`Nombre del documento`,`Document name`, `Nom del document`, `Nome del documento`, `Nom du document`, `Dokumentname`],
     [`Fecha de caducidad (opcional)`, `Expiry date (optional)`, `Data de caducitat (opcional)`, `Data di scadenza (facoltativa)`, `Date d'expiration (facultatif)`, `Ablaufdatum (optional)`],
     [`Documento guardado`, `Document saved`, `Document desat`, `Documento salvato`, `Document enregistré`, `Dokument gespeichert`],
     [`No se pudo subir el documento.`, `Could not upload the document.`, `No s'ha pogut pujar el document.`, `Impossibile caricare il documento.`, `Impossible d'envoyer le document.`, `Dokument konnte nicht hochgeladen werden.`],
