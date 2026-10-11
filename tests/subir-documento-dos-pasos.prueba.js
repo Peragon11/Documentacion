@@ -19,10 +19,10 @@ module.exports = {
       document.querySelector('#input-categoria [data-valor="c1"]').click(); document.querySelector('#input-persona [data-valor="p1"]').click();
       const b = document.querySelector('#btn-anadir-pagina-subida'); const m = [];
       document.querySelector('#modal-guardar').click();
-      const t = setInterval(() => m.push(getComputedStyle(b).outlineColor), 40);
+      const t = setInterval(() => m.push(getComputedStyle(b).boxShadow), 40);
       setTimeout(() => { clearInterval(t); res(JSON.stringify(m)); }, 1500);
     })`));
-    const alfas = muestras.map((x) => { const m = /rgba\(229, 52, 42, ([\d.]+)\)/.exec(x); return m ? Number(m[1]) : (x === 'rgb(229, 52, 42)' ? 1 : 0); });
+    const alfas = muestras.map((x) => { const m = /^rgba?\(229, 52, 42(?:, ([\d.]+))?\)/.exec(x); return m ? (m[1] === undefined ? 1 : Number(m[1])) : 0; });
     c(alfas.some((a) => a > 0.9), 'Guardar sin ninguna página hace parpadear en rojo el cuadro de añadir página');
     let subidas = 0; alfas.forEach((a, i) => { if (a > 0.9 && (i === 0 || alfas[i - 1] <= 0.9)) subidas++; });
     c(subidas >= 3, 'Parpadea tres veces (se enciende y se apaga), no se queda fijo');

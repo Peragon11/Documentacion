@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.9.3';
+const VERSION_APP = '3.9.4';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6246,7 +6246,7 @@ function abrirModalSubida(previo) {
       </div>
       <div id="resto-subida">
         <div id="lista-paginas-subida"></div>
-        <button class="btn-secundario" id="btn-anadir-pagina-subida" type="button">+ Añadir primera página</button>
+        <div class="caja-anadir-pagina" id="btn-anadir-pagina-subida" role="button" tabindex="0">+ Añadir primera página</div>
         <div class="campo">
           <label>Persona</label>
           ${datos.personas.length ? htmlSelectorPersonas(datos.personas) : `<p style="color:var(--text-dim);font-size:.85rem;margin:0;">Todavía no tienes a nadie añadido.</p>`}
@@ -6319,6 +6319,7 @@ function abrirModalSubida(previo) {
     actualizarBotonGuardar();
   }
 
+  $('#btn-anadir-pagina-subida').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } });
   $('#btn-anadir-pagina-subida').addEventListener('click', () => {
     // Antes hace falta el nombre del documento: va fijo delante del de cada página.
     if (!$('#input-nombre').value.trim()) { parpadearFalta($('#input-nombre')); $('#input-nombre').focus(); return; }

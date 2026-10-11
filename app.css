@@ -820,6 +820,13 @@ body.modo-seleccion .check-seleccion{ display:flex; }
 }
 .btn-quitar-pagina-subida{ flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer; }
 #btn-anadir-pagina-subida{ margin-bottom:16px; }
+/* Cuadro de "añadir página": una caja normal (como los campos), para que su parpadeo en rojo se vea igual que el de los demás. */
+.caja-anadir-pagina{
+  display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer; user-select:none; -webkit-user-select:none;
+  padding:13px 12px; font-size:.92rem; font-weight:600; color:var(--text-dim);
+  background:var(--ink-3); border:1px dashed var(--borde); border-radius:var(--r-campo);
+}
+.caja-anadir-pagina:active{ background:var(--ink-2); }
 
 /* Selector de persona al subir desde una categoría */
 .selector-personas{ position:relative; }
@@ -941,11 +948,6 @@ body.modo-seleccion .check-seleccion{ display:flex; }
 @keyframes parpadeo-falta{
   0%, 40%, 80%, 100%{ box-shadow:0 0 0 0 rgba(229,52,42,0); }
   15%, 55%, 95%{ box-shadow:0 0 0 3px #E5342A, 0 0 16px rgba(229,52,42,.65); }
-}
-.btn-secundario.parpadeo-falta{ animation-name:parpadeo-falta-boton; }
-@keyframes parpadeo-falta-boton{
-  0%, 40%, 80%, 100%{ box-shadow:0 0 0 0 rgba(229,52,42,0); outline:3px solid transparent; background-image:linear-gradient(transparent, transparent); }
-  15%, 55%, 95%{ box-shadow:0 0 0 3px #E5342A, 0 0 16px rgba(229,52,42,.65); outline:3px solid #E5342A; background-image:linear-gradient(rgba(229,52,42,.22), rgba(229,52,42,.22)); }
 }
 @media (prefers-reduced-motion:reduce){ .parpadeo-falta{ animation:none; box-shadow:0 0 0 3px #E5342A; } }
 .btn-secundario{ background:transparent; color:var(--text-dim); border:1px solid var(--borde); }
