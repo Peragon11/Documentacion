@@ -94,7 +94,13 @@ async function abrirNavegador({ ancho = 412, alto = 860 } = {}) {
       if (!sw) await enviar('Page.addScriptToEvaluateOnNewDocument', { source: 'if (navigator.serviceWorker) navigator.serviceWorker.register = () => new Promise(() => {});' });
       await enviar('Page.addScriptToEvaluateOnNewDocument', { source: semilla(datos, extra) });
       await enviar('Page.navigate', { url: base + ruta });
-      await espera(1200);
+      // con la máquina cargada la página tarda más: se espera a que la app esté cargada de verdad antes de tocar nada
+      for (let i = 0; i < 150; i++) {
+        const lista = await ejecutar("document.readyState === 'complete' && typeof abrirPersona === 'function'").catch(() => false);
+        if (lista) break;
+        await espera(100);
+      }
+      await espera(600);
       await this.esperarDatos(datos);
       await ejecutar(MINIATURA + ' 0');
     },

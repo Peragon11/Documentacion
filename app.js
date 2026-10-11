@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.8';
+const VERSION_APP = '3.7.9';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2256,6 +2256,16 @@ async function cerrarSesionCompleta() {
     try { const r = indexedDB.deleteDatabase(DB_NOMBRE); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch (e) { res(); }
     setTimeout(res, 2000);
   });
+  // Las ventanas abiertas (Ajustes y sus confirmaciones) dejaron entradas en el historial. Si se recarga con ellas, se quedan
+  // por debajo de la app nueva y, después de conectar una nube, el primer "atrás" volvería a cargar la app sin hacer nada visible
+  // (un "atrás" fantasma antes de salir). Se vuelve antes a la entrada de la app y se recarga ahí.
+  const capas = pilaNavegacion.length;
+  if (capas > 0) {
+    pilaNavegacion.length = 0;
+    ignorarProximoPopstate = true;
+    history.go(-capas);
+    await new Promise((r) => setTimeout(r, 500));
+  }
   location.reload();
 }
 
@@ -2341,9 +2351,9 @@ function renderizarPantallaInicio() {
   ajustarNombresLargos();
 }
 
-// Los nombres de las barras de categoría y de las fichas de persona no se recortan NUNCA, pero tampoco hacen
-// crecer la barra o la ficha: si el nombre no cabe en una línea a su tamaño normal, la letra se va reduciendo
-// (y el nombre pasa a dos líneas si hace falta) hasta que cabe sin que el contenedor cambie de alto.
+// Los nombres no se recortan NUNCA. En las barras de categoría tampoco hacen crecer la barra: si el nombre no cabe en una
+// línea a su tamaño normal, la letra se va reduciendo (y el nombre pasa a dos líneas si hace falta) hasta que cabe sin que
+// el contenedor cambie de alto. Los de persona, en cambio, ocupan las líneas que necesiten.
 // Se comprueba contra la altura que tiene el contenedor con un nombre corto, así vale igual en todos los estilos.
 const NOMBRE_TAM_MIN = 9;
 function ajustarNombreEnContenedor(nombre, contenedor) {
@@ -2367,7 +2377,13 @@ function ajustarNombresLargos() {
   const grid = $('#grid-personas');
   if (!grid) return;
   grid.querySelectorAll('.categoria-barra').forEach((barra) => ajustarNombreEnContenedor(barra.querySelector('.categoria-barra-nombre'), barra));
-  grid.querySelectorAll('.persona-tile-clic').forEach((ficha) => ajustarNombreEnContenedor(ficha.querySelector('.nombre-persona'), ficha));
+  // Los nombres de persona no se encogen: ocupan las líneas que necesiten y la ficha crece (con más aire debajo si son dos o más)
+  grid.querySelectorAll('.persona-tile').forEach((ficha) => {
+    const nombre = ficha.querySelector('.nombre-persona');
+    if (!nombre || !nombre.offsetHeight) return;
+    const linea = parseFloat(getComputedStyle(nombre).lineHeight) || nombre.offsetHeight;
+    ficha.classList.toggle('nombre-largo', nombre.getBoundingClientRect().height > linea * 1.6);
+  });
 }
 (function activarAjusteNombresLargos() {
   let pendiente = false;

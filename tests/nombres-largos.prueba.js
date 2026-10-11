@@ -25,10 +25,22 @@ module.exports = {
       barras.forEach((g, i) => c(g <= 0.5, `${skin} ${pct}%: la barra de categoría ${i + 1} crece ${g}px por el nombre`));
       await nav.ejecutar(`modoInicio = 'personas'; guardarModoInicio(modoInicio); renderizarPantallaInicio(); 0`);
       await espera(700);
-      // En Metálico la placa del nombre mide una línea y un nombre largo en mayúsculas no cabe ni a 9 px: ahí sí puede crecer (nunca se recorta)
-      if (skin !== 'metalico') {
-        (await crecimiento('.persona-tile-clic', '.nombre-persona')).forEach((g, i) => c(g <= 0.5, `${skin} ${pct}%: la ficha de persona ${i + 1} crece ${g}px por el nombre`));
+      // Las personas con nombre largo ocupan más líneas, pero sin pisar la ficha de debajo (ni los botones de editar en el modo administrar)
+      for (const editar of [false, true]) {
+        await nav.ejecutar(`modoEdicionPersonas = ${editar}; renderizarPantallaInicio(); 0`);
+        await espera(500);
+        const solapes = await nav.ejecutar(`(() => {
+          const fichas = [...document.querySelectorAll('#grid-personas .persona-tile')]; const malos = [];
+          fichas.forEach((f, i) => {
+            const n = f.querySelector('.nombre-persona'); if (!n) return; const nb = n.getBoundingClientRect().bottom;
+            const acc = f.querySelector('.acciones-persona-tile'); if (acc && acc.getBoundingClientRect().top < nb - 0.5) malos.push('el nombre pisa los botones de la ficha ' + (i + 1));
+            const sig = fichas[i + 2]; if (sig && sig.querySelector('.avatar-persona').getBoundingClientRect().top < nb + 10) malos.push('la ficha ' + (i + 3) + ' queda a menos de 10px del nombre de la ' + (i + 1));
+            if (n.scrollHeight > n.clientHeight + 2) malos.push('el nombre de la ficha ' + (i + 1) + ' está cortado');
+          });
+          return malos; })()`);
+        solapes.forEach((m) => c(false, `${skin} ${pct}%${editar ? ' (administrar)' : ''}: ${m}`));
       }
+      await nav.ejecutar(`modoEdicionPersonas = false; 0`);
     }
   },
 };

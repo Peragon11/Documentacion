@@ -410,16 +410,17 @@ main{
   -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
   display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px; width:100%; min-width:0;
 }
-/* El hueco del nombre mide SIEMPRE una línea (--altura-nombre), sea el nombre largo o corto: así
-   todas las fichas de persona miden lo mismo y la separación de una a la siguiente no cambia
-   según cuánto ocupe el nombre. Los estilos que le cambian la letra o le ponen marco/relleno
-   al nombre redefinen --altura-nombre con la altura de su línea más lo que añaden. */
+/* El hueco del nombre mide como mínimo una línea (--altura-nombre) y crece si el nombre ocupa más (dos líneas o más), sin pisar
+   los botones de editar ni la ficha de debajo. Los estilos que le cambian la letra o le ponen marco/relleno al nombre
+   redefinen --altura-nombre con la altura de su línea más lo que añaden. */
 .persona-tile-clic{
   background:none; border:none; color:inherit; font:inherit; cursor:pointer; padding:0;
-  display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto var(--altura-nombre, calc(.95rem * 1.2));
+  display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(var(--altura-nombre, calc(.95rem * 1.2)), auto);
   justify-items:center; row-gap:10px; width:100%; min-width:0;
 }
 .persona-tile-clic > .nombre-persona{ align-self:start; }
+/* con el nombre en dos líneas o más, algo más de aire hasta lo que hay debajo (botones de editar o la ficha siguiente) */
+.persona-tile.nombre-largo{ padding-bottom:14px; }
 .acciones-persona-tile{ display:flex; gap:8px; }
 .icon-btn-persona-tile{
   width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
