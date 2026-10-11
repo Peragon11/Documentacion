@@ -130,6 +130,8 @@ html:not([data-preguntar-idioma]) #vista-idioma{ display:none; }
 .ajustes .texto-sello{ min-width:0; }
 .ajustes .titular-sello{ font-family:var(--serif); font-size:1.4rem; font-weight:600; line-height:1.12; letter-spacing:-.01em; }
 .ajustes .detalle-sello{ margin:5px 0 0; font-size:.88rem; line-height:1.4; color:var(--text-dim); }
+.ajustes .grupo[hidden]{ display:none; }
+.ajustes #op-sync-ahora.sincronizando .icono-accion svg{ animation:girar .8s linear infinite; }
 .ajustes .ultima-sync{ margin:8px 0 0; font-size:.76rem; line-height:1.4; color:var(--text-dim); }
 
 /* Listas agrupadas: un solo panel con filas separadas por una línea fina */

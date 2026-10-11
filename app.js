@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.8.0';
+const VERSION_APP = '3.8.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -2170,6 +2170,8 @@ function refrescarSelloCopias() {
 function refrescarEstadoAjustes() {
   actualizarPuntoAjustes();
   refrescarSelloCopias();
+  const grupoSync = $('#grupo-sync-ahora');
+  if (grupoSync) grupoSync.hidden = !hayProveedores();
   const lista = $('#lista-proveedores');
   if (lista) lista.innerHTML = htmlFilasProveedores();
 }
@@ -6840,6 +6842,12 @@ function abrirAjustes(animar = true) {
 
       <div class="bloque-copias">
         <div class="sello-copias" id="sello-copias"></div>
+        <div class="grupo" id="grupo-sync-ahora"${hayProveedores() ? '' : ' hidden'}>
+          <button class="fila-accion" id="op-sync-ahora">
+            <span class="icono-accion azul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7M20 4v4.7h-4.7M20 12a8 8 0 0 1-13.7 5.6L4 15.3M4 20v-4.7h4.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span><strong>Sincronizar ahora</strong><small>Trae lo nuevo de tus nubes y sube lo tuyo</small></span>
+          </button>
+        </div>
         <div class="grupo" id="lista-proveedores">${htmlFilasProveedores()}</div>
       </div>
 
@@ -6913,6 +6921,15 @@ function abrirAjustes(animar = true) {
     }
     else if (btn.dataset.accion === 'conectar' || btn.dataset.accion === 'reconectar') PROVEEDORES[id].conectar();
     else if (btn.dataset.accion === 'desconectar') desconectarProveedor(id);
+  });
+  $('#op-sync-ahora').addEventListener('click', async () => {
+    const boton = $('#op-sync-ahora');
+    if (boton.classList.contains('sincronizando')) return;
+    boton.classList.add('sincronizando');
+    let resultado;
+    try { resultado = await sincronizarTodo(); } finally { boton.classList.remove('sincronizando'); }
+    if (resultado.fallos.length) mostrarToast(trad('No se pudo sincronizar con {nubes}.', { nubes: unirConY(resultado.fallos) }), true);
+    else mostrarToast('Sincronizado');
   });
   $('#op-exportar').addEventListener('click', () => abrirModalExportar());
   $('#op-importar').addEventListener('click', abrirModalImportar);
