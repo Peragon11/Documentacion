@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.9.2';
+const VERSION_APP = '3.9.3';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6290,7 +6290,6 @@ function abrirModalSubida(previo) {
           </button>
         </div>`;
     }).join('');
-    if (paginasSubidaPendientes.length) $('#btn-anadir-pagina-subida').classList.remove('falta-pagina');
     $('#btn-anadir-pagina-subida').textContent = paginasSubidaPendientes.length ? '+ Añadir otra página' : '+ Añadir primera página';
     listaPaginas.querySelectorAll('img[data-i]').forEach((img) => ponerMiniaturaTemporal(img, paginasSubidaPendientes[Number(img.dataset.i)].archivo));
     $$('.input-nombre-pagina-subida').forEach((input) => {
@@ -6413,8 +6412,6 @@ function intentarGuardarDocumento() {
   const faltan = camposQueFaltanSubida();
   if (!faltan.length) { guardarDocumentoNuevo(); return; }
   faltan.forEach(parpadearFalta);
-  // Falta añadir página: además del parpadeo, el cuadro se queda en rojo hasta que se añada una.
-  if (!paginasSubidaPendientes.length) $('#btn-anadir-pagina-subida').classList.add('falta-pagina');
   faltan[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
