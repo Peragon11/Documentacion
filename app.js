@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.9.1';
+const VERSION_APP = '3.9.2';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -4710,13 +4710,9 @@ function crearTarjetaDocUnica(doc, indicePagina) {
   const esImagen = (pagina.mimeType || '').startsWith('image/');
   const variasPaginas = doc.paginas.length > 1;
 
-  // La primera página se guarda con el mismo nombre que el documento mientras no se le
-  // ponga uno a mano (ver #input-nombre en abrirModalSubida) — mostrar ese mismo nombre
-  // también a la derecha sería redundante con el de la izquierda, así que solo se muestra
-  // el nombre de la página cuando de verdad es distinto; si no, se deja sitio a la caducidad.
-  const nombrePagina = pagina.nombre || trad('Página {n}', { n: (indicePagina ?? 0) + 1 });
-  const badgePaginaRedundante = modoExpandido && nombrePagina === doc.nombre;
-  const mostrarBadgePagina = modoExpandido && variasPaginas && !badgePaginaRedundante;
+  // El nombre de una página ya incluye el del documento ("DNI Raul Anverso"), así que en una ficha de
+  // página se muestra solo ese nombre a la izquierda; a la derecha va, si la hay, la caducidad (corta).
+  const nombreFicha = modoExpandido ? (pagina.nombre || trad('Página {n}', { n: indicePagina + 1 })) : doc.nombre;
 
   const clave = claveSeleccion(doc, indicePagina);
   const fila = document.createElement('button');
@@ -4731,13 +4727,10 @@ function crearTarjetaDocUnica(doc, indicePagina) {
     <div class="miniatura">
       ${esImagen ? '<div class="skeleton"></div>' : `<svg class="icono-pdf" width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l5 5v13H6V3z" stroke="currentColor" stroke-width="1.3"/><path d="M15 3v5h5" stroke="currentColor" stroke-width="1.3"/></svg>`}
       <span class="check-seleccion"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 12l6 6L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      ${badge ? `<span class="cinta-caducidad ${badge.estado}">${trad(badge.estado === 'caducado' ? 'Caducado' : 'Por caducar')}</span>` : ''}
+      ${badge ? `<span class="cinta-caducidad ${badge.estado}">${trad(badge.estado === 'caducado' ? 'Caducado' : 'Por caducar')}</span><span class="dias-caducidad ${badge.estado}">${badge.texto}</span>` : ''}
     </div>
     <div class="info">
-      <p class="doc-nombre">${escapeHtml(doc.nombre)}</p>
-      ${mostrarBadgePagina
-        ? `<span class="badge-mini pagina">${escapeHtml(nombrePagina)}</span>`
-        : (badge ? `<span class="badge-mini ${badge.estado}">${badge.texto}</span>` : '')}
+      <p class="doc-nombre">${escapeHtml(nombreFicha)}</p>
     </div>`;
 
   // Mantener pulsado selecciona el documento (para compartir varios); aquí NUNCA sirve para
@@ -5086,9 +5079,10 @@ async function compartirPaginasComoPdf(paginas, titulo) {
 function calcularBadgeCaducidad(fecha) {
   if (!fecha) return null;
   const dias = diasHastaCaducidad(fecha);
-  if (dias === 0) return { estado: 'caducado', texto: trad('Caducó hoy') };
+  // Hoy es el último día que el documento sigue vigente: aviso, no caducado.
+  if (dias === 0) return { estado: 'aviso', texto: trad('Caduca hoy') };
   if (dias < 0) return { estado: 'caducado', texto: trad(dias === -1 ? 'Caducó hace {n} día' : 'Caducó hace {n} días', { n: -dias }) };
-  if (dias <= 60) return { estado: 'aviso', texto: trad(dias === 1 ? '{n} día' : '{n} días', { n: dias }) };
+  if (dias <= 60) return { estado: 'aviso', texto: trad(dias === 1 ? 'Caducará en {n} día' : 'Caducará en {n} días', { n: dias }) };
   return null;
 }
 // Cuenta, para una persona, cuántos de sus documentos están ya
@@ -6296,6 +6290,7 @@ function abrirModalSubida(previo) {
           </button>
         </div>`;
     }).join('');
+    if (paginasSubidaPendientes.length) $('#btn-anadir-pagina-subida').classList.remove('falta-pagina');
     $('#btn-anadir-pagina-subida').textContent = paginasSubidaPendientes.length ? '+ Añadir otra página' : '+ Añadir primera página';
     listaPaginas.querySelectorAll('img[data-i]').forEach((img) => ponerMiniaturaTemporal(img, paginasSubidaPendientes[Number(img.dataset.i)].archivo));
     $$('.input-nombre-pagina-subida').forEach((input) => {
@@ -6418,6 +6413,8 @@ function intentarGuardarDocumento() {
   const faltan = camposQueFaltanSubida();
   if (!faltan.length) { guardarDocumentoNuevo(); return; }
   faltan.forEach(parpadearFalta);
+  // Falta añadir página: además del parpadeo, el cuadro se queda en rojo hasta que se añada una.
+  if (!paginasSubidaPendientes.length) $('#btn-anadir-pagina-subida').classList.add('falta-pagina');
   faltan[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 

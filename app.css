@@ -589,6 +589,14 @@ main{
   transform:rotate(-8deg); background:rgba(0,0,0,.85);
   box-shadow:0 0 0 1px color-mix(in srgb, currentColor 30%, transparent) inset, 0 2px 6px rgba(0,0,0,.5);
 }
+/* Días que faltan (o que lleva caducado): esquina inferior derecha de la imagen, aparte del sello */
+.dias-caducidad{
+  position:absolute; right:10px; bottom:10px; z-index:2; pointer-events:none; white-space:nowrap;
+  padding:4px 10px; border-radius:var(--r-chip, 10px); background:rgba(0,0,0,.82); border:2px solid currentColor;
+  font-size:.82rem; font-weight:800; letter-spacing:.02em; box-shadow:0 2px 6px rgba(0,0,0,.5);
+}
+.dias-caducidad.caducado{ color:#FF5449; }
+.dias-caducidad.aviso{ color:#FFC24B; }
 .cinta-caducidad.caducado{ color:#FF5449; }
 .cinta-caducidad.aviso{ color:#FFC24B; font-size:.8rem; }
 .doc-fila .miniatura{
@@ -644,7 +652,7 @@ body.modo-seleccion .check-seleccion{ display:flex; }
 }
 .doc-fila .doc-nombre{ font-size:.95rem; font-weight:600; color:var(--text-light); margin:0; white-space:normal; overflow-wrap:anywhere; min-width:0; flex:1; }
 .doc-fila .badge-mini{
-  display:inline-block; flex:none; font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:var(--r-chip);
+  display:inline-block; flex:none; white-space:nowrap; font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:var(--r-chip);
   background:var(--ink-3); color:var(--text-dim);
 }
 
@@ -935,6 +943,7 @@ body.modo-seleccion .check-seleccion{ display:flex; }
   15%, 55%, 95%{ box-shadow:0 0 0 3px #E5342A, 0 0 16px rgba(229,52,42,.65); }
 }
 @media (prefers-reduced-motion:reduce){ .parpadeo-falta{ animation:none; box-shadow:0 0 0 3px #E5342A; } }
+.btn-secundario.falta-pagina{ border:2px solid #E5342A !important; color:#E5342A !important; background:rgba(229,52,42,.12) !important; }
 .btn-secundario{ background:transparent; color:var(--text-dim); border:1px solid var(--borde); }
 .btn-peligro{ background:var(--stamp); color:var(--sobre-acento); }
 /* Botón final de "Borrar todo y cerrar sesión": apagado hasta escribir la palabra, y al escribirla se rellena en rojo */

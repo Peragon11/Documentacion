@@ -14,10 +14,13 @@ module.exports = {
     await ejecutar(`document.querySelector('#btn-anadir-pagina-subida').click(); 0`); await espera(100);
     c(await ejecutar(`document.querySelector('#input-nombre').classList.contains('parpadeo-falta')`), 'Sin nombre, "Añadir primera página" hace parpadear el nombre del documento');
     await ejecutar(`(() => { const i = document.querySelector('#input-nombre'); i.readOnly = false; i.value = 'DNI Raul'; i.dispatchEvent(new Event('input')); return 0; })()`);
+    await ejecutar(`document.querySelector('#input-categoria [data-valor="c1"]').click(); document.querySelector('#input-persona [data-valor="p1"]').click(); document.querySelector('#modal-guardar').click(); 0`); await espera(150);
+    c(await ejecutar(`document.querySelector('#btn-anadir-pagina-subida').classList.contains('falta-pagina')`), 'Guardar sin ninguna página deja en rojo el cuadro de añadir página');
     const subir = (nombre) => ejecutar(`(() => { const inp = document.querySelector('#input-archivo'); const dt = new DataTransfer(); dt.items.add(new File(['%PDF-1.4'], '${nombre}', { type: 'application/pdf' })); inp.files = dt.files; inp.dispatchEvent(new Event('change')); return 0; })()`);
     await subir('a.pdf'); await espera(200);
     await subir('b.pdf'); await espera(200);
     const campos = JSON.parse(await ejecutar(`JSON.stringify([...document.querySelectorAll('.pagina-subida-fila')].map((f) => [f.querySelector('.prefijo-fijo').textContent, f.querySelector('input').value]))`));
+    c(await ejecutar(`!document.querySelector('#btn-anadir-pagina-subida').classList.contains('falta-pagina')`), 'Al añadir una página se quita el rojo');
     c.igual(campos[0][0], 'DNI Raul', 'El nombre del documento va fijo delante de la primera página');
     c.igual(campos[0][1], '', 'La primera página puede quedar sin nada más');
     c.igual(campos[1][1], '2', 'La segunda lleva su número');
