@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.7';
+const VERSION_APP = '3.7.8';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -626,6 +626,18 @@ async function onTokenRecibido(resp) {
   await alConectarProveedor('google');
 }
 
+// Al iniciar sesión con Dropbox la app sale a su página y vuelve a una carga nueva: el historial se queda con la
+// pantalla de conexión de antes. Si con "atrás" el navegador la devuelve tal cual estaba (restaurada de memoria, con
+// la ventana de conectar a la vista) pero ya hay datos en este móvil, se vuelve a cargar la app para que entre en ellos.
+window.addEventListener('pageshow', (e) => {
+  let hayDatos = false;
+  try { hayDatos = !!localStorage.getItem('documentacion_hay_datos'); } catch (err) { /* sin almacenamiento */ }
+  const loginAVista = !$('#vista-login').classList.contains('hidden') && getComputedStyle($('#vista-login')).display !== 'none';
+  let retornoPendiente = false;
+  try { retornoPendiente = !!sessionStorage.getItem(CLAVE_RETORNO_OAUTH); } catch (err) { /* ignorar */ }
+  if (e.persisted && ((hayDatos && loginAVista) || retornoPendiente)) location.reload();
+});
+
 function volverALogin(panel = 'nubes') {
   $('#vista-app').classList.add('hidden');
   $('#vista-login').classList.remove('hidden');
@@ -857,7 +869,7 @@ async function asegurarCarpeta() {
 // borró. Cualquier categoría, incluidas las de fábrica, se puede borrar.
 // Límite común para el nombre de una persona o de una categoría (al crear y al renombrar).
 // Sale en la barra de arriba, donde con este largo cabe entero en dos líneas.
-const LIMITE_NOMBRE = 35;
+const LIMITE_NOMBRE = 30;
 
 const CATEGORIA_SIN_ASIGNAR = { id: null, nombre: 'Sin categoría', color: '#6B7686' };
 
@@ -1036,17 +1048,40 @@ async function iniciarOAuthPkce(id, urlAutorizar, parametros) {
     code_challenge: await desafioPkce(verificador), code_challenge_method: 'S256', state: estado,
   }, parametros);
   Object.keys(todos).forEach((k) => { if (todos[k] !== undefined) url.searchParams.set(k, todos[k]); });
+  try { sessionStorage.setItem(CLAVE_HISTORIAL_ANTES, String(history.length)); } catch (e) { /* sin sessionStorage: se sigue sin limpiar el historial */ }
   location.href = url.toString();
 }
 
+// Al salir a Dropbox y volver, el historial se queda con [la app de antes, la página de Dropbox, la app de ahora]; con "atrás"
+// desde los documentos se iría a esas pantallas en vez de salir de la app. Para dejarlo como al abrir la app de normal
+// (solo una entrada), al volver se retrocede hasta la app de antes de salir y allí se termina la conexión: la entrada de
+// Dropbox y la de ahora quedan "hacia delante" y atrás sale de la app. Si no se puede retroceder, se sigue como siempre.
+const CLAVE_HISTORIAL_ANTES = 'documentacion_historial_antes';
+const CLAVE_RETORNO_OAUTH = 'documentacion_oauth_retorno';
 async function procesarRetornoOAuth() {
   const params = new URLSearchParams(location.search);
-  const codigo = params.get('code');
-  const estado = params.get('state');
-  const error = params.get('error');
-  if ((!codigo && !error) || !estado) return null;
+  let codigo = params.get('code');
+  let estado = params.get('state');
+  let error = params.get('error');
+  let guardado = null;
+  try { guardado = JSON.parse(sessionStorage.getItem(CLAVE_RETORNO_OAUTH) || 'null'); } catch (e) { /* ignorar */ }
+  if ((codigo || error) && estado) {
+    history.replaceState(null, '', location.pathname);
+    let pasos = 0;
+    try { pasos = history.length - Number(sessionStorage.getItem(CLAVE_HISTORIAL_ANTES) || history.length); sessionStorage.removeItem(CLAVE_HISTORIAL_ANTES); } catch (e) { /* ignorar */ }
+    if (pasos >= 1 && pasos <= 8) {
+      try {
+        sessionStorage.setItem(CLAVE_RETORNO_OAUTH, JSON.stringify({ codigo, estado, error }));
+        history.go(-pasos);
+        await new Promise((r) => setTimeout(r, 1200)); // si la página se descarga, el código sigue en la entrada de antes
+        sessionStorage.removeItem(CLAVE_RETORNO_OAUTH);  // seguimos aquí: no se pudo retroceder, se continúa con normalidad
+      } catch (e) { /* ignorar */ }
+    }
+  } else if (guardado && guardado.estado) {
+    ({ codigo, estado, error } = guardado);
+    try { sessionStorage.removeItem(CLAVE_RETORNO_OAUTH); } catch (e) { /* ignorar */ }
+  } else return null;
   const pendiente = leerJsonLocal('documentacion_oauth_pendiente', null);
-  history.replaceState(null, '', location.pathname);
   guardarJsonLocal('documentacion_oauth_pendiente', null);
   if (!pendiente || pendiente.estado !== estado || !PROVEEDORES[pendiente.id]) return null;
   const prov = PROVEEDORES[pendiente.id];
@@ -2303,7 +2338,47 @@ function renderizarPantallaInicio() {
   if (modoInicio === 'categorias') renderizarCategoriasHome();
   else renderizarPersonas();
   actualizarTutorialModo();
+  ajustarNombresLargos();
 }
+
+// Los nombres de las barras de categoría y de las fichas de persona no se recortan NUNCA, pero tampoco hacen
+// crecer la barra o la ficha: si el nombre no cabe en una línea a su tamaño normal, la letra se va reduciendo
+// (y el nombre pasa a dos líneas si hace falta) hasta que cabe sin que el contenedor cambie de alto.
+// Se comprueba contra la altura que tiene el contenedor con un nombre corto, así vale igual en todos los estilos.
+const NOMBRE_TAM_MIN = 9;
+function ajustarNombreEnContenedor(nombre, contenedor) {
+  if (!nombre || !contenedor || !contenedor.offsetHeight) return; // no se ve ahora (se vuelve a ajustar al enseñarlo)
+  const original = nombre.textContent;
+  nombre.style.fontSize = '';
+  nombre.textContent = 'Ag';
+  const alturaUna = contenedor.offsetHeight;
+  nombre.textContent = original;
+  const cabe = () => contenedor.offsetHeight <= alturaUna + 0.5 && nombre.scrollWidth <= nombre.clientWidth + 0.5;
+  if (cabe()) return;
+  let bajo = NOMBRE_TAM_MIN, alto = parseFloat(getComputedStyle(nombre).fontSize);
+  for (let i = 0; i < 8; i++) {
+    const medio = (bajo + alto) / 2;
+    nombre.style.fontSize = medio + 'px';
+    if (cabe()) bajo = medio; else alto = medio;
+  }
+  nombre.style.fontSize = (Math.floor(bajo * 10) / 10) + 'px';
+}
+function ajustarNombresLargos() {
+  const grid = $('#grid-personas');
+  if (!grid) return;
+  grid.querySelectorAll('.categoria-barra').forEach((barra) => ajustarNombreEnContenedor(barra.querySelector('.categoria-barra-nombre'), barra));
+  grid.querySelectorAll('.persona-tile-clic').forEach((ficha) => ajustarNombreEnContenedor(ficha.querySelector('.nombre-persona'), ficha));
+}
+(function activarAjusteNombresLargos() {
+  let pendiente = false;
+  const programar = () => { if (pendiente) return; pendiente = true; requestAnimationFrame(() => { pendiente = false; ajustarNombresLargos(); }); };
+  window.addEventListener('resize', programar);
+  window.addEventListener('orientationchange', () => setTimeout(programar, 150));
+  // la letra del estilo tarda en cargar y cambia el ancho del texto; también cambian con el estilo y con el tamaño del texto
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', programar);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(programar);
+  new MutationObserver(programar).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin', 'style'] });
+})();
 
 // La primera vez que se ve cada modo se explica cómo pasar al otro, con el dibujo del botón de arriba.
 // Se da por visto al pulsar "Entendido" o al usar ese botón.

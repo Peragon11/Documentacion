@@ -27,7 +27,15 @@ const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 function iniciarServidor() {
   return new Promise((ok) => {
     const srv = http.createServer((req, res) => {
-      let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+      const url = new URL(req.url, 'http://x');
+      let p = decodeURIComponent(url.pathname);
+      // Página de "autorizar" falsa, como la de Dropbox: una página intermedia con un botón que vuelve a la app con un código
+      if (p === '/autorizar-falso') {
+        const vuelta = url.searchParams.get('redirect_uri') + '?code=codigo-falso&state=' + encodeURIComponent(url.searchParams.get('state'));
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<!doctype html><title>Autorizar</title><a id="permitir" href="' + vuelta + '">Permitir</a>');
+        return;
+      }
       if (p === '/') p = '/index.html';
       const f = path.normalize(path.join(RAIZ, p));
       if (!f.startsWith(RAIZ) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end(); return; }

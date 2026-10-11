@@ -301,7 +301,7 @@ body:has(#pantalla-personas:not(.hidden)) .toast{ bottom:calc(122px + var(--safe
    se queda pegado al avatar, como estaba antes (ver ajustarTituloTopbar). */
 .topbar .marca span#titulo-topbar.centrado{ text-align:center; }
 /* Nombre largo: se reparte en dos líneas (ajustarTituloTopbar) */
-.topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; line-height:1.2; overflow:hidden; max-height:calc(2.4em + 7px); padding-bottom:5px; margin-bottom:-5px; }
+.topbar .marca span#titulo-topbar.dos-lineas{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; white-space:normal; overflow-wrap:anywhere; line-height:1.2; overflow:hidden; max-height:calc(2.4em + 7px); padding-bottom:5px; margin-bottom:-5px; }
 .topbar .avatar-persona{ width:44px; height:44px; font-size:1rem; border-radius:var(--r-avatar-mini); flex:none; box-shadow:none; }
 .btn-icono-top{
   background:var(--ink-2); border:none; color:var(--text-light); width:44px; height:44px; border-radius:var(--r-redondo);
@@ -370,8 +370,8 @@ main{
   box-shadow:0 16px 34px rgba(0,0,0,.4); outline:2px solid var(--stamp); outline-offset:3px;
 }
 .categoria-barra-nombre{
-  flex:1; min-width:0; background:none; border:none; color:inherit; font:inherit;
-  text-align:left; cursor:pointer; padding:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  flex:1; min-width:0; background:none; border:none; color:inherit; font:inherit; line-height:1.2;
+  text-align:left; cursor:pointer; padding:0; white-space:normal; overflow-wrap:anywhere;
 }
 .icon-btn-cat-bar{
   flex:none; width:32px; height:32px; margin-left:8px; border-radius:50%; border:none; cursor:pointer;
@@ -453,8 +453,7 @@ main{
 .aviso-caducidad-persona.aviso{ background:#C77B22; }
 .aviso-caducidad-persona.caducado{ background:#E5342A; }
 .persona-tile .nombre-persona{
-  font-size:.95rem; font-weight:600; text-align:center; max-width:100%; line-height:1.2;
-  overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1;
+  font-size:.95rem; font-weight:600; text-align:center; max-width:100%; line-height:1.2; overflow-wrap:anywhere;
 }
 .persona-tile.arrastrando-tile{
   z-index:30; cursor:grabbing; transition:none; pointer-events:none;
@@ -642,7 +641,7 @@ body.modo-seleccion .check-seleccion{ display:flex; }
   padding:12px 14px 14px; min-width:0;
   display:flex; align-items:center; justify-content:space-between; gap:10px;
 }
-.doc-fila .doc-nombre{ font-size:.95rem; font-weight:600; color:var(--text-light); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; }
+.doc-fila .doc-nombre{ font-size:.95rem; font-weight:600; color:var(--text-light); margin:0; white-space:normal; overflow-wrap:anywhere; min-width:0; flex:1; }
 .doc-fila .badge-mini{
   display:inline-block; flex:none; font-size:.78rem; font-weight:700; padding:3px 9px; border-radius:var(--r-chip);
   background:var(--ink-3); color:var(--text-dim);
@@ -731,7 +730,7 @@ body.modo-seleccion .check-seleccion{ display:flex; }
 .galeria-pagina .miniatura .icono-pdf{ color:var(--text-dim); }
 .galeria-pagina-nombre{
   padding:10px 12px 12px; margin:0; font-size:.88rem; font-weight:600; color:var(--text-light);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  white-space:normal; overflow-wrap:anywhere;
 }
 
 .modal-fondo{
@@ -811,13 +810,13 @@ body.modo-seleccion .check-seleccion{ display:flex; }
   background:none; border:2px solid transparent; border-radius:14px; color:var(--text-dim); cursor:pointer; scroll-snap-align:center;
 }
 .opcion-persona .avatar-persona{ width:68px; height:68px; font-size:1rem; border-radius:var(--r-avatar-mini); box-shadow:none; }
-.opcion-persona .op-nombre{ font-size:.78rem; line-height:1.2; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.opcion-persona .op-nombre{ font-size:.78rem; line-height:1.2; max-width:100%; white-space:normal; overflow-wrap:anywhere; text-align:center; }
 .opcion-persona.activa{ border-color:var(--stamp); color:var(--text-light); background:color-mix(in srgb, var(--stamp) 12%, transparent); }
 .opcion-persona.activa .op-nombre{ font-weight:700; }
 .opcion-categoria{
-  flex:none; max-width:170px; padding:9px 16px; border-radius:999px; border:2px solid transparent; cursor:pointer;
-  background:var(--color-categoria, var(--ink-3)); color:#fff; font-size:.85rem; font-weight:600; filter:saturate(.35) brightness(.8);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; scroll-snap-align:center;
+  flex:none; max-width:min(240px, 70vw); padding:9px 16px; border-radius:22px; border:2px solid transparent; cursor:pointer;
+  background:var(--color-categoria, var(--ink-3)); color:#fff; font-size:.85rem; font-weight:600; line-height:1.2; filter:saturate(.35) brightness(.8);
+  white-space:normal; overflow-wrap:anywhere; text-align:center; scroll-snap-align:center;
 }
 .opcion-categoria.activa{ filter:none; border-color:var(--text-light); box-shadow:0 0 0 2px var(--ink-2), 0 0 0 4px var(--stamp); }
 .selector-personas .flecha-personas{ top:34px; }
@@ -1302,6 +1301,8 @@ html[data-skin="comic"] .categoria-barra::before{ content:''; position:absolute;
     linear-gradient(180deg, rgba(255,255,255,.07), transparent 50%, rgba(0,0,0,.07)),
     var(--color-categoria, #888); }
 html[data-skin="comic"] .categoria-barra > *{ position:relative; }
+/* el aviso de caducidad de la barra no usa los desplazamientos right/bottom de su versión sobre el avatar (con position:relative lo corrían encima del nombre) */
+html[data-skin="comic"] .categoria-barra > .aviso-caducidad-persona{ right:auto; bottom:auto; }
 html[data-skin="comic"] .categoria-barra:active{ transform:translate(3px,3px); }
 html[data-skin="comic"] .categoria-barra:active::before{ box-shadow:2px 2px 0 var(--text-light); }
 /* Filtro de categorías: globitos de texto (los de categoría, en gris) */
@@ -1525,14 +1526,9 @@ html[data-skin="metalico"] .doc-nombre, html[data-skin="metalico"] .titulo-grupo
 
 /* Placa de nombre remachada: un "tornillo" a cada lado, como una etiqueta atornillada */
 html[data-skin="metalico"] .persona-tile .nombre-persona{
-  /* El nombre no se recorta a una línea: cabe hasta en DOS (por eso --altura-nombre reserva sitio
-     para dos, ver más abajo). Si aun así no cupiera, se recorta con puntos suspensivos —
-     -webkit-line-clamp cuando el navegador lo aplique, y el tope de altura (max-height) siempre,
-     que es lo que de verdad evita que una tercera línea asome por debajo de la placa: al ser un
-     elemento de la rejilla (grid) de la ficha, el navegador "bloquea" el display a flow-root, y
-     con flow-root -webkit-line-clamp no hace nada por sí solo. */
-  position:relative; display:-webkit-box; width:fit-content; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
-  line-height:1.2; max-height:calc(.78rem * 1.2 * 2 + 8px);
+  /* El nombre nunca se recorta: la placa crece con las líneas que haga falta (la fila de la ficha es
+     minmax(--altura-nombre, auto), así que se adapta). */
+  position:relative; width:fit-content; line-height:1.2; overflow-wrap:anywhere;
   max-width:100%; font-size:.78rem; font-weight:700; text-align:center;
   text-transform:uppercase; letter-spacing:.04em; padding:4px 16px; border-radius:3px;
   background:linear-gradient(165deg, var(--ink-3), var(--ink-2) 60%, var(--ink) 100%);
@@ -1555,7 +1551,7 @@ html[data-skin="metalico"] .barra-inferior{ background:linear-gradient(180deg, v
 html[data-skin="metalico"] .barra-inferior::before{ content:''; display:block; height:6px; margin:-8px -10px 8px; background:repeating-linear-gradient(135deg, var(--stamp) 0 9px, #1a1a1a 9px 18px); }
 
 /* Menús de opciones de documento, página y persona (mismo diseño que Ajustes) */
-html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+html .ajustes .ajustes-titulo.titulo-menu{ font-size:1.3rem; line-height:1.2; overflow-wrap:anywhere; }
 .ajustes .texto-menu{ margin:-8px 0 0; color:var(--text-dim); font-size:.85rem; line-height:1.45; }
 .fila-accion.fila-cat{ grid-template-columns:38px minmax(0,1fr) auto; }
 .fila-accion .marca-actual{ display:flex; color:var(--seal); }
