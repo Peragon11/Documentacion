@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.7.9';
+const VERSION_APP = '3.8.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -699,6 +699,7 @@ async function alConectarProveedor(id) {
       mostrarToast(trad('{nube} conectado', { nube: prov.nombre }));
     }
     estadoProv[id] = 'ok';
+    marcarConsulta(id);
   } catch (e) {
     console.error(e);
     estadoProv[id] = 'error';
@@ -1546,9 +1547,17 @@ const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 // veces), se consulta cada nube y se suma en los dos sentidos (sincronizarTodo).
 // Si aún no toca, solo se hace la pasada normal, que envía lo pendiente. Los
 // cambios propios se copian a las nubes al momento, sin esperar a esta consulta.
-const CLAVE_ULTIMA_SYNC = 'documentacion_ultima_sync';
+// La hora se anota POR NUBE, cada vez que con ella se hace una pasada completa (se lee lo suyo, se suma y se sube): tanto en la
+// consulta de cada hora como al copiar cambios o al conectarla. La que se enseña (y la que decide cuándo toca la siguiente
+// consulta) es la de la nube más atrasada: si una falla, se sigue reintentando y la hora no esconde el problema.
 const MINUTOS_ENTRE_SINCRONIZACIONES = 60;
-const ultimaSincronizacion = () => parseInt(localStorage.getItem(CLAVE_ULTIMA_SYNC) || '0', 10) || 0;
+const claveConsulta = (id) => 'documentacion_consulta_' + id;
+const consultaDe = (id) => parseInt(localStorage.getItem(claveConsulta(id)) || '0', 10) || 0;
+function marcarConsulta(id) { try { localStorage.setItem(claveConsulta(id), String(Date.now())); } catch (e) { /* sin espacio: solo se pierde la hora */ } }
+function ultimaSincronizacion() {
+  const ids = Object.keys(PROVEEDORES).filter((id) => PROVEEDORES[id].conectado());
+  return ids.length ? Math.min(...ids.map(consultaDe)) : 0;
+}
 function sincronizacionDebida() {
   return Date.now() - ultimaSincronizacion() >= MINUTOS_ENTRE_SINCRONIZACIONES * 60000;
 }
@@ -1588,7 +1597,6 @@ async function sincronizarTodo() {
     }
   } finally { respaldoEnCurso = false; }
   const fallos = activos.filter((id) => estadoProv[id] !== 'ok').map((id) => PROVEEDORES[id].nombre);
-  if (!fallos.length) localStorage.setItem(CLAVE_ULTIMA_SYNC, String(Date.now()));
   refrescarEstadoAjustes();
   return { fallos };
 }
@@ -1917,6 +1925,7 @@ async function respaldarEn(id, forzar = false) {
       try { await prov.barrerCarpetasVacias(); } catch (e) { console.error(e); }
     }
     estadoProv[id] = 'ok';
+    marcarConsulta(id);
     avisadoReconectar[id] = false;
     avisadoLlena[id] = false;
   } catch (e) {
@@ -2170,6 +2179,7 @@ async function desconectarProveedor(id) {
   try { await prov.desconectar(); } catch (e) { /* ignorar */ }
   guardarProv(id, null);
   guardarEstadoProv(id, null);
+  try { localStorage.removeItem(claveConsulta(id)); } catch (e) { /* ignorar */ }
   delete estadoProv[id];
   guardarJsonLocal(CLAVE_BORRADOS, leerJsonLocal(CLAVE_BORRADOS, []).filter((b) => b.prov !== id));
   refrescarEstadoAjustes();
