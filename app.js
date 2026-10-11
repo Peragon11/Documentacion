@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.9.0';
+const VERSION_APP = '3.9.1';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -6250,7 +6250,7 @@ function abrirModalSubida(previo) {
         <label for="input-nombre">Nombre del documento</label>
         <input type="search" id="input-nombre" name="q" placeholder="Ej: DNI" autocomplete="off" autocapitalize="sentences" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore data-form-type="other" readonly>
       </div>
-      <div id="resto-subida" class="hidden">
+      <div id="resto-subida">
         <div id="lista-paginas-subida"></div>
         <button class="btn-secundario" id="btn-anadir-pagina-subida" type="button">+ Añadir primera página</button>
         <div class="campo">
@@ -6269,7 +6269,7 @@ function abrirModalSubida(previo) {
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
-        <button class="btn-primario inactivo" id="modal-guardar" aria-disabled="true">Crear documento</button>
+        <button class="btn-primario inactivo" id="modal-guardar" aria-disabled="true">Guardar</button>
       </div>
     </div>
     <div id="zona-recorte-subida" class="hidden"></div>
@@ -6325,7 +6325,11 @@ function abrirModalSubida(previo) {
     actualizarBotonGuardar();
   }
 
-  $('#btn-anadir-pagina-subida').addEventListener('click', () => inputArchivo.click());
+  $('#btn-anadir-pagina-subida').addEventListener('click', () => {
+    // Antes hace falta el nombre del documento: va fijo delante del de cada página.
+    if (!$('#input-nombre').value.trim()) { parpadearFalta($('#input-nombre')); $('#input-nombre').focus(); return; }
+    inputArchivo.click();
+  });
 
   inputArchivo.addEventListener('change', () => {
     const f = inputArchivo.files[0];
@@ -6359,14 +6363,10 @@ function abrirModalSubida(previo) {
     actualizarBotonGuardar();
   });
   evitarBarraAutorrelleno($('#input-nombre'));
-  $('#input-nombre').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && $('#resto-subida').classList.contains('hidden')) intentarGuardarDocumento();
-  });
   $('#modal-cancelar').addEventListener('click', volverAtras);
   $('#modal-guardar').addEventListener('click', intentarGuardarDocumento);
 
   if (previo) {
-    mostrarRestoSubida(); // venía del paso 2 (crear persona o categoría): el nombre ya estaba puesto
     $('#input-nombre').value = previo.nombre;
     ponerCampoFecha('input-caducidad', previo.caducidad);
     renderizarListaPaginasSubida();
@@ -6387,22 +6387,9 @@ function abrirModalSubida(previo) {
   });
 }
 
-// Paso 2 de "Subir documento": con el nombre ya puesto, aparecen las páginas, la persona, la categoría y la caducidad.
-function mostrarRestoSubida() {
-  $('#resto-subida').classList.remove('hidden');
-  $('#modal-guardar').textContent = 'Guardar';
-  actualizarBotonGuardar();
-}
-
 function actualizarBotonGuardar() {
   const btn = $('#modal-guardar');
   if (!btn) return;
-  if ($('#resto-subida').classList.contains('hidden')) {
-    const sinNombre = !$('#input-nombre').value.trim();
-    btn.classList.toggle('inactivo', sinNombre);
-    btn.setAttribute('aria-disabled', sinNombre ? 'true' : 'false');
-    return;
-  }
   const faltaPersona = !valorSelectorFila($('#input-persona')); // sin ninguna persona creada / elegida
   const faltaCategoria = !valorSelectorFila($('#input-categoria')); // hay que elegir (o crear) una categoría
   const incompleto = faltaPersona || faltaCategoria || !campoFechaValido('input-caducidad') || !(paginasSubidaPendientes.length > 0 && $('#input-nombre').value.trim());
@@ -6414,8 +6401,8 @@ function actualizarBotonGuardar() {
 // Campos de "Subir documento" que aún faltan, en el orden en que salen.
 function camposQueFaltanSubida() {
   const faltan = [];
-  if (!paginasSubidaPendientes.length) faltan.push($('#btn-anadir-pagina-subida'));
   if (!$('#input-nombre').value.trim()) faltan.push($('#input-nombre'));
+  if (!paginasSubidaPendientes.length) faltan.push($('#btn-anadir-pagina-subida'));
   if (!valorSelectorFila($('#input-persona'))) faltan.push($('#input-persona') || $('#seccion-normal-subida'));
   if (!valorSelectorFila($('#input-categoria'))) faltan.push($('#input-categoria'));
   if (!campoFechaValido('input-caducidad')) faltan.push($('#input-caducidad-caja'));
@@ -6428,12 +6415,6 @@ function parpadearFalta(el) {
   setTimeout(() => el.classList.remove('parpadeo-falta'), 1500);
 }
 function intentarGuardarDocumento() {
-  if ($('#resto-subida').classList.contains('hidden')) {
-    if (!$('#input-nombre').value.trim()) { parpadearFalta($('#input-nombre')); return; }
-    $('#input-nombre').blur();
-    mostrarRestoSubida();
-    return;
-  }
   const faltan = camposQueFaltanSubida();
   if (!faltan.length) { guardarDocumentoNuevo(); return; }
   faltan.forEach(parpadearFalta);
