@@ -820,6 +820,23 @@ body.modo-seleccion .check-seleccion{ display:flex; }
 }
 .btn-quitar-pagina-subida{ flex:none; background:none; border:none; color:var(--text-dim); padding:6px; cursor:pointer; }
 #btn-anadir-pagina-subida{ margin-bottom:16px; }
+/* "Subir documento": ventana más alta y con los espacios justos, para que el botón Guardar se vea sin desplazar. */
+.modal.modal-subida{ max-height:95dvh; padding-top:18px; padding-bottom:calc(16px + var(--safe-b)); }
+.modal-subida h3{ margin-bottom:12px; }
+.modal-subida .campo{ margin-bottom:11px; }
+.modal-subida #btn-anadir-pagina-subida{ margin-bottom:11px; }
+.modal-subida .caja-anadir-pagina{ padding:11px 12px; }
+.modal-subida .selector-personas .fila-personas{ padding:5px 10px 3px; }
+.modal-subida .opcion-persona{ gap:3px; padding:4px 2px 2px; }
+.modal-subida .opcion-persona .avatar-persona{ width:58px; height:58px; }
+.modal-subida .selector-personas .flecha-personas{ top:24px; }
+.modal-subida .selector-categorias .flecha-personas{ top:8px; }
+.selector-aviso{ display:flex; gap:6px; }
+.selector-aviso button{
+  flex:1; min-width:0; padding:10px 0; border-radius:var(--r-campo); border:1px solid var(--borde);
+  background:var(--ink-3); color:var(--text-dim); font-size:.92rem; font-weight:600; cursor:pointer;
+}
+.selector-aviso button[aria-checked="true"]{ background:var(--stamp); border-color:var(--stamp); color:var(--sobre-acento); }
 /* Cuadro de "añadir página": una caja normal (como los campos), para que su parpadeo en rojo se vea igual que el de los demás. */
 .caja-anadir-pagina{
   display:flex; align-items:center; justify-content:center; text-align:center; cursor:pointer; user-select:none; -webkit-user-select:none;

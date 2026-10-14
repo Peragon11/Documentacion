@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.9.5';
+const VERSION_APP = '3.9.6';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -5081,11 +5081,20 @@ async function compartirPaginasComoPdf(paginas, titulo) {
 const DIAS_AVISO_POR_DEFECTO = 60;
 const OPCIONES_AVISO = [15, 30, 60, 90, 180];
 function diasAvisoDe(doc) { return doc && OPCIONES_AVISO.includes(doc.avisoDias) ? doc.avisoDias : DIAS_AVISO_POR_DEFECTO; }
-// Desplegable "Avisar con antelación" de los formularios de caducidad.
+// Botones "Avisar con antelación (días)" de los formularios de caducidad: una fila que cabe en el ancho.
 function htmlSelectorAviso(id, valor) {
-  const opciones = OPCIONES_AVISO.map((n) => `<option value="${n}"${n === valor ? ' selected' : ''}>${trad(n === DIAS_AVISO_POR_DEFECTO ? '{n} días antes (lo habitual)' : '{n} días antes', { n })}</option>`).join('');
-  return `<div class="campo"><label for="${id}">Avisar con antelación</label><select id="${id}">${opciones}</select></div>`;
+  const botones = OPCIONES_AVISO.map((n) => `<button type="button" role="radio" data-valor="${n}" aria-checked="${n === valor ? 'true' : 'false'}">${n}</button>`).join('');
+  return `<div class="campo"><label id="${id}-etiqueta">Avisar con antelación (días)</label><div class="selector-aviso" id="${id}" role="radiogroup" aria-labelledby="${id}-etiqueta">${botones}</div></div>`;
 }
+function valorSelectorAviso(id) {
+  const activo = $('#' + id + ' [aria-checked="true"]');
+  return activo ? Number(activo.dataset.valor) : DIAS_AVISO_POR_DEFECTO;
+}
+document.addEventListener('click', (e) => {
+  const boton = e.target.closest('.selector-aviso [data-valor]');
+  if (!boton) return;
+  boton.parentElement.querySelectorAll('[data-valor]').forEach((b) => b.setAttribute('aria-checked', b === boton ? 'true' : 'false'));
+});
 function calcularBadgeCaducidad(fecha, avisoDias = DIAS_AVISO_POR_DEFECTO) {
   if (!fecha) return null;
   const dias = diasHastaCaducidad(fecha);
@@ -5958,7 +5967,7 @@ function abrirModalCaducidad(doc) {
   $('#modal-guardar-caducidad').addEventListener('click', () => {
     if (!campoFechaValido('input-caducidad-doc')) { parpadearFalta($('#input-caducidad-doc-caja')); mostrarToast('La fecha no es válida (dd/mm/aaaa).', true); return; }
     doc.fechaCaducidad = $('#input-caducidad-doc').value || null;
-    doc.avisoDias = Number($('#input-aviso-doc').value);
+    doc.avisoDias = valorSelectorAviso('input-aviso-doc');
     guardarMetadatos().then(() => {
       volverAtras();
       refrescarPantallaActual();
@@ -6058,7 +6067,7 @@ function abrirModalActualizar(doc) {
       }
       doc.paginas = paginas;
       doc.fechaCaducidad = $('#input-caducidad-actualizar').value || null;
-      doc.avisoDias = Number($('#input-aviso-actualizar').value);
+      doc.avisoDias = valorSelectorAviso('input-aviso-actualizar');
       doc.fechaSubida = new Date().toISOString().slice(0, 10);
       await guardarMetadatos();
       // Síncrono (no volverAtras): si no, el visor de abajo, al repintarse, sustituiría la capa del modal
@@ -6221,7 +6230,7 @@ function capturarEstadoSubida() {
     esEstadoSubida: true,
     nombre: $('#input-nombre').value,
     caducidad: $('#input-caducidad').value,
-    aviso: Number($('#input-aviso').value),
+    aviso: valorSelectorAviso('input-aviso'),
     personaId: valorSelectorFila($('#input-persona')),
     categoriaId: valorSelectorFila($('#input-categoria')),
   };
@@ -6289,6 +6298,7 @@ function abrirModalSubida(previo) {
     <input type="file" id="input-archivo" accept="image/*,application/pdf" capture="environment" class="visually-hidden">
   `);
 
+  $('.modal').classList.add('modal-subida'); // más alta y con los espacios más ajustados: que quepa Guardar sin desplazar
   activarCampoFecha('input-caducidad');
   if ($('#input-persona')) activarSelectorFila($('#input-persona'), personaPreseleccionada);
   activarSelectorFila($('#input-categoria'), catPreseleccionada);
@@ -6458,7 +6468,7 @@ async function guardarDocumentoNuevo() {
       id: 'doc-' + Date.now(),
       personaId,
       nombre, categoria: categoriaId,
-      fechaCaducidad: caducidad, avisoDias: Number($('#input-aviso').value), fechaSubida: new Date().toISOString().slice(0, 10),
+      fechaCaducidad: caducidad, avisoDias: valorSelectorAviso('input-aviso'), fechaSubida: new Date().toISOString().slice(0, 10),
       paginas,
     });
     await guardarMetadatos();

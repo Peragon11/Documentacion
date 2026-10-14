@@ -16,11 +16,11 @@ module.exports = {
     c.igual(estados.join(','), 'aviso,nada,aviso,nada', 'A 45 días avisa con 60 (por defecto) pero no con 30; a 100 días avisa con 180 pero no con 60');
     // Se elige el margen al poner la caducidad de un documento
     await nav.ejecutar(`abrirPersona('p1'); abrirModalCaducidad(datos.documentos[3]); 0`); await espera(300);
-    c.igual(await nav.ejecutar(`document.querySelector('#input-aviso-doc').value`), '60', 'El margen por defecto es 60 días');
-    await nav.ejecutar(`document.querySelector('#input-aviso-doc').value = '180'; document.querySelector('#modal-guardar-caducidad').click(); 0`); await espera(600);
+    c.igual(await nav.ejecutar(`document.querySelector('#input-aviso-doc [aria-checked="true"]').dataset.valor`), '60', 'El margen por defecto es 60 días');
+    await nav.ejecutar(`document.querySelector('#input-aviso-doc [data-valor="180"]').click(); document.querySelector('#modal-guardar-caducidad').click(); 0`); await espera(600);
     c.igual(await nav.ejecutar(`datos.documentos[3].avisoDias`), 180, 'El margen elegido se guarda en el documento');
     // Y también al subir uno nuevo
     await nav.ejecutar(`abrirModalSubida(); 0`); await espera(300);
-    c.igual(await nav.ejecutar(`document.querySelector('#input-aviso').value`), '60', 'Al subir, el margen por defecto es 60 días');
+    c.igual(await nav.ejecutar(`document.querySelector('#input-aviso [aria-checked="true"]').dataset.valor`), '60', 'Al subir, el margen por defecto es 60 días');
   },
 };
