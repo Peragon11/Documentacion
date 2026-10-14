@@ -5,7 +5,7 @@ const CLIENT_ID = '938847082843-e27khin167n3dem5bpt715p37k5adkkp.apps.googleuser
 const DROPBOX_APP_KEY = '6z1ho8yuc20yulh';
 const NOMBRE_APP_DROPBOX = 'DOCUMENTACION_APP'; // nombre de la app en la consola de Dropbox = nombre de su carpeta en Aplicaciones
 
-const VERSION_APP = '3.9.4';
+const VERSION_APP = '3.10.0';
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const NOMBRE_CARPETA = 'DOCUMENTACION_APP';
@@ -1659,6 +1659,7 @@ function sanearDatos(d) {
   (Array.isArray(d.documentos) ? d.documentos : []).forEach((doc) => {
     doc.nombre = texto(doc.nombre);
     if (doc.fechaCaducidad && !RE_FECHA_ISO.test(doc.fechaCaducidad)) doc.fechaCaducidad = null;
+    if (!OPCIONES_AVISO.includes(doc.avisoDias)) delete doc.avisoDias;
     (Array.isArray(doc.paginas) ? doc.paginas : []).forEach((pg) => {
       pg.nombre = texto(pg.nombre);
       if (pg.mimeType && !/^[\w.+-]+\/[\w.+-]+$/.test(pg.mimeType)) pg.mimeType = 'application/octet-stream';
@@ -4706,7 +4707,7 @@ function crearTarjetaDoc(doc) {
 function crearTarjetaDocUnica(doc, indicePagina) {
   const modoExpandido = indicePagina !== null;
   const pagina = modoExpandido ? doc.paginas[indicePagina] : doc.paginas[0];
-  const badge = calcularBadgeCaducidad(doc.fechaCaducidad);
+  const badge = calcularBadgeCaducidad(doc.fechaCaducidad, diasAvisoDe(doc));
   const esImagen = (pagina.mimeType || '').startsWith('image/');
   const variasPaginas = doc.paginas.length > 1;
 
@@ -5076,24 +5077,33 @@ async function compartirPaginasComoPdf(paginas, titulo) {
   }
 }
 
-function calcularBadgeCaducidad(fecha) {
+// Margen de aviso previo a la caducidad: 60 días salvo que el documento tenga otro (doc.avisoDias).
+const DIAS_AVISO_POR_DEFECTO = 60;
+const OPCIONES_AVISO = [15, 30, 60, 90, 180];
+function diasAvisoDe(doc) { return doc && OPCIONES_AVISO.includes(doc.avisoDias) ? doc.avisoDias : DIAS_AVISO_POR_DEFECTO; }
+// Desplegable "Avisar con antelación" de los formularios de caducidad.
+function htmlSelectorAviso(id, valor) {
+  const opciones = OPCIONES_AVISO.map((n) => `<option value="${n}"${n === valor ? ' selected' : ''}>${trad(n === DIAS_AVISO_POR_DEFECTO ? '{n} días antes (lo habitual)' : '{n} días antes', { n })}</option>`).join('');
+  return `<div class="campo"><label for="${id}">Avisar con antelación</label><select id="${id}">${opciones}</select></div>`;
+}
+function calcularBadgeCaducidad(fecha, avisoDias = DIAS_AVISO_POR_DEFECTO) {
   if (!fecha) return null;
   const dias = diasHastaCaducidad(fecha);
   // Hoy es el último día que el documento sigue vigente: aviso, no caducado.
   if (dias === 0) return { estado: 'aviso', texto: trad('Caduca hoy') };
   if (dias < 0) return { estado: 'caducado', texto: trad(dias === -1 ? 'Caducó hace {n} día' : 'Caducó hace {n} días', { n: -dias }) };
-  if (dias <= 60) return { estado: 'aviso', texto: trad(dias === 1 ? 'Caducará en {n} día' : 'Caducará en {n} días', { n: dias }) };
+  if (dias <= avisoDias) return { estado: 'aviso', texto: trad(dias === 1 ? 'Caducará en {n} día' : 'Caducará en {n} días', { n: dias }) };
   return null;
 }
 // Cuenta, para una persona, cuántos de sus documentos están ya
-// caducados y cuántos solo en aviso (dentro de los 60 días, sin vencer
+// caducados y cuántos solo en aviso (dentro de su margen de aviso, sin vencer
 // aún) — de aquí salen tanto la insignia de su botón como la barra de
 // su propia pantalla.
 function contarCaducidadesPersona(personaId) {
   let caducados = 0, avisos = 0;
   datos.documentos.forEach((d) => {
     if (d.personaId !== personaId) return;
-    const badge = calcularBadgeCaducidad(d.fechaCaducidad);
+    const badge = calcularBadgeCaducidad(d.fechaCaducidad, diasAvisoDe(d));
     if (!badge) return;
     if (badge.estado === 'caducado') caducados++; else avisos++;
   });
@@ -5138,7 +5148,7 @@ function estadoCaducidadCategoria(catId) {
   let estado = null;
   datos.documentos.forEach((d) => {
     if (d.categoria !== catId) return;
-    const b = calcularBadgeCaducidad(d.fechaCaducidad);
+    const b = calcularBadgeCaducidad(d.fechaCaducidad, diasAvisoDe(d));
     if (!b) return;
     if (b.estado === 'caducado') estado = 'caducado';
     else if (!estado) estado = 'aviso';
@@ -5154,7 +5164,7 @@ function documentosConAviso(estado) {
         if (d.categoria !== categoriaGlobalActivaId) return false;
         if (personaFiltroActiva !== 'todos' && d.personaId !== personaFiltroActiva) return false;
       } else if (d.personaId !== personaActivaId) return false;
-      return (calcularBadgeCaducidad(d.fechaCaducidad) || {}).estado === estado;
+      return (calcularBadgeCaducidad(d.fechaCaducidad, diasAvisoDe(d)) || {}).estado === estado;
     })
     .sort((a, b) => a.fechaCaducidad.localeCompare(b.fechaCaducidad));
 }
@@ -5226,14 +5236,17 @@ function comprobarCaducidadesYNotificar() {
       diasHastaCaducidad(a.fechaCaducidad) < diasHastaCaducidad(b.fechaCaducidad) ? a : b);
     const dias = diasHastaCaducidad(docMasProximo.fechaCaducidad);
 
+    // Primer aviso cuando entra en su margen (60 días salvo que el documento tenga otro); si el margen es
+    // mayor de 30 días, hay un segundo aviso a los 30; y otro al caducar.
+    const margen = diasAvisoDe(docMasProximo);
     let estado = avisos[clave];
-    if (!estado || estado.fecha !== docMasProximo.fechaCaducidad) {
-      estado = { fecha: docMasProximo.fechaCaducidad, aviso60: false, aviso30: false, avisoCaducado: false };
+    if (!estado || estado.fecha !== docMasProximo.fechaCaducidad || estado.margen !== margen) {
+      estado = { fecha: docMasProximo.fechaCaducidad, margen, aviso60: false, aviso30: false, avisoCaducado: false };
     }
 
     const necesitaAvisoCaducado = dias <= 0 && !estado.avisoCaducado;
-    const necesitaAviso30 = !necesitaAvisoCaducado && dias <= 30 && !estado.aviso30;
-    const necesitaAviso60 = !necesitaAvisoCaducado && !necesitaAviso30 && dias <= 60 && !estado.aviso60;
+    const necesitaAviso30 = !necesitaAvisoCaducado && margen > 30 && dias <= 30 && !estado.aviso30;
+    const necesitaAviso60 = !necesitaAvisoCaducado && !necesitaAviso30 && dias <= margen && !estado.aviso60;
 
     if (necesitaAvisoCaducado || necesitaAviso30 || necesitaAviso60) {
       notificarCaducidad(docMasProximo, dias);
@@ -5477,7 +5490,7 @@ async function abrirVisor(doc, indicePagina = 0, sinNavegacion = false, direccio
   const pagina = doc.paginas[indicePagina];
   const esImagen = (pagina.mimeType || '').startsWith('image/');
   const visor = $('#visor-completo');
-  const badgeVisor = calcularBadgeCaducidad(doc.fechaCaducidad);
+  const badgeVisor = calcularBadgeCaducidad(doc.fechaCaducidad, diasAvisoDe(doc));
   visor.innerHTML = `
     <div class="visor-topbar">
       <button class="btn-icono-top" id="visor-cerrar" aria-label="Cerrar">
@@ -5933,6 +5946,7 @@ function abrirModalCaducidad(doc) {
       <label>${escapeHtml(doc.nombre)}</label>
       ${htmlCampoFecha('input-caducidad-doc', doc.fechaCaducidad)}
     </div>
+    ${htmlSelectorAviso('input-aviso-doc', diasAvisoDe(doc))}
     <div class="modal-acciones">
       <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
       <button class="btn-primario" id="modal-guardar-caducidad">Guardar</button>
@@ -5944,6 +5958,7 @@ function abrirModalCaducidad(doc) {
   $('#modal-guardar-caducidad').addEventListener('click', () => {
     if (!campoFechaValido('input-caducidad-doc')) { parpadearFalta($('#input-caducidad-doc-caja')); mostrarToast('La fecha no es válida (dd/mm/aaaa).', true); return; }
     doc.fechaCaducidad = $('#input-caducidad-doc').value || null;
+    doc.avisoDias = Number($('#input-aviso-doc').value);
     guardarMetadatos().then(() => {
       volverAtras();
       refrescarPantallaActual();
@@ -5976,6 +5991,7 @@ function abrirModalActualizar(doc) {
         <label>${trad('Nueva fecha de caducidad')}</label>
         ${htmlCampoFecha('input-caducidad-actualizar', '')}
       </div>
+      ${htmlSelectorAviso('input-aviso-actualizar', diasAvisoDe(doc))}
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
         <button class="btn-primario inactivo" id="modal-guardar-actualizar" aria-disabled="true">Guardar</button>
@@ -6042,6 +6058,7 @@ function abrirModalActualizar(doc) {
       }
       doc.paginas = paginas;
       doc.fechaCaducidad = $('#input-caducidad-actualizar').value || null;
+      doc.avisoDias = Number($('#input-aviso-actualizar').value);
       doc.fechaSubida = new Date().toISOString().slice(0, 10);
       await guardarMetadatos();
       // Síncrono (no volverAtras): si no, el visor de abajo, al repintarse, sustituiría la capa del modal
@@ -6204,6 +6221,7 @@ function capturarEstadoSubida() {
     esEstadoSubida: true,
     nombre: $('#input-nombre').value,
     caducidad: $('#input-caducidad').value,
+    aviso: Number($('#input-aviso').value),
     personaId: valorSelectorFila($('#input-persona')),
     categoriaId: valorSelectorFila($('#input-categoria')),
   };
@@ -6260,6 +6278,7 @@ function abrirModalSubida(previo) {
           <label>Fecha de caducidad (opcional)</label>
           ${htmlCampoFecha('input-caducidad', '')}
         </div>
+        ${htmlSelectorAviso('input-aviso', previo && previo.aviso ? previo.aviso : DIAS_AVISO_POR_DEFECTO)}
       </div>
       <div class="modal-acciones">
         <button class="btn-secundario" id="modal-cancelar">Cancelar</button>
@@ -6439,7 +6458,7 @@ async function guardarDocumentoNuevo() {
       id: 'doc-' + Date.now(),
       personaId,
       nombre, categoria: categoriaId,
-      fechaCaducidad: caducidad, fechaSubida: new Date().toISOString().slice(0, 10),
+      fechaCaducidad: caducidad, avisoDias: Number($('#input-aviso').value), fechaSubida: new Date().toISOString().slice(0, 10),
       paginas,
     });
     await guardarMetadatos();
@@ -7004,7 +7023,7 @@ async function generarArchivoExportacion(personaId = null, categoriaId = null) {
   // Los ids van dentro del archivo para que, al importarlo, lo que ya esté no se duplique.
   const documentosCabecera = documentosAExportar.map((doc) => ({
     id: doc.id, personaId: doc.personaId, nombre: doc.nombre, categoria: doc.categoria,
-    fechaCaducidad: doc.fechaCaducidad, fechaSubida: doc.fechaSubida, mod: doc.mod,
+    fechaCaducidad: doc.fechaCaducidad, avisoDias: doc.avisoDias, fechaSubida: doc.fechaSubida, mod: doc.mod,
     paginas: doc.paginas.map((pagina) => ({
       archivoId: pagina.archivoId, nombre: pagina.nombre, mimeType: pagina.mimeType, mod: pagina.mod, tamano: partesArchivos[indiceParte++].length,
     })),
@@ -7247,6 +7266,7 @@ async function procesarImportacion(file, desdeBienvenida = false) {
       if (existente && (meta.mod || 0) > (existente.mod || 0)) {
         existente.nombre = meta.nombre; existente.categoria = categoriaId;
         existente.fechaCaducidad = meta.fechaCaducidad || null;
+        if (OPCIONES_AVISO.includes(meta.avisoDias)) existente.avisoDias = meta.avisoDias; else delete existente.avisoDias;
         existente.fechaSubida = meta.fechaSubida || existente.fechaSubida;
         existente.mod = meta.mod;
         sumado.cambios++;
@@ -7258,6 +7278,7 @@ async function procesarImportacion(file, desdeBienvenida = false) {
         fechaCaducidad: meta.fechaCaducidad || null, fechaSubida: meta.fechaSubida || new Date().toISOString().slice(0, 10),
         paginas: [],
       };
+      if (!existente && OPCIONES_AVISO.includes(meta.avisoDias)) destino.avisoDias = meta.avisoDias;
       for (let j = 0; j < meta.paginas.length; j++) {
         const metaPagina = meta.paginas[j];
         const yaEsta = metaPagina.archivoId && destino.paginas.find((p) => p.archivoId === metaPagina.archivoId);
